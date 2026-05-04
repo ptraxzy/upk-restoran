@@ -1,94 +1,33 @@
-# Desain Arsitektur Project Restoran UPK
+# Desain Arsitektur Sederhana Project Restoran UPK
 
 Tanggal: 2026-05-04
-Status: Disetujui untuk direview sebelum implementasi
-
-## Latar Belakang
-
-Project Restoran UPK akan dibangun dengan PHP murni. Berdasarkan sitemap dan mockup yang tersedia, aplikasi memiliki tiga aktor utama:
-
-- Admin
-- Karyawan
-- Pembeli
-
-Ketiga aktor tersebut berbagi domain bisnis yang sama, tetapi memiliki pengalaman antarmuka yang berbeda. Area pembeli berfokus pada katalog dan transaksi dengan tampilan visual yang lebih kaya, sedangkan area admin dan karyawan berfokus pada operasi internal, data, dan efisiensi kerja.
-
-Karena itu, struktur project perlu dipisahkan antara frontend dan backend, dengan frontend dibagi menurut pengalaman pengguna, dan backend dibagi menurut domain bisnis.
+Status: Revisi untuk direview sebelum implementasi
 
 ## Tujuan
 
-- Memisahkan tanggung jawab tampilan dan logika aplikasi secara jelas.
-- Menjaga aplikasi tetap full PHP tanpa berganti stack.
-- Memudahkan pengembangan modul admin, karyawan, dan pembeli secara paralel.
-- Menyediakan lingkungan database lokal dengan Docker dan phpMyAdmin.
-- Menyiapkan struktur yang mudah dirawat ketika fitur bertambah.
+Struktur project ini dibuat khusus untuk kebutuhan UPK, jadi alur kode harus sederhana, mudah dipahami, dan mudah dikerjakan dengan PHP murni.
 
-## Pendekatan yang Dipilih
+Tujuan utamanya:
 
-Pendekatan yang dipilih adalah:
+- memisahkan tampilan dan proses
+- tetap full PHP
+- tidak memakai pola yang terlalu kompleks
+- mudah dijalankan dengan MySQL dan phpMyAdmin
 
-- `frontend/` dipisah berdasarkan pengalaman pengguna
-- `backend/` dipisah berdasarkan domain bisnis
-- Docker digunakan untuk `mysql` dan `phpmyadmin`
+## Keputusan Utama
 
-Pendekatan ini dipilih karena paling sesuai dengan dua referensi utama:
+Project akan dipisah menjadi dua bagian:
 
-- sitemap menunjukkan pemisahan fitur menurut aktor
-- mockup menunjukkan gaya antarmuka pembeli berbeda dari area operasional admin dan karyawan
+- `frontend/` untuk halaman
+- `backend/` untuk file proses, koneksi database, auth, dan helper
 
-## Alternatif yang Dipertimbangkan
-
-### 1. Frontend per pengalaman pengguna + backend per domain bisnis
-
-Ini adalah pendekatan yang dipilih.
-
-Kelebihan:
-
-- Selaras dengan sitemap dan mockup
-- Pemisahan tanggung jawab jelas
-- Logic bisnis terpusat dan dapat dipakai lintas role
-- Mudah memperluas UI publik dan dashboard tanpa mencampur struktur
-
-Kekurangan:
-
-- Membutuhkan disiplin pemanggilan controller dan service agar tidak kembali bercampur
-
-### 2. Frontend tetap role-based penuh + backend hanya shared logic
-
-Kelebihan:
-
-- Mirip struktur awal yang sudah dibayangkan di README
-- Lebih cepat dipahami pada tahap awal
-
-Kekurangan:
-
-- Domain bisnis berisiko tersebar di banyak folder role
-- Controller dan proses form mudah terdorong kembali ke folder tampilan
-
-### 3. Frontend dan backend keduanya dipisah per fitur
-
-Kelebihan:
-
-- Sangat modular
-- Baik untuk tim besar atau aplikasi yang sudah matang
-
-Kekurangan:
-
-- Terlalu berat untuk tahap awal project ini
-- Menambah kompleksitas navigasi struktur pada codebase PHP murni
+Pemisahan ini hanya untuk merapikan project. Ini bukan arsitektur besar dengan banyak layer.
 
 ## Struktur Folder yang Disetujui
 
 ```text
 upk-restoran/
 ├── frontend/
-│   ├── public/
-│   │   ├── auth/
-│   │   ├── dashboard/
-│   │   ├── menu/
-│   │   ├── keranjang/
-│   │   ├── pesanan/
-│   │   └── profil/
 │   ├── admin/
 │   │   ├── auth/
 │   │   ├── dashboard/
@@ -104,258 +43,221 @@ upk-restoran/
 │   │   ├── pembayaran/
 │   │   ├── pesanan/
 │   │   └── profil/
+│   ├── pembeli/
+│   │   ├── auth/
+│   │   ├── dashboard/
+│   │   ├── menu/
+│   │   ├── keranjang/
+│   │   ├── pesanan/
+│   │   └── profil/
 │   ├── assets/
 │   │   ├── css/
 │   │   ├── js/
-│   │   ├── images/
-│   │   └── fonts/
+│   │   └── images/
 │   └── index.php
 ├── backend/
 │   ├── config/
-│   ├── controllers/
-│   ├── services/
-│   ├── repositories/
-│   ├── middlewares/
-│   ├── helpers/
-│   └── views/
-│       └── partials/
+│   ├── includes/
+│   ├── auth/
+│   ├── functions/
+│   └── actions/
 ├── database/
-│   ├── migrations/
-│   └── seeds/
-├── docker/
-├── docs/
+│   └── sql/
 ├── storage/
-│   ├── logs/
-│   └── uploads/
-├── .env.example
+│   ├── uploads/
+│   └── logs/
 ├── docker-compose.yml
+├── .env.example
 └── README.md
 ```
 
-## Alasan Penamaan dan Boundary
+## Penjelasan Folder
 
-### `frontend/public`
+### `frontend/`
 
-Berisi halaman pembeli. Nama `public` dipilih untuk membedakan area pengguna umum dari area operasional internal. Folder ini memuat halaman katalog, detail menu, keranjang, checkout, riwayat pesanan, dan profil akun.
+Semua halaman yang dilihat user ada di sini.
 
-### `frontend/admin`
+- `admin/` untuk admin
+- `karyawan/` untuk karyawan
+- `pembeli/` untuk pembeli
+- `assets/` untuk CSS, JS, dan gambar
 
-Berisi halaman operasional untuk administrator. Fokusnya pada pengelolaan data, kontrol sistem, dan pelaporan.
+Frontend hanya fokus pada:
 
-### `frontend/karyawan`
+- tampilan
+- form
+- tabel
+- layout
+- pemanggilan file proses dari backend
 
-Berisi halaman operasional untuk petugas atau staf restoran. Nama `karyawan` dipertahankan agar konsisten dengan sitemap dan istilah yang sudah dipakai di project.
+### `backend/config/`
 
-### `backend`
+Berisi konfigurasi utama seperti:
 
-Seluruh logika inti aplikasi ditempatkan di sini. Folder frontend hanya bertanggung jawab sebagai lapisan halaman dan pemanggilan controller.
+- koneksi database
+- konfigurasi aplikasi
+- environment variable sederhana
 
-## Domain Backend
+### `backend/includes/`
 
-Struktur internal backend akan mengikuti domain bisnis berikut:
+Berisi file yang dipakai berulang, misalnya:
 
-- `Auth`
-- `Menu`
-- `Order`
-- `Payment`
-- `Employee`
-- `Report`
-- `Profile`
-- `RestaurantSetting`
+- header
+- footer
+- navbar
+- sidebar
+- session bootstrap
 
-Setiap domain dapat memiliki kombinasi file pada:
+### `backend/auth/`
 
-- `controllers/`
-- `services/`
-- `repositories/`
+Berisi proses login, logout, dan pengecekan role.
 
 Contoh:
 
-- `backend/controllers/MenuController.php`
-- `backend/services/MenuService.php`
-- `backend/repositories/MenuRepository.php`
+- login admin
+- login karyawan
+- login pembeli
+- logout
+- cek session
 
-## Pola Interaksi Antar Layer
+### `backend/functions/`
 
-Alur request standar:
+Berisi fungsi bantu sederhana yang dipakai berulang, misalnya:
 
-1. User mengakses file PHP pada `frontend/...`
-2. File frontend memuat bootstrap, session, dan dependency dasar
-3. Frontend memanggil controller yang sesuai dari `backend/controllers/`
-4. Controller memvalidasi request dan meneruskan proses ke service
-5. Service menjalankan aturan bisnis
-6. Repository menjalankan query database
-7. Hasil dikembalikan ke frontend untuk dirender
+- redirect
+- flash message
+- format rupiah
+- validasi input ringan
 
-Boundary utama:
+### `backend/actions/`
 
-- `frontend` tidak menulis query database langsung
-- `frontend` tidak menyimpan logika bisnis utama
-- `service` tidak merender HTML
-- `repository` tidak menangani session atau redirect
+Berisi file proses form dan aksi data.
 
-## Komponen Shared
+Contoh:
 
-Komponen bersama akan dipisahkan sebagai berikut:
+- simpan menu
+- edit menu
+- hapus menu
+- tambah pesanan
+- update status pesanan
+- simpan data karyawan
 
-- `backend/config/` untuk konfigurasi aplikasi, koneksi database, dan loader environment
-- `backend/middlewares/` untuk pengecekan login, role, dan proteksi halaman
-- `backend/helpers/` untuk helper kecil seperti redirect, flash message, formatter, atau request helper
-- `backend/views/partials/` untuk potongan tampilan PHP yang dipakai berulang, misalnya head, navbar, sidebar, footer, atau komponen alert
+Folder ini menjadi tempat utama proses bisnis sederhana project.
 
-## Pemetaan Sitemap ke Struktur
+## Alur Kode yang Disetujui
+
+Alurnya dibuat sesimpel ini:
+
+1. user membuka halaman di `frontend/`
+2. halaman menampilkan form atau data
+3. saat submit, form diarahkan ke file di `backend/actions/`
+4. file action memanggil koneksi database dan fungsi yang diperlukan
+5. setelah proses selesai, user diarahkan kembali ke halaman yang sesuai
+
+Contoh sederhana:
+
+- `frontend/admin/menu/tambah.php`
+- submit ke `backend/actions/menu/store.php`
+- action memproses input dan menyimpan ke database
+- selesai lalu redirect ke `frontend/admin/menu/index.php`
+
+## Batasan Supaya Tetap Simpel
+
+Supaya project ini tetap ringan:
+
+- tidak perlu `controllers/`
+- tidak perlu `services/`
+- tidak perlu `repositories/`
+- tidak perlu pola OOP yang berat kalau belum dibutuhkan
+
+Aturan sederhananya:
+
+- query database boleh ditulis di `backend/actions/`
+- helper umum ditaruh di `backend/functions/`
+- file frontend jangan mengurus proses simpan, edit, atau hapus langsung
+
+## Pemetaan Berdasarkan Sitemap
 
 ### Admin
 
-- `frontend/admin/auth/`
-- `frontend/admin/dashboard/`
-- `frontend/admin/menu/`
-- `frontend/admin/pesanan/`
-- `frontend/admin/karyawan/`
-- `frontend/admin/laporan/`
-- `frontend/admin/pengaturan/`
+- login
+- dashboard
+- manajemen menu
+- manajemen pesanan
+- manajemen karyawan
+- laporan
+- pengaturan
 
 ### Karyawan
 
-- `frontend/karyawan/auth/`
-- `frontend/karyawan/dashboard/`
-- `frontend/karyawan/menu/`
-- `frontend/karyawan/pembayaran/`
-- `frontend/karyawan/pesanan/`
-- `frontend/karyawan/profil/`
+- login
+- dashboard
+- menu
+- pembayaran
+- pesanan
+- profil
 
 ### Pembeli
 
-- `frontend/public/auth/`
-- `frontend/public/dashboard/`
-- `frontend/public/menu/`
-- `frontend/public/keranjang/`
-- `frontend/public/pesanan/`
-- `frontend/public/profil/`
+- login
+- dashboard
+- menu
+- keranjang
+- pesanan
+- profil
 
-## Prinsip Routing Awal
+Struktur folder frontend harus mengikuti pembagian ini.
 
-Project tetap menggunakan PHP murni. Pada tahap awal, routing dapat dilakukan melalui file dan folder PHP biasa, misalnya:
+## Docker
 
-- `frontend/admin/menu/index.php`
-- `frontend/admin/menu/create.php`
-- `frontend/public/menu/detail.php`
+Docker dipakai hanya untuk database dan phpMyAdmin.
 
-Setiap file halaman akan memanggil controller atau service yang sesuai. Tidak ada kewajiban memakai router framework pada tahap ini.
+Service minimal:
 
-Jika nanti aplikasi tumbuh lebih besar, satu file bootstrap atau front controller tetap bisa ditambahkan tanpa mengubah boundary utama frontend dan backend.
+- `mysql`
+- `phpmyadmin`
 
-## Session, Auth, dan Role
+Port awal yang dipakai:
 
-Aturan awal:
+- MySQL: `3306`
+- phpMyAdmin: `8080`
 
-- Session dikelola terpusat
-- Login admin, karyawan, dan pembeli tetap bisa memiliki form dan halaman berbeda
-- Pemeriksaan role dilakukan lewat middleware atau helper backend
-- Redirect setelah login disesuaikan dengan role:
-  - admin ke area admin
-  - karyawan ke area karyawan
-  - pembeli ke area public
+Tujuannya:
 
-## Strategi Database
+- database mudah dijalankan
+- tabel mudah dicek lewat browser
+- tidak perlu setup phpMyAdmin manual
 
-Database dijalankan melalui Docker dengan MySQL sebagai database utama.
+Untuk tahap awal, aplikasi PHP tidak wajib dijalankan lewat Docker.
 
-Struktur database tidak didefinisikan penuh dalam spesifikasi ini, tetapi modul backend harus dirancang agar:
+## Database
 
-- query tidak tersebar di file tampilan
-- akses tabel dipusatkan lewat repository
-- migrasi atau SQL seed dapat disimpan dalam folder `database/`
+Folder `database/sql/` dipakai untuk menyimpan:
 
-## Desain Docker
+- file schema
+- dump database
+- seed data awal jika perlu
 
-`docker-compose.yml` akan menyediakan minimal dua service:
+Karena project ini sederhana, SQL biasa sudah cukup.
 
-### `mysql`
+## Pengujian Minimal
 
-Tanggung jawab:
+Setelah implementasi, yang perlu dipastikan:
 
-- menyimpan database project restoran
-- menyediakan port database lokal
-- menyimpan data persisten melalui volume
+- folder `frontend/` dan `backend/` sudah terpisah
+- Docker MySQL berjalan
+- Docker phpMyAdmin bisa dibuka
+- halaman PHP masih bisa diakses
+- form penting bisa mengarah ke file action yang benar
+- login dan logout dasar berjalan
 
-### `phpmyadmin`
+## Ruang Lingkup Tahap Pertama
 
-Tanggung jawab:
+Tahap pertama implementasi mencakup:
 
-- memberi antarmuka browser untuk melihat tabel, data, dan query
-- terhubung ke service `mysql`
-- diekspos ke port lokal terpisah
+- merapikan struktur folder
+- memperbarui `README.md`
+- membuat folder backend sederhana
+- membuat `docker-compose.yml` untuk MySQL dan phpMyAdmin
 
-Konfigurasi yang diharapkan:
-
-- nama database default project
-- user database non-root untuk aplikasi
-- password dikontrol lewat environment variable
-- port lokal MySQL menggunakan `3306`
-- port lokal phpMyAdmin menggunakan `8080`
-
-Pada tahap implementasi pertama, Docker hanya wajib menangani database dan phpMyAdmin. Runtime aplikasi PHP boleh tetap dijalankan langsung dari environment lokal pengguna.
-
-## Konvensi Pengembangan
-
-- Nama folder mengikuti bahasa domain yang sudah dipakai di sitemap
-- Halaman tampilan tetap berada di `frontend`
-- Proses data dan bisnis dipindahkan ke `backend`
-- File baru mengikuti pola penamaan yang konsisten per domain
-- Aset visual global diletakkan di `frontend/assets`
-- Upload user dan file runtime tidak disimpan di folder frontend
-
-## Risiko dan Mitigasi
-
-### Risiko: frontend kembali berisi logic bisnis
-
-Mitigasi:
-
-- seluruh operasi database dan aturan bisnis dipaksa lewat backend
-- controller dan service dibuat sejak awal, bukan belakangan
-
-### Risiko: admin dan karyawan berbagi tampilan yang terlalu berbeda
-
-Mitigasi:
-
-- masing-masing area punya folder sendiri
-- komponen bersama hanya diambil jika benar-benar reusable
-
-### Risiko: pembeli dan admin berbagi asset atau partial yang tidak cocok
-
-Mitigasi:
-
-- partial reusable disimpan terpisah dan dibuat netral
-- bila perlu, shell layout public dan dashboard dibuat terpisah
-
-## Strategi Pengujian
-
-Pada tahap implementasi awal, pengujian minimal meliputi:
-
-- validasi struktur folder sesuai desain
-- koneksi PHP ke database berjalan
-- service `mysql` dan `phpmyadmin` dapat dijalankan
-- halaman frontend dapat memanggil backend tanpa error include path
-- auth dan role guard dasar berjalan sesuai aktor
-
-## Hasil yang Diharapkan
-
-Setelah implementasi tahap pertama:
-
-- project memiliki pemisahan `frontend/` dan `backend/`
-- struktur role pada frontend sesuai sitemap
-- backend siap menjadi pusat logic aplikasi
-- Docker dapat menjalankan MySQL dan phpMyAdmin
-- codebase lebih siap dikembangkan untuk fitur admin, karyawan, dan pembeli
-
-## Ruang Lingkup Implementasi Tahap Pertama
-
-Tahap pertama implementasi dari desain ini mencakup:
-
-- restrukturisasi folder project
-- penyesuaian README agar mencerminkan arsitektur baru
-- pembuatan skeleton backend utama
-- pembuatan file konfigurasi Docker untuk `mysql` dan `phpmyadmin`
-
-Tahap ini belum harus mencakup penyelesaian seluruh halaman atau seluruh fitur bisnis final.
+Tahap ini belum harus mengisi semua halaman aplikasi.
