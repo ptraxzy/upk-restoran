@@ -1,50 +1,164 @@
-# Struktur Folder Project UPK Restoran
+# UPK Restoran
 
-Project ini menggunakan arsitektur folder berbasis role/aktor berdasarkan sitemap aplikasi (Admin, Karyawan, dan Pembeli). Pendekatan ini memudahkan pemisahan logika aplikasi dan kontrol hak akses.
+Ini project restoran pakai PHP.
 
-## Direktori Utama
+Bayangkan project ini seperti restoran:
 
-Berikut adalah penjelasan fungsi dari setiap direktori yang ada di dalam project:
+- `frontend/` = ruang depan yang dilihat orang.
+- `backend/` = dapur yang memproses data.
+- `database/` = buku penyimpanan data.
+- `storage/` = gudang file upload dan log.
+
+## Cara Buka
+
+Jalankan:
+
+```bash
+docker compose up -d --build
+```
+
+Buka aplikasi:
+
+```text
+http://localhost:8001/frontend/login.php
+```
+
+Buka phpMyAdmin:
+
+```text
+http://localhost:8080
+```
+
+## Akun Dummy
+
+Admin:
+
+```text
+username: admin
+password: admin123
+```
+
+Karyawan:
+
+```text
+username: kasir
+password: kasir123
+
+username: kasir.senja
+password: kasir456
+
+username: kasir.raka
+password: kasir789
+```
+
+Pembeli:
+
+```text
+username: testmember
+password: secret123
+```
+
+## Struktur Paling Gampang
 
 ```text
 upk-restoran/
-├── admin/             # Modul khusus untuk Administrator
-│   ├── auth/          # Proses Login dan Logout Admin
-│   ├── dashboard/     # Halaman utama (Overview) Admin
-│   ├── karyawan/      # Manajemen Karyawan (Tambah, Edit, Hapus)
-│   ├── laporan/       # Laporan Penjualan (Harian/Bulanan)
-│   ├── menu/          # Manajemen Menu (Tambah, Edit, Hapus, Kategori)
-│   ├── pengaturan/    # Pengaturan aplikasi (Profil Restoran)
-│   └── pesanan/       # Manajemen Pesanan (Lihat Semua, Update Status)
-│
-├── assets/            # Tempat penyimpanan aset statis aplikasi
-│   ├── css/           # File Cascading Style Sheets (.css)
-│   ├── images/        # Gambar, logo, dan ikon
-│   └── js/            # File JavaScript (.js)
-│
-├── config/            # File konfigurasi utama (koneksi database, variabel global, dll)
-│
-├── includes/          # File komponen antarmuka yang digunakan berulang (Header, Footer, Navbar, dll)
-│
-├── karyawan/          # Modul khusus untuk Karyawan
-│   ├── auth/          # Proses Login dan Logout Karyawan
-│   ├── menu/          # Halaman Lihat Menu
-│   ├── pembayaran/    # Manajemen Pembayaran (Cek Status, Riwayat, Cetak Struk/Bukti Bayar)
-│   ├── pesanan/       # Manajemen Pesanan Masuk (Daftar, Tambah, Update Status)
-│   └── profil/        # Pengaturan Data Diri Karyawan
-│
-└── pembeli/           # Modul khusus untuk Pembeli/Pelanggan
-    ├── auth/          # Proses Login dan Logout Pembeli
-    ├── dashboard/     # Halaman utama Pembeli
-    ├── keranjang/     # Manajemen Keranjang (Lihat, Edit, Hapus, Checkout)
-    ├── menu/          # Lihat Menu, Promo/Rekomendasi, Detail Menu, Tambah ke Keranjang
-    ├── pesanan/       # Lacak Pesanan (Riwayat, Status)
-    └── profil/        # Pengaturan Akun (Data Diri, Alamat)
+├── frontend/
+│   ├── login.php
+│   ├── admin/
+│   ├── karyawan/
+│   ├── pembeli/
+│   └── assets/css/
+├── backend/
+│   ├── actions/
+│   ├── auth/
+│   ├── config/
+│   ├── functions/
+│   └── includes/
+├── database/
+│   └── sql/
+├── storage/
+├── Dockerfile
+├── docker-compose.yml
+└── README.md
 ```
 
-## Panduan Pengembangan
+## Arti Folder
 
-- **Pemisahan Hak Akses**: Setiap aktor (Admin, Karyawan, Pembeli) memiliki foldernya masing-masing. Pastikan pengecekan sesi (session check) diletakkan dengan benar di setiap folder aktor untuk keamanan.
-- **Aset Global**: Seluruh file statis disatukan di folder `assets` agar mudah diakses dari modul mana pun dan tidak tercampur dengan logic PHP.
-- **Konfigurasi Global**: Gunakan folder `config` untuk menyimpan hal-hal terkait konfigurasi utama seperti `database.php`.
-- **Komponen UI Berulang**: Gunakan folder `includes` untuk memisahkan bagian kode yang akan di-_require_ berulang-ulang seperti file koneksi, _header_, _footer_, atau _sidebar_ navigasi.
+`frontend/login.php`
+
+Tempat semua user login. Admin, karyawan, dan pembeli login di halaman yang sama.
+
+`frontend/admin/`
+
+Halaman untuk admin.
+
+`frontend/karyawan/`
+
+Halaman untuk karyawan atau kasir.
+
+`frontend/pembeli/`
+
+Halaman untuk pembeli/member.
+
+`frontend/assets/css/`
+
+Tempat style tampilan website.
+
+`backend/actions/`
+
+Tempat proses form, misalnya login, register, simpan menu, dan simpan karyawan.
+
+`backend/auth/`
+
+Tempat cek apakah user sudah login dan rolenya benar.
+
+`backend/config/`
+
+Tempat setting aplikasi dan database.
+
+`backend/includes/`
+
+Potongan file yang dipakai bareng-bareng, seperti header, footer, dan layout.
+
+`database/sql/`
+
+File SQL untuk membuat tabel dan data awal.
+
+`storage/`
+
+Tempat file runtime seperti upload dan log.
+
+## Alur Super Simpel
+
+```text
+User buka halaman
+        ↓
+User isi form
+        ↓
+Form dikirim ke backend/actions
+        ↓
+Backend proses data
+        ↓
+User balik ke halaman tujuan
+```
+
+Contoh:
+
+```text
+frontend/admin/menu/create.php
+        ↓
+backend/actions/menu/store.php
+        ↓
+frontend/admin/menu/index.php
+```
+
+## Catatan Penting
+
+Jangan hapus folder ini:
+
+- `frontend/`
+- `backend/`
+- `database/`
+- `storage/`
+
+Folder itu yang bikin project jalan.
