@@ -1,12 +1,7 @@
 CREATE DATABASE IF NOT EXISTS db_restoran;
 USE db_restoran;
 
-CREATE TABLE IF NOT EXISTS `kategori` (
-  `id_kategori` int NOT NULL AUTO_INCREMENT,
-  `nama_kategori` varchar(50) NOT NULL,
-  PRIMARY KEY (`id_kategori`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+-- Tabel user dipakai dulu untuk login semua role.
 CREATE TABLE IF NOT EXISTS `user` (
   `id_user` int NOT NULL AUTO_INCREMENT,
   `username` varchar(50) NOT NULL,
@@ -15,38 +10,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   PRIMARY KEY (`id_user`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE IF NOT EXISTS `menu` (
-  `id_menu` int NOT NULL AUTO_INCREMENT,
-  `nama_menu` varchar(100) NOT NULL,
-  `harga` int NOT NULL,
-  `status_menu` enum('tersedia','habis') NOT NULL,
-  `id_kategori` int NOT NULL,
-  PRIMARY KEY (`id_menu`),
-  KEY `idx_menu_kategori` (`id_kategori`),
-  CONSTRAINT `fk_menu_kategori`
-    FOREIGN KEY (`id_kategori`) REFERENCES `kategori` (`id_kategori`)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE IF NOT EXISTS `transaksi` (
-  `id_transaksi` int NOT NULL AUTO_INCREMENT,
-  `tgl_transaksi` datetime NOT NULL,
-  `total_bayar` int NOT NULL,
-  `id_user` int NOT NULL,
-  `id_menu` int NOT NULL,
-  PRIMARY KEY (`id_transaksi`),
-  KEY `idx_transaksi_user` (`id_user`),
-  KEY `idx_transaksi_menu` (`id_menu`),
-  CONSTRAINT `fk_transaksi_user`
-    FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT,
-  CONSTRAINT `fk_transaksi_menu`
-    FOREIGN KEY (`id_menu`) REFERENCES `menu` (`id_menu`)
-    ON UPDATE CASCADE
-    ON DELETE RESTRICT
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+-- TODO: tambahkan tabel kategori, menu, pesanan, dan pembayaran saat endpoint backend dikerjakan.
 
 INSERT INTO `user` (`username`, `password`, `level`)
 SELECT 'admin', 'admin123', 'admin'

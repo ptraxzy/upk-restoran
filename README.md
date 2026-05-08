@@ -1,164 +1,165 @@
 # UPK Restoran
 
-Ini project restoran pakai PHP.
+Aplikasi manajemen restoran berbasis PHP native dengan Docker.
 
-Bayangkan project ini seperti restoran:
+---
 
-- `frontend/` = ruang depan yang dilihat orang.
-- `backend/` = dapur yang memproses data.
-- `database/` = buku penyimpanan data.
-- `storage/` = gudang file upload dan log.
+## Prasyarat
 
-## Cara Buka
+Pastikan sudah terinstall di komputer:
 
-Jalankan:
+- [Git](https://git-scm.com/downloads)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (sudah termasuk Docker Compose)
+
+## Cara Setup (Untuk yang Baru Clone)
+
+### 1. Clone repository
+
+```bash
+git clone https://github.com/ptraxzy/upk-restoran.git
+cd upk-restoran
+```
+
+### 2. Jalankan Docker
 
 ```bash
 docker compose up -d --build
 ```
 
-Buka aplikasi:
+Tunggu sampai selesai (~1-2 menit pertama kali). Perintah ini otomatis:
 
-```text
-http://localhost:8001/frontend/login.php
+- Build container PHP + Apache
+- Jalankan MySQL 8.0
+- Import database dari `database/sql/`
+- Jalankan phpMyAdmin
+
+### 3. Buka di browser
+
+| Layanan    | URL                                        |
+| ---------- | ------------------------------------------ |
+| Aplikasi   | http://localhost:8001/frontend/login.php    |
+| phpMyAdmin | http://localhost:8080                       |
+
+### 4. Login dengan akun demo
+
+**Admin:**
+
+```
+Username: admin
+Password: admin123
 ```
 
-Buka phpMyAdmin:
+**Karyawan:**
 
-```text
-http://localhost:8080
+```
+Username: kasir
+Password: kasir123
 ```
 
-## Akun Dummy
+**Pembeli:**
 
-Admin:
-
-```text
-username: admin
-password: admin123
+```
+Username: testmember
+Password: secret123
 ```
 
-Karyawan:
+---
 
-```text
-username: kasir
-password: kasir123
+## Perintah Berguna
 
-username: kasir.senja
-password: kasir456
+```bash
+# Jalankan container
+docker compose up -d
 
-username: kasir.raka
-password: kasir789
+# Stop container
+docker compose down
+
+# Rebuild setelah ubah Dockerfile
+docker compose up -d --build
+
+# Lihat log
+docker compose logs -f app
+
+# Reset database (hapus volume lalu rebuild)
+docker compose down -v
+docker compose up -d --build
 ```
 
-Pembeli:
+---
 
-```text
-username: testmember
-password: secret123
-```
-
-## Struktur Paling Gampang
+## Struktur Folder
 
 ```text
 upk-restoran/
-├── frontend/
+├── frontend/           # Halaman yang dilihat user
 │   ├── login.php
-│   ├── admin/
-│   ├── karyawan/
-│   ├── pembeli/
-│   └── assets/css/
+│   ├── admin/          # Panel admin
+│   ├── karyawan/       # Panel karyawan/kasir
+│   ├── pembeli/        # Panel pembeli/member
+│   └── assets/css/     # Stylesheet
 ├── backend/
-│   ├── actions/
-│   ├── auth/
-│   ├── config/
-│   ├── functions/
-│   └── includes/
-├── database/
-│   └── sql/
-├── storage/
+│   ├── actions/        # Endpoint proses form (POST handler)
+│   ├── auth/           # Middleware cek login & role
+│   ├── config/         # Konfigurasi app, env, database
+│   ├── functions/      # Helper functions
+│   └── includes/       # Template header, footer, sidebar
+├── database/sql/       # SQL init (auto-import saat docker up)
+├── storage/            # Upload & log (git-ignored)
 ├── Dockerfile
-├── docker-compose.yml
-└── README.md
+└── docker-compose.yml
 ```
 
-## Arti Folder
+## Cara Berkontribusi
 
-`frontend/login.php`
+### Workflow Git
 
-Tempat semua user login. Admin, karyawan, dan pembeli login di halaman yang sama.
+```bash
+# 1. Buat branch baru untuk fitur yang dikerjakan
+git checkout -b fitur/nama-fitur
 
-`frontend/admin/`
+# 2. Kerjakan perubahan, lalu commit
+git add .
+git commit -m "feat: deskripsi perubahan"
 
-Halaman untuk admin.
+# 3. Push branch ke GitHub
+git push origin fitur/nama-fitur
 
-`frontend/karyawan/`
-
-Halaman untuk karyawan atau kasir.
-
-`frontend/pembeli/`
-
-Halaman untuk pembeli/member.
-
-`frontend/assets/css/`
-
-Tempat style tampilan website.
-
-`backend/actions/`
-
-Tempat proses form, misalnya login, register, simpan menu, dan simpan karyawan.
-
-`backend/auth/`
-
-Tempat cek apakah user sudah login dan rolenya benar.
-
-`backend/config/`
-
-Tempat setting aplikasi dan database.
-
-`backend/includes/`
-
-Potongan file yang dipakai bareng-bareng, seperti header, footer, dan layout.
-
-`database/sql/`
-
-File SQL untuk membuat tabel dan data awal.
-
-`storage/`
-
-Tempat file runtime seperti upload dan log.
-
-## Alur Super Simpel
-
-```text
-User buka halaman
-        ↓
-User isi form
-        ↓
-Form dikirim ke backend/actions
-        ↓
-Backend proses data
-        ↓
-User balik ke halaman tujuan
+# 4. Buat Pull Request di GitHub untuk di-review
 ```
 
-Contoh:
+### Konvensi Commit
 
-```text
-frontend/admin/menu/create.php
-        ↓
-backend/actions/menu/store.php
-        ↓
-frontend/admin/menu/index.php
+```
+feat: fitur baru          → feat: tambah halaman pesanan
+fix: perbaikan bug        → fix: validasi login gagal
+style: perubahan tampilan → style: update warna sidebar
+docs: dokumentasi         → docs: update README
 ```
 
-## Catatan Penting
+## Status Pengerjaan
 
-Jangan hapus folder ini:
+### ✅ Sudah selesai
 
-- `frontend/`
-- `backend/`
-- `database/`
-- `storage/`
+- Login / Logout / Register pembeli
+- Role guard (admin, karyawan, pembeli)
+- Layout & navigasi semua role
+- CRUD menu (form)
+- Form karyawan
 
-Folder itu yang bikin project jalan.
+### 🔧 Perlu dilanjutkan
+
+- [ ] CRUD menu → sambungkan ke database
+- [ ] Data karyawan → sambungkan ke database
+- [ ] Pesanan → buat flow pemesanan lengkap
+- [ ] Pembayaran → proses pembayaran
+- [ ] Laporan → tampilkan data dari database
+
+---
+
+## Tech Stack
+
+- **Backend:** PHP 8 Native (tanpa framework)
+- **Database:** MySQL 8.0
+- **Frontend:** HTML + CSS (Tailwind CSS via PostCSS)
+- **Server:** Apache (via Docker)
+- **Tools:** Docker Compose, phpMyAdmin

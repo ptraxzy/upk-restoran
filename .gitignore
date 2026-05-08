@@ -1,4 +1,18 @@
+# Environment
 .env
+
+# Dependencies
+node_modules/
+
+# Storage
 storage/logs/*.log
 storage/uploads/*
 !storage/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

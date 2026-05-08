@@ -30,6 +30,7 @@ if (is_hashed_password($storedPassword)) {
 } elseif ($storedPassword === $password) {
     $isValid = true;
 
+    // Upgrade akun seed lama ke hash begitu berhasil login.
     $rehash = password_hash($password, PASSWORD_DEFAULT);
     $update = db()->prepare('UPDATE user SET password = :password WHERE id_user = :id_user');
     $update->execute([

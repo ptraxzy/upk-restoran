@@ -8,5 +8,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     redirect(frontend_url('admin/menu/create.php'));
 }
 
-set_flash('success', 'Menu baru berhasil disimpan.');
+// TODO: validasi input dan insert ke tabel menu.
+set_flash('error', 'Penyimpanan menu belum dihubungkan ke database.');
 redirect(frontend_url('admin/menu/index.php'));

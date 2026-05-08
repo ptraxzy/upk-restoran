@@ -49,4 +49,6 @@ require base_path('backend/includes/header.php');
         </section>
     </div>
 </main>
-<?php require base_path('backend/includes/footer.php'); ?>
+<?php
+require base_path('backend/includes/footer.php');
+?>

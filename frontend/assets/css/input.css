@@ -33,6 +33,7 @@
     color-scheme: dark;
     scroll-behavior: smooth;
   }
+   
 
   body {
     @apply m-0 bg-ink text-stone-300 font-body antialiased;
@@ -40,7 +41,7 @@
       radial-gradient(circle at top right, rgba(197, 160, 89, 0.08), transparent 40%),
       linear-gradient(180deg, #0C0C0C 0%, #080808 100%);
     min-height: 100vh;
-    /* subtle noise */
+    /* Tekstur tipis supaya background hitam tidak terasa polos. */
     position: relative;
   }
 
@@ -70,7 +71,7 @@
 }
 
 @layer components {
-  /* Layout Shells */
+  /* Kerangka halaman umum. */
   .shell {
     @apply min-h-screen flex flex-col animate-fade-in;
   }
@@ -79,7 +80,7 @@
     @apply mx-auto w-full max-w-[1440px] px-4 py-8 md:px-8 lg:px-12;
   }
 
-  /* Typography */
+  /* Gaya tulisan dasar yang sering dipakai ulang. */
   .eyebrow {
     @apply text-[10px] uppercase tracking-[0.35em] text-brass/80 font-medium;
   }
@@ -92,7 +93,7 @@
     @apply max-w-2xl text-sm leading-relaxed text-stone-400 md:text-[15px];
   }
 
-  /* Panels & Cards */
+  /* Panel dan kartu kecil. */
   .panel {
     @apply border border-white/5 bg-white/[0.02] backdrop-blur-md shadow-aura rounded-sm;
   }
@@ -101,7 +102,7 @@
     @apply border border-brass/20 bg-black/40 shadow-aura rounded-sm;
   }
 
-  /* Hero Elements */
+  /* Area hero halaman awal. */
   .hero-stage {
     @apply relative min-h-screen animate-fade-in;
   }
@@ -129,7 +130,7 @@
     @apply mt-10 flex flex-wrap gap-4;
   }
 
-  /* Buttons & Links */
+  /* Tombol dan link utama. */
   .nav-link {
     @apply text-[11px] uppercase tracking-[0.15em] text-stone-400 hover:text-brass transition-colors duration-300;
   }
@@ -144,7 +145,7 @@
     border-radius: 2px;
   }
 
-  /* Auth Screens */
+  /* Halaman login dan register lama. */
   .auth-shell {
     @apply mx-auto flex min-h-screen w-full items-center justify-center px-4 py-6 md:px-6 lg:px-8 animate-fade-in;
     background:
@@ -206,7 +207,7 @@
     @apply border-brass/40 bg-brass/10 text-brass shadow-[0_0_15px_rgba(212,175,55,0.1)];
   }
 
-  /* Forms */
+  /* Input form. */
   .field-label {
     @apply mb-2.5 block text-[10px] uppercase tracking-[0.25em] text-stone-400 font-medium;
   }
@@ -220,7 +221,7 @@
     @apply min-h-[140px] w-full resize-y border border-white/10 bg-ink px-4 py-3.5 text-sm text-stone-100 outline-none transition-all duration-300 placeholder:text-stone-600 focus:border-brass focus:ring-1 focus:ring-brass focus:bg-smoke rounded-sm;
   }
 
-  /* Notices */
+  /* Pesan error dan sukses. */
   .notice {
     @apply border px-4 py-3.5 text-sm leading-relaxed rounded-sm animate-fade-in;
   }
@@ -233,7 +234,7 @@
     @apply border-emerald-500/40 bg-emerald-500/10 text-emerald-200;
   }
 
-  /* Dashboards */
+  /* Layout dashboard internal. */
   .dashboard-shell {
     @apply flex min-h-screen flex-col bg-ink lg:grid lg:grid-cols-[250px_minmax(0,1fr)] animate-fade-in;
   }
@@ -322,7 +323,7 @@
     @apply border border-white/10 bg-white/[0.03] px-3 py-1.5 text-[9px] uppercase tracking-[0.2em] text-stone-400 rounded-full backdrop-blur-sm;
   }
 
-  /* Dashboard Content */
+  /* Isi dashboard. */
   .metric-grid {
     @apply grid gap-5 md:grid-cols-2 xl:grid-cols-4;
   }
@@ -370,7 +371,7 @@
     @apply mt-3 text-sm leading-relaxed text-stone-400;
   }
 
-  /* Tables */
+  /* Tabel data. */
   .dark-table {
     @apply w-full border-collapse text-left;
   }
@@ -391,7 +392,7 @@
     @apply bg-[#0e0e0e];
   }
 
-  /* Badges */
+  /* Label status kecil. */
   .badge {
     @apply inline-flex items-center justify-center px-[10px] py-[4px] text-[9px] uppercase font-medium border border-current bg-transparent;
     letter-spacing: 0.12em;
@@ -406,7 +407,7 @@
     @apply text-stone-400;
   }
 
-  /* Cards */
+  /* Kartu navigasi dan shortcut. */
   .role-card {
     @apply flex min-h-[192px] flex-col justify-between border border-white/5 bg-smoke/40 p-6 transition-all duration-500 hover:border-brass/50 hover:bg-smoke/60 hover:-translate-y-1 hover:shadow-gold rounded-sm relative overflow-hidden xl:min-h-[220px];
   }
@@ -423,7 +424,7 @@
     @apply grid gap-5 md:grid-cols-2;
   }
 
-  /* Public Area Shell */
+  /* Layout area pembeli. */
   .public-shell {
     @apply border-b border-white/5 bg-black/20 backdrop-blur-md sticky top-0 z-40;
   }
@@ -462,7 +463,7 @@
     @apply py-10 lg:py-14 animate-slide-up;
   }
 
-  /* Public Hero Content */
+  /* Kartu sambutan pembeli. */
   .public-hero {
     @apply grid gap-0 overflow-hidden border border-white/5 bg-smoke/50 shadow-aura rounded-sm lg:grid-cols-[1fr_1.2fr] transition-transform duration-500 hover:border-brass/30;
   }
@@ -480,7 +481,7 @@
     @apply flex flex-col justify-between p-8 md:p-10 lg:p-12 relative;
   }
 
-  /* Product Menus */
+  /* Katalog menu. */
   .menu-showcase {
     @apply grid gap-8 md:grid-cols-2 xl:grid-cols-3 mt-12;
   }
@@ -538,7 +539,7 @@
     @apply mt-10 flex flex-wrap gap-4;
   }
 
-  /* Cart & Summary */
+  /* Keranjang dan ringkasan pembayaran. */
   .cart-layout {
     @apply grid gap-8 lg:grid-cols-[1.1fr_0.9fr];
   }
@@ -572,7 +573,7 @@
     @apply flex items-center justify-between border-b border-white/5 py-4 text-[14px] text-stone-300 last:border-b-0;
   }
 
-  /* Utility Layouts */
+  /* Bantuan layout kecil. */
   .form-grid {
     @apply grid gap-6 md:grid-cols-2;
   }
@@ -618,7 +619,7 @@
   }
 }
 
-/* FIX: design tokens */
+/* Warna dan font utama restoran. */
 @layer base {
   :root {
     --bg-main: #0D0D0D;
@@ -637,14 +638,14 @@
     --font-body: "DM Sans", system-ui, sans-serif;
   }
 
-  /* FIX: zero radius contract */
+  /* Semua sudut dibuat tajam sesuai desain Figma. */
   *,
   *::before,
   *::after {
     border-radius: 0 !important;
   }
 
-  /* FIX: global dark luxury canvas */
+  /* Dasar tampilan gelap untuk seluruh halaman. */
   html {
     background: var(--bg-main);
   }
@@ -688,7 +689,7 @@
   }
 }
 
-/* FIX: shared typography */
+/* Tipografi bersama untuk judul, label, dan teks isi. */
 @layer components {
   .eyebrow,
   .field-label,
@@ -742,7 +743,7 @@
     line-height: 1.7;
   }
 
-  /* FIX: buttons exact tokens */
+  /* Tombol utama dan tombol outline. */
   .cta-primary,
   button.cta-primary,
   a.cta-primary,
@@ -804,7 +805,7 @@
     color: var(--gold) !important;
   }
 
-  /* FIX: forms exact tokens */
+  /* Input, textarea, dan select dibuat seragam. */
   .field-label,
   label:not(.plain-label) {
     display: block;
@@ -860,7 +861,7 @@
     box-shadow: none !important;
   }
 
-  /* FIX: notices inline luxury */
+  /* Pesan form dibuat kecil dan tidak mengganggu layout. */
   .notice {
     background: transparent !important;
     border: 0 !important;
@@ -871,7 +872,7 @@
     line-height: 1.6;
   }
 
-  /* FIX: admin sidebar */
+  /* Sidebar admin. */
   .dashboard-shell {
     display: grid;
     grid-template-columns: 200px minmax(0, 1fr);
@@ -996,7 +997,7 @@
     text-transform: uppercase;
   }
 
-  /* FIX: metric cards */
+  /* Kartu angka ringkasan. */
   .metric-grid {
     display: grid;
     grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -1041,7 +1042,7 @@
     line-height: 1.6;
   }
 
-  /* FIX: panel and chart surfaces */
+  /* Permukaan panel, chart, dan card besar. */
   .panel,
   .panel-soft,
   .section-panel,
@@ -1074,7 +1075,7 @@
     stroke-width: 1.5px !important;
   }
 
-  /* FIX: table style */
+  /* Tabel dibuat padat supaya mudah discan. */
   .dark-table {
     width: 100%;
     background: var(--bg-card);
@@ -1113,7 +1114,7 @@
     background: transparent !important;
   }
 
-  /* FIX: badge status */
+  /* Badge status tanpa warna isi. */
   .badge {
     background: transparent !important;
     border: 1px solid currentColor !important;
@@ -1135,7 +1136,7 @@
     color: #888888 !important;
   }
 
-  /* FIX: employee topbar */
+  /* Navigasi atas untuk karyawan. */
   .employee-shell {
     min-height: 100vh;
     background: var(--bg-main);
@@ -1229,7 +1230,7 @@
     line-height: 1.05;
   }
 
-  /* FIX: employee order controls */
+  /* Filter dan aksi pesanan karyawan. */
   .employee-page-copy {
     color: #555555;
     font-size: 10px;
@@ -1323,7 +1324,7 @@
     color: #666666 !important;
   }
 
-  /* FIX: public topnav */
+  /* Navigasi atas untuk pembeli. */
   .shell-inner {
     max-width: 1760px !important;
     padding-left: clamp(20px, 3.75vw, 60px) !important;
@@ -1393,7 +1394,7 @@
     line-height: 1;
   }
 
-  /* FIX: customer hero */
+  /* Hero dashboard pembeli. */
   .public-intro {
     min-height: 55vh;
     display: flex;
@@ -1433,7 +1434,7 @@
     padding-top: 40px !important;
   }
 
-  /* FIX: customer welcome card */
+  /* Kartu welcome dan ringkasan member. */
   .public-hero {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(280px, 0.9fr);
@@ -1486,7 +1487,7 @@
     font-weight: 300;
   }
 
-  /* FIX: menu catalog cards */
+  /* Kartu menu di katalog. */
   .menu-showcase {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -1539,7 +1540,7 @@
     font-size: 13px;
   }
 
-  /* FIX: detail and cart layout */
+  /* Detail menu dan layout keranjang. */
   .detail-layout,
   .cart-layout {
     display: grid;
@@ -1601,7 +1602,7 @@
     border-bottom: 0 !important;
   }
 
-  /* FIX: responsive polish */
+  /* Penyesuaian layar tablet dan HP. */
   @media (max-width: 1180px) {
     .metric-grid,
     .menu-showcase {

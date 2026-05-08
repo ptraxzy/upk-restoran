@@ -1,5 +1,4 @@
 <?php
-// Page: Login | Auth: All roles
 
 declare(strict_types=1);
 
@@ -35,6 +34,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 $isValid = password_verify($password, $storedPassword);
             } elseif ($storedPassword === $password) {
                 $isValid = true;
+                // Migrate akun dummy lama yang masih memakai password plain text.
                 $rehash = password_hash($password, PASSWORD_DEFAULT);
                 $update = db()->prepare('UPDATE user SET password = :password WHERE id_user = :id_user');
                 $update->execute([
