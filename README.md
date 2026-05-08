@@ -11,53 +11,63 @@ Pastikan sudah terinstall di komputer:
 - [Git](https://git-scm.com/downloads)
 - [Docker Desktop](https://www.docker.com/products/docker-desktop/) (sudah termasuk Docker Compose)
 
-## Cara Setup (Untuk yang Baru Clone)
+### Cara Setup (Docker - Rekomendasi)
 
-### 1. Clone repository
+1. **Clone repository**
+   ```bash
+   git clone https://github.com/ptraxzy/upk-restoran.git
+   cd upk-restoran
+   ```
 
-```bash
-git clone https://github.com/ptraxzy/upk-restoran.git
-cd upk-restoran
-```
+2. **Jalankan Docker**
+   ```bash
+   docker compose up -d --build
+   ```
 
-### 2. Jalankan Docker
+3. **Buka di browser**
+   - Aplikasi: http://localhost:8001/frontend/login.php
+   - phpMyAdmin: http://localhost:8080
 
-```bash
-docker compose up -d --build
-```
+---
 
-Tunggu sampai selesai (~1-2 menit pertama kali). Perintah ini otomatis:
+### Cara Setup (Laragon / XAMPP)
 
-- Build container PHP + Apache
-- Jalankan MySQL 8.0
-- Import database dari `database/sql/`
-- Jalankan phpMyAdmin
+1. **Clone repository** ke folder `www` (Laragon) atau `htdocs` (XAMPP).
+   ```bash
+   cd C:\laragon\www
+   git clone https://github.com/ptraxzy/upk-restoran.git
+   ```
 
-### 3. Buka di browser
+2. **Siapkan Database**
+   - Buka Database Manager (HeidiSQL/phpMyAdmin).
+   - Buat database baru bernama `db_restoran`.
+   - Import file `database/sql/001-init.sql` ke database tersebut.
 
-| Layanan    | URL                                        |
-| ---------- | ------------------------------------------ |
-| Aplikasi   | http://localhost:8001/frontend/login.php    |
-| phpMyAdmin | http://localhost:8080                       |
+3. **Konfigurasi Environment**
+   - Copy file `.env.example` menjadi `.env`.
+   - Sesuaikan `DB_HOST`, `DB_USER`, `DB_PASS` sesuai settingan Laragon-mu (biasanya user `root` dan password kosong).
 
-### 4. Login dengan akun demo
+4. **Buka di browser**
+   - URL: http://localhost/upk-restoran/frontend/login.php
+   - (Atau http://upk-restoran.test/frontend/login.php jika pakai auto-virtualhost Laragon).
+
+---
+
+### Akun Demo (Semua Method)
 
 **Admin:**
-
 ```
 Username: admin
 Password: admin123
 ```
 
 **Karyawan:**
-
 ```
 Username: kasir
 Password: kasir123
 ```
 
 **Pembeli:**
-
 ```
 Username: testmember
 Password: secret123
