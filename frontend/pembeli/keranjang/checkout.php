@@ -17,7 +17,7 @@ $paymentResult = null;
 if (isset($_GET['action']) && $_GET['action'] === 'pay') {
     $payment = new QrisCepat();
     // Gunakan nominal total Rp 1.772.750 untuk contoh
-    $paymentResult = $payment->deposit(1772750);
+    $paymentResult = $payment->deposit(1340);
 }
 
 $voucherMessage = null;
