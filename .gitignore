@@ -16,3 +16,6 @@ storage/uploads/*
 # OS
 .DS_Store
 Thumbs.db
+
+#skills agent
+.agent/ 
