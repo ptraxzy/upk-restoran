@@ -16,6 +16,8 @@ services:
       DB_PASS: upk_password
     ports:
       - "8001:80"
+    volumes:
+      - .:/var/www/html:z
 
   mysql:
     image: mysql:8.0

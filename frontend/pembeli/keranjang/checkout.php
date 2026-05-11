@@ -17,7 +17,7 @@ $paymentResult = null;
 if (isset($_GET['action']) && $_GET['action'] === 'pay') {
     $payment = new QrisCepat();
     // Gunakan nominal total Rp 1.772.750 untuk contoh
-    $paymentResult = $payment->deposit(1340);
+    $paymentResult = $payment->deposit(11500);
 }
 
 $voucherMessage = null;
@@ -34,12 +34,43 @@ ob_start();
         <h2 class="section-title mt-3">Pemesanan Anda</h2>
         
         <?php if ($paymentResult): ?>
-            <div class="mt-6 p-6 border border-brass/30 bg-stone-900 rounded-sm">
-                <h3 class="text-xl font-display text-brass mb-4">Informasi Pembayaran QRIS</h3>
-                <p class="text-sm text-stone-400 mb-4">Pindai QR Code atau gunakan data berikut untuk membayar.</p>
-                <div class="bg-stone-950 p-4 rounded-sm overflow-x-auto text-sm text-stone-300 font-mono">
-                    <pre><?= htmlspecialchars(print_r($paymentResult, true)) ?></pre>
-                </div>
+            <div class="mt-6 p-6 border border-brass/30 bg-stone-900 rounded-sm flex flex-col md:flex-row gap-8 items-center md:items-start">
+                <?php if (isset($paymentResult['status']) && $paymentResult['status'] === 'success' && isset($paymentResult['data'])): ?>
+                    <?php 
+                        $qrisPayload = urlencode($paymentResult['data']['qris']);
+                        $qrImageUrl = "https://quickchart.io/qr?text={$qrisPayload}&size=300&margin=2";
+                    ?>
+                    <div class="flex-shrink-0 bg-white p-4 rounded-md">
+                        <img src="<?= $qrImageUrl ?>" alt="QRIS Code" class="w-48 h-48 md:w-64 md:h-64 object-contain">
+                    </div>
+                    <div class="flex-1 w-full space-y-4">
+                        <div>
+                            <h3 class="text-xl font-display text-brass mb-1">Pindai untuk Membayar</h3>
+                            <p class="text-sm text-stone-400">Silakan buka aplikasi mobile banking atau e-wallet Anda dan pindai QR code ini.</p>
+                        </div>
+                        
+                        <div class="bg-stone-950 p-4 rounded-sm space-y-3">
+                            <div class="flex justify-between border-b border-stone-800 pb-2">
+                                <span class="text-stone-500 text-sm">Nominal Pembayaran</span>
+                                <span class="text-stone-200 font-medium">Rp <?= number_format((float)$paymentResult['data']['amount'], 0, ',', '.') ?></span>
+                            </div>
+                            <div class="flex justify-between border-b border-stone-800 pb-2">
+                                <span class="text-stone-500 text-sm">ID Transaksi</span>
+                                <span class="text-stone-300 font-mono text-xs break-all text-right ml-4"><?= htmlspecialchars($paymentResult['data']['trx_id']) ?></span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-stone-500 text-sm">Status</span>
+                                <span class="text-amber-400 text-sm font-medium animate-pulse">Menunggu Pembayaran...</span>
+                            </div>
+                        </div>
+                        <p class="text-xs text-stone-500 italic mt-2">Peringatan: Jangan tutup halaman ini sebelum pembayaran Anda terkonfirmasi.</p>
+                    </div>
+                <?php else: ?>
+                    <div class="w-full bg-red-950/30 border border-red-500/30 p-4 rounded-sm text-red-400">
+                        <p class="font-medium mb-1">Gagal Menghasilkan QRIS</p>
+                        <p class="text-sm"><?= htmlspecialchars($paymentResult['message'] ?? 'Terjadi kesalahan sistem, silakan coba lagi.') ?></p>
+                    </div>
+                <?php endif; ?>
             </div>
         <?php endif; ?>
 
@@ -105,7 +136,7 @@ ob_start();
                 <input type="hidden" name="voucher_code" value="COMPDESSERT">
                 <div>
                     <p class="font-medium text-stone-100">Complimentary Dessert</p>
-                    <p class="mt-2 text-sm text-stone-500">Bonus untuk member loyalitas premium</p>
+                    <p class="mt-2 text-sm te   xt-stone-500">Bonus untuk member loyalitas premium</p>
                 </div>
                 <button class="cta-secondary" type="submit">Gunakan</button>
             </form>
