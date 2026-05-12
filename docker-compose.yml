@@ -8,7 +8,7 @@ services:
     depends_on:
       - mysql
     environment:
-      APP_URL: http://localhost:8001/frontend
+      APP_URL: http://localhost:8001
       DB_HOST: mysql
       DB_PORT: 3306
       DB_NAME: db_restoran
@@ -29,7 +29,7 @@ services:
       MYSQL_USER: upk_user
       MYSQL_PASSWORD: upk_password
     ports:
-      - "3308:3306"
+      - "3309:3306"
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/sql:/docker-entrypoint-initdb.d:ro
@@ -46,7 +46,7 @@ services:
       PMA_USER: root
       PMA_PASSWORD: root
     ports:
-      - "${PMA_PORT:-8080}:80"
+      - "${PMA_PORT:-8081}:80"
 
 volumes:
   mysql_data:
