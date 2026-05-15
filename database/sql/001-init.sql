@@ -4,10 +4,25 @@ USE db_restoran;
 -- Tabel user dipakai dulu untuk login semua role.
 CREATE TABLE IF NOT EXISTS `user` (
   `id_user` int NOT NULL AUTO_INCREMENT,
+  `nama_user` varchar(100) DEFAULT NULL,
   `username` varchar(50) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `level` enum('admin','kasir','pelanggan') NOT NULL,
-  PRIMARY KEY (`id_user`)
+  PRIMARY KEY (`id_user`),
+  UNIQUE KEY `user_username_unique` (`username`),
+  UNIQUE KEY `user_email_unique` (`email`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+CREATE TABLE IF NOT EXISTS `password_resets` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `email` varchar(100) NOT NULL,
+  `token` varchar(64) NOT NULL,
+  `expires_at` datetime NOT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `password_resets_token_unique` (`token`),
+  KEY `password_resets_email_index` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 -- Tabel kategori, menu, pesanan, detail_pesanan, dan pembayaran.

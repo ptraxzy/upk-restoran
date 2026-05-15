@@ -9,152 +9,133 @@ $title = 'Laporan Penjualan';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
+require_once __DIR__ . '/../includes/database.php';
+
+// Total Revenue & Transactions
+$stmtStats = db()->query("
+    SELECT
+        COALESCE(SUM(total_bayar), 0) as total_revenue,
+        COUNT(*) as total_count
+    FROM pembayaran
+    WHERE status = 'Lunas'
+");
+$stats = $stmtStats->fetch();
+
+// Best Selling
+$stmtBest = db()->query("
+    SELECT m.nama_menu, m.gambar, SUM(dp.jumlah) as total_porsi, SUM(dp.jumlah * dp.harga_satuan) as total_revenue
+    FROM detail_pesanan dp
+    JOIN menu m ON dp.id_menu = m.id_menu
+    JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
+    JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
+    WHERE py.status = 'Lunas'
+    GROUP BY m.id_menu
+    ORDER BY total_porsi DESC
+    LIMIT 3
+");
+$bestSelling = $stmtBest->fetchAll();
+
+// Recent Transactions
+$stmtRecent = db()->query("
+    SELECT p.*, py.total_bayar, py.status as payment_status
+    FROM pesanan p
+    LEFT JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
+    ORDER BY p.tanggal_pesanan DESC
+    LIMIT 5
+");
+$recentTransactions = $stmtRecent->fetchAll();
+
 ob_start();
 ?>
-<style>
-    /* Override shell for Light Mode specific to this page */
-    .dashboard-main { background-color: #ffffff; color: #111111; }
-    .dashboard-topbar-title { color: #111111 !important; }
-    .dashboard-topbar-desc { color: #666666 !important; }
-    .text-warning { color: #d4af37 !important; }
-    .table { --bs-table-color: #111111; --bs-table-border-color: #eeeeee; }
-    .table thead th { color: #888888; border-bottom: 1px solid #dddddd; }
-    .table tbody td { border-bottom: 1px solid #eeeeee; color: #111111; }
-</style>
-
-<section class="d-flex flex-column gap-5">
-    <div class="d-flex flex-wrap align-items-center justify-content-between mb-4 border-bottom pb-4" style="border-color: #eeeeee !important;">
-        <div class="d-flex gap-4">
-            <a class="text-dark text-uppercase small letter-spacing-1 fw-medium text-decoration-none pb-2 border-bottom border-dark border-2" href="#">HARI INI</a>
-            <a class="text-secondary text-uppercase small letter-spacing-1 text-decoration-none pb-2" href="#">BULAN INI</a>
-            <a class="text-secondary text-uppercase small letter-spacing-1 text-decoration-none pb-2" href="#">KUSTOM</a>
-        </div>
-        <div>
-            <button class="btn btn-outline-dark rounded-0 small text-uppercase letter-spacing-1 fw-medium px-4 py-2" style="font-size: 10px;">Export Laporan</button>
-        </div>
+<section class="row g-5">
+    <div class="col-lg-4 d-flex flex-column gap-4">
+        <article class="card h-100">
+            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Total Pendapatan</p>
+            <p class="h2 font-display mb-0">Rp <?= number_format((float)$stats['total_revenue'], 0, ',', '.'); ?></p>
+            <p class="metric-note">Akumulasi seluruh transaksi lunas.</p>
+        </article>
+        <article class="card h-100">
+            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Total Transaksi</p>
+            <p class="h2 font-display mb-0"><?= number_format((float)$stats['total_count'], 0, ',', '.'); ?></p>
+            <p class="metric-note">Jumlah pesanan yang telah diselesaikan.</p>
+        </article>
     </div>
 
-    <div class="row g-4">
-        <div class="col-lg-4 d-flex flex-column gap-4">
-            <div class="p-4 border" style="border-color: #eeeeee;">
-                <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Total Pendapatan</p>
-                <p class="font-display text-dark mb-0" style="font-size: 32px;">Rp 124.500.000</p>
-                <p class="small text-success mt-2 mb-0">+12.5% vs bulan lalu</p>
+    <div class="col-lg-8">
+        <article class="section-panel h-100">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h3 class="font-display text-white m-0" style="font-size: 24px;">Tren Penjualan</h3>
+                <button class="btn btn-outline-warning py-2 px-3" style="font-size: 9px;" onclick="window.print()">Cetak Laporan</button>
             </div>
-            <div class="p-4 border" style="border-color: #eeeeee;">
-                <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Total Transaksi</p>
-                <p class="font-display text-dark mb-0" style="font-size: 32px;">1,432</p>
-                <p class="small text-success mt-2 mb-0">+8.2% vs bulan lalu</p>
-            </div>
-        </div>
-        <div class="col-lg-8">
-            <div class="p-4 border h-100" style="border-color: #eeeeee;">
-                <div class="d-flex justify-content-between align-items-center mb-4">
-                    <p class="text-secondary small text-uppercase letter-spacing-1 m-0">Grafik Pendapatan</p>
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="text-secondary"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-                </div>
-                <!-- Placeholder Grafik Line Emas -->
-                <div class="w-100 d-flex align-items-end" style="height: 200px; position: relative;">
-                    <svg viewBox="0 0 100 40" class="w-100 h-100" preserveAspectRatio="none">
-                        <path d="M0 35 Q 20 5, 40 25 T 80 15 L 100 5" fill="none" stroke="#d4af37" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-                        <circle cx="20" cy="20" r="1.5" fill="#d4af37"/>
-                        <circle cx="60" cy="25" r="1.5" fill="#d4af37"/>
-                        <circle cx="80" cy="15" r="1.5" fill="#d4af37"/>
-                    </svg>
-                    <div class="d-flex justify-content-between w-100 position-absolute bottom-0 text-secondary" style="font-size: 10px;">
-                        <span>W1</span><span>W2</span><span>W3</span><span>W4</span>
-                    </div>
+            <div class="w-100 d-flex align-items-end" style="height: 240px; position: relative; padding-bottom: 30px;">
+                <svg viewBox="0 0 100 40" class="w-100 h-100" preserveAspectRatio="none">
+                    <path d="M0 35 Q 20 5, 40 25 T 80 15 L 100 10" fill="none" stroke="#C9A84C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <div class="d-flex justify-content-between w-100 position-absolute bottom-0 text-muted" style="font-size: 10px;">
+                    <span>SEN</span><span>SEL</span><span>RAB</span><span>KAM</span><span>JUM</span><span>SAB</span><span>MIN</span>
                 </div>
             </div>
-        </div>
+        </article>
     </div>
+</section>
 
-    <div class="row g-4 mt-2">
-        <div class="col-lg-5">
-            <h4 class="font-display text-dark mb-4" style="font-size: 24px;">Menu Terlaris</h4>
+<section class="row g-5 mt-2">
+    <div class="col-lg-5">
+        <article class="section-panel">
+            <h3 class="font-display text-white mb-4" style="font-size: 22px;">Menu Terlaris</h3>
             <div class="d-flex flex-column gap-3">
-                <div class="d-flex align-items-center justify-content-between pb-3 border-bottom" style="border-color: #eeeeee !important;">
+                <?php foreach ($bestSelling as $item): ?>
+                <div class="d-flex align-items-center justify-content-between pb-3 border-bottom border-soft">
                     <div class="d-flex align-items-center gap-3">
-                        <img src="https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=100&q=80" alt="Truffle Risotto" style="width: 48px; height: 48px; object-fit: cover;">
+                        <?php if ($item['gambar']): ?>
+                            <img src="<?= htmlspecialchars($item['gambar']); ?>" alt="<?= htmlspecialchars($item['nama_menu']); ?>" style="width: 44px; height: 44px; object-fit: cover; border: 1px solid var(--border);">
+                        <?php else: ?>
+                            <div class="bg-black border border-soft d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
+                                <span class="text-muted" style="font-size: 9px;">N/A</span>
+                            </div>
+                        <?php endif; ?>
                         <div>
-                            <p class="fw-medium text-dark m-0" style="font-size: 13px;">Truffle Risotto</p>
-                            <p class="text-secondary small m-0">124 PORSI</p>
+                            <p class="text-white m-0" style="font-size: 13px;"><?= htmlspecialchars($item['nama_menu']); ?></p>
+                            <p class="text-muted small m-0 text-uppercase" style="font-size: 9px;"><?= $item['total_porsi']; ?> PORSI</p>
                         </div>
                     </div>
-                    <span class="fw-medium text-dark small">Rp 48.2M</span>
+                    <span class="text-gold small fw-medium">Rp <?= number_format((float)$item['total_revenue'], 0, ',', '.'); ?></span>
                 </div>
-                <div class="d-flex align-items-center justify-content-between pb-3 border-bottom" style="border-color: #eeeeee !important;">
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=100&q=80" alt="Wagyu A5 Striploin" style="width: 48px; height: 48px; object-fit: cover;">
-                        <div>
-                            <p class="fw-medium text-dark m-0" style="font-size: 13px;">Wagyu A5 Striploin</p>
-                            <p class="text-secondary small m-0">98 PORSI</p>
-                        </div>
-                    </div>
-                    <span class="fw-medium text-dark small">Rp 72.5M</span>
-                </div>
-                <div class="d-flex align-items-center justify-content-between pb-3 border-bottom" style="border-color: #eeeeee !important;">
-                    <div class="d-flex align-items-center gap-3">
-                        <img src="https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=100&q=80" alt="Smoked Old Fashioned" style="width: 48px; height: 48px; object-fit: cover;">
-                        <div>
-                            <p class="fw-medium text-dark m-0" style="font-size: 13px;">Smoked Old Fashioned</p>
-                            <p class="text-secondary small m-0">210 GELAS</p>
-                        </div>
-                    </div>
-                    <span class="fw-medium text-dark small">Rp 21.5M</span>
-                </div>
+                <?php endforeach; ?>
             </div>
-        </div>
+        </article>
+    </div>
 
-        <div class="col-lg-7">
-            <div class="d-flex align-items-center justify-content-between mb-4">
-                <h4 class="font-display text-dark m-0" style="font-size: 24px;">Transaksi Terbaru</h4>
-                <a href="#" class="text-dark small text-uppercase letter-spacing-1 fw-medium text-decoration-none border-bottom border-dark">Lihat Semua</a>
-            </div>
+    <div class="col-lg-7">
+        <article class="section-panel">
+            <h3 class="font-display text-white mb-4" style="font-size: 22px;">Transaksi Terbaru</h3>
             <div class="table-responsive">
                 <table class="table align-middle">
                     <thead>
                         <tr>
-                            <th>ID PESANAN</th>
-                            <th>WAKTU</th>
-                            <th>MEJA</th>
-                            <th>TOTAL</th>
-                            <th>STATUS</th>
+                            <th>Order</th>
+                            <th>Meja</th>
+                            <th>Total</th>
+                            <th>Status</th>
                         </tr>
                     </thead>
                     <tbody>
+                        <?php foreach ($recentTransactions as $trx): ?>
                         <tr>
-                            <td class="fw-medium">#ORD-0821</td>
-                            <td>20:45</td>
-                            <td>Meja 12</td>
-                            <td>Rp 4.250.000</td>
-                            <td><span class="text-success small fw-medium letter-spacing-1">SELESAI</span></td>
+                            <td class="fw-medium text-white">#<?= str_pad((string)$trx['id_pesanan'], 4, '0', STR_PAD_LEFT); ?></td>
+                            <td>Meja <?= htmlspecialchars($trx['no_meja']); ?></td>
+                            <td class="text-white">Rp <?= number_format((float)$trx['total_harga'], 0, ',', '.'); ?></td>
+                            <td>
+                                <span class="text-<?= $trx['status_pesanan'] === 'Selesai' ? 'success' : 'warning'; ?> small text-uppercase fw-bold" style="font-size: 9px;">
+                                    <?= htmlspecialchars($trx['status_pesanan']); ?>
+                                </span>
+                            </td>
                         </tr>
-                        <tr>
-                            <td class="fw-medium">#ORD-0820</td>
-                            <td>20:30</td>
-                            <td>VIP Room B</td>
-                            <td>Rp 12.400.000</td>
-                            <td><span class="text-success small fw-medium letter-spacing-1">SELESAI</span></td>
-                        </tr>
-                        <tr>
-                            <td class="fw-medium">#ORD-0819</td>
-                            <td>20:15</td>
-                            <td>Meja 04</td>
-                            <td>Rp 1.650.000</td>
-                            <td><span class="text-success small fw-medium letter-spacing-1">SELESAI</span></td>
-                        </tr>
-                        <tr>
-                            <td class="fw-medium">#ORD-0818</td>
-                            <td>19:50</td>
-                            <td>Bar 02</td>
-                            <td>Rp 650.000</td>
-                            <td><span class="text-success small fw-medium letter-spacing-1">SELESAI</span></td>
-                        </tr>
+                        <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
-        </div>
+        </article>
     </div>
 </section>
 <?php

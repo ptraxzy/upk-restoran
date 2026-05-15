@@ -9,42 +9,51 @@ $title = 'Edit Karyawan';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
+require_once __DIR__ . '/../includes/database.php';
+
+$id = $_GET['id'] ?? null;
+$karyawan = null;
+
+if ($id) {
+    $stmt = db()->prepare("SELECT * FROM user WHERE id_user = ? AND level IN ('admin', 'kasir')");
+    $stmt->execute([$id]);
+    $karyawan = $stmt->fetch();
+}
+
+if (!$karyawan) {
+    set_flash('error', 'Karyawan tidak ditemukan.');
+    redirect(base_url('admin/karyawan.php'));
+}
+
 ob_start();
 ?>
 <section class="row row-cols-1 row-cols-lg-2 g-4">
     <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
         <p class="text-muted small text-uppercase mb-1">Edit Data</p>
         <h3 class="h3 mb-1 text-warning mt-2">Edit Data Karyawan</h3>
-        <p class="text-muted small mb-4">Perbarui informasi karyawan yang sudah terdaftar.</p>
+        <p class="text-muted small mb-4">Perbarui informasi kredensial dan hak akses karyawan.</p>
 
         <form class="mt-4 d-flex flex-column gap-4" action="<?= htmlspecialchars(base_url('actions/karyawan/update.php'), ENT_QUOTES, 'UTF-8'); ?>" method="post">
+            <input type="hidden" name="id_user" value="<?= htmlspecialchars((string)$karyawan['id_user']); ?>">
+
             <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
                 <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Nama Lengkap</label>
-                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" name="nama" value="Elisa Monroe" placeholder="Nama karyawan">
+                    <label class="form-label small text-muted text-uppercase mb-1">Username</label>
+                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" name="username" value="<?= htmlspecialchars($karyawan['username']); ?>" required>
                 </div>
                 <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Posisi</label>
-                    <select class="form-control bg-dark text-white border-secondary rounded-0" name="posisi">
-                        <option selected>Kasir</option>
-                        <option>Service</option>
-                        <option>Kitchen Support</option>
+                    <label class="form-label small text-muted text-uppercase mb-1">Password Baru (Opsional)</label>
+                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="password" name="password" placeholder="Kosongkan jika tidak diubah">
+                </div>
+            </div>
+            <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
+                <div>
+                    <label class="form-label small text-muted text-uppercase mb-1">Level Akses</label>
+                    <select class="form-control bg-dark text-white border-secondary rounded-0" name="level">
+                        <option value="admin" <?= $karyawan['level'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                        <option value="kasir" <?= $karyawan['level'] === 'kasir' ? 'selected' : ''; ?>>Kasir</option>
                     </select>
                 </div>
-            </div>
-            <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
-                <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Email</label>
-                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="email" name="email" value="elisa@restoran.com" placeholder="email@restoran.com">
-                </div>
-                <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Jadwal</label>
-                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" name="jadwal" value="14:00 - 22:00" placeholder="14:00 - 22:00">
-                </div>
-            </div>
-            <div>
-                <label class="form-label small text-muted text-uppercase mb-1">Catatan Peran</label>
-                <textarea class="form-control bg-dark text-white border-secondary rounded-0" name="catatan" placeholder="Catatan tanggung jawab, shift, atau kebutuhan onboarding.">Kasir utama shift malam, bertanggung jawab atas transaksi pembayaran.</textarea>
             </div>
             <div class="d-flex flex-wrap gap-2">
                 <button class="btn btn-warning rounded-0 text-uppercase fw-medium px-4 py-2" type="submit">Simpan Perubahan</button>

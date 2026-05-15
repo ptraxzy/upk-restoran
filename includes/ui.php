@@ -19,10 +19,10 @@ function render_flash_messages(): void
 function public_nav_items(): array
 {
     return [
-        ['label' => 'Dashboard', 'href' => base_url('pelanggan/dashboard.php')],
-        ['label' => 'Menu', 'href' => base_url('pelanggan/menu.php')],
+        ['label' => 'Beranda', 'href' => base_url('pelanggan/dashboard.php')],
+        ['label' => 'Daftar Menu', 'href' => base_url('pelanggan/menu.php')],
         ['label' => 'Keranjang', 'href' => base_url('pelanggan/keranjang.php')],
-        ['label' => 'Pesanan', 'href' => base_url('pelanggan/pesanan.php')],
+        ['label' => 'Pesanan Saya', 'href' => base_url('pelanggan/pesanan.php')],
         ['label' => 'Profil', 'href' => base_url('pelanggan/profil.php')],
     ];
 }       
@@ -30,16 +30,16 @@ function public_nav_items(): array
 function admin_nav_sections(): array
 {
     return [
-        'Utama' => [
-            ['label' => 'Dashboard', 'href' => base_url('admin/dashboard.php')],
+        'Ikhtisar' => [
+            ['label' => 'Ringkasan', 'href' => base_url('admin/dashboard.php')],
         ],
-        'Manajemen' => [
-            ['label' => 'Manajemen Menu', 'href' => base_url('admin/menu.php')],
-            ['label' => 'Manajemen Diskon', 'href' => base_url('admin/diskon.php')],
-            ['label' => 'Manajemen Karyawan', 'href' => base_url('admin/karyawan.php')],
+        'Pengelolaan' => [
+            ['label' => 'Data Menu', 'href' => base_url('admin/menu.php')],
+            ['label' => 'Promo & Diskon', 'href' => base_url('admin/diskon.php')],
+            ['label' => 'Data Tim', 'href' => base_url('admin/karyawan.php')],
         ],
-        'Kontrol' => [
-            ['label' => 'Laporan', 'href' => base_url('admin/laporan.php')],
+        'Sistem' => [
+            ['label' => 'Catatan Penjualan', 'href' => base_url('admin/laporan.php')],
             ['label' => 'Pengaturan', 'href' => base_url('admin/pengaturan.php')],
         ],
     ];
@@ -48,15 +48,15 @@ function admin_nav_sections(): array
 function staff_nav_sections(): array
 {
     return [
-        'Utama' => [
-            ['label' => 'Dashboard', 'href' => base_url('kasir/dashboard.php')],
+        'Harian' => [
+            ['label' => 'Ringkasan', 'href' => base_url('kasir/dashboard.php')],
         ],
-        'Manajemen' => [
-            ['label' => 'Manajemen Pesanan', 'href' => base_url('kasir/pesanan.php')],
-            ['label' => 'Manajemen Pembayaran', 'href' => base_url('kasir/pembayaran.php')],
+        'Layanan' => [
+            ['label' => 'Daftar Pesanan', 'href' => base_url('kasir/pesanan.php')],
+            ['label' => 'Proses Bayar', 'href' => base_url('kasir/pembayaran.php')],
         ],
-        'Personal' => [
-            ['label' => 'Profil', 'href' => base_url('kasir/profil.php')],
+        'Akun' => [
+            ['label' => 'Profil Saya', 'href' => base_url('kasir/profil.php')],
         ],
     ];
 }
@@ -78,104 +78,106 @@ function render_internal_shell(array $config, string $content): void
     $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES, 'UTF-8');
     $roleName = htmlspecialchars(role_label($_SESSION['user_role'] ?? ''), ENT_QUOTES, 'UTF-8');
 
-    if ($badge === 'Service Floor') {
-        $items = array_merge(...array_values($sections));
-        ?>
-        <main class="employee-shell">
-            <header class="employee-topbar">
-                <div class="employee-brand">
-                    <a class="employee-logo" href="<?= htmlspecialchars(base_url('kasir/dashboard.php'), ENT_QUOTES, 'UTF-8'); ?>">
-                        <?= htmlspecialchars($brand, ENT_QUOTES, 'UTF-8'); ?>
-                    </a>
-                    <nav class="employee-nav" aria-label="Navigasi karyawan">
-                        <?php foreach ($items as $item): ?>
-                            <?php $active = is_active_path($item['href']); ?>
-                            <a class="employee-nav-link <?= $active ? 'active' : ''; ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>">
-                                <?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?>
-                            </a>
-                        <?php endforeach; ?>
-                    </nav>
-                </div>
-
-                <div class="employee-user">
-                    <div class="employee-user-info">
-                        <div class="employee-user-name"><?= $userName; ?></div>
-                        <div class="employee-user-role"><?= $roleName; ?></div>
-                    </div>
-                    <a class="btn btn-outline-warning" style="padding: 8px 16px; font-size: 10px;" href="<?= htmlspecialchars(base_url('logout.php'), ENT_QUOTES, 'UTF-8'); ?>">Logout</a>
-                </div>
-            </header>
-
-            <section class="employee-main">
-                <header class="mb-5">
-                    <p class="text-gold small text-uppercase letter-spacing-2 mb-2"><?= htmlspecialchars($badge, ENT_QUOTES, 'UTF-8'); ?></p>
-                    <h2 class="font-display text-white" style="font-size: 36px;"><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h2>
-                    <p class="text-secondary"><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?></p>
-                </header>
-
-                <?php render_flash_messages(); ?>
-                <?= $content; ?>
-            </section>
-        </main>
-        <?php
-        return;
-    }
     ?>
+    <header class="mobile-navbar">
+        <a href="#" class="public-brand text-decoration-none" style="font-size: 16px;"><?= htmlspecialchars($brand); ?></a>
+        <button class="btn p-0 text-gold border-0 shadow-none" id="sidebarToggle">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+        </button>
+    </header>
+
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
     <main class="dashboard-shell">
-        <aside class="dashboard-sidebar">
+        <aside class="dashboard-sidebar" id="sidebar">
             <div class="sidebar-brand">
-                <p class="sidebar-brand-mark"><?= htmlspecialchars($brand, ENT_QUOTES, 'UTF-8'); ?></p>
-                <p class="sidebar-brand-copy"><?= htmlspecialchars($badge, ENT_QUOTES, 'UTF-8'); ?></p>
+                <p class="sidebar-brand-mark"><?= htmlspecialchars($brand); ?></p>
+                <p class="sidebar-brand-copy"><?= htmlspecialchars($badge); ?></p>
             </div>
 
-            <div class="d-flex flex-column pb-5">
-                <?php foreach ($sections as $sectionTitle => $items): ?>
-                    <div>
-                        <p class="sidebar-section-title"><?= htmlspecialchars($sectionTitle, ENT_QUOTES, 'UTF-8'); ?></p>
-                        <nav class="d-grid gap-1">
+            <div class="flex-grow-1 overflow-auto py-3">
+                <?php if ($badge === 'Service Floor'): ?>
+                    <?php $items = array_merge(...array_values($sections)); ?>
+                    <div class="sidebar-group mb-4">
+                        <p class="sidebar-section-title">Operasional</p>
+                        <nav class="d-flex flex-column">
                             <?php foreach ($items as $item): ?>
                                 <?php $active = is_active_path($item['href']); ?>
-                                <a class="sidebar-link <?= $active ? 'sidebar-link-active' : ''; ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>">
-                                    <?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?>
+                                <a class="sidebar-link <?= $active ? 'sidebar-link-active' : ''; ?>" href="<?= htmlspecialchars($item['href']); ?>">
+                                    <?= htmlspecialchars($item['label']); ?>
                                 </a>
                             <?php endforeach; ?>
                         </nav>
                     </div>
-                <?php endforeach; ?>
+                <?php else: ?>
+                    <?php foreach ($sections as $sectionTitle => $items): ?>
+                        <div class="sidebar-group mb-4">
+                            <p class="sidebar-section-title"><?= htmlspecialchars($sectionTitle); ?></p>
+                            <nav class="d-flex flex-column">
+                                <?php foreach ($items as $item): ?>
+                                    <?php $active = is_active_path($item['href']); ?>
+                                    <a class="sidebar-link <?= $active ? 'sidebar-link-active' : ''; ?>" href="<?= htmlspecialchars($item['href']); ?>">
+                                        <?= htmlspecialchars($item['label']); ?>
+                                    </a>
+                                <?php endforeach; ?>
+                            </nav>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
 
-            <div class="mt-auto p-4 border-top border-secondary">
-                <div class="d-flex align-items-center justify-content-between">
-                    <div>
-                        <p class="text-gold small text-uppercase letter-spacing-1 mb-1" style="font-size: 10px;"><?= $roleName; ?></p>
-                        <p class="text-white m-0" style="font-size: 13px;"><?= $userName; ?></p>
+            <div class="mt-auto p-4 border-top border-soft">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <div style="min-width: 0;">
+                        <p class="text-gold m-0 text-uppercase" style="font-size: 9px; letter-spacing: 1px;"><?= $roleName; ?></p>
+                        <p class="text-white m-0 fw-medium text-truncate" style="font-size: 13px;"><?= $userName; ?></p>
                     </div>
-                    <a class="text-secondary hover-gold" title="Logout" href="<?= htmlspecialchars(base_url('logout.php'), ENT_QUOTES, 'UTF-8'); ?>">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-right" viewBox="0 0 16 16">
-                            <path fill-rule="evenodd" d="M10 12.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-9a.5.5 0 0 1 .5-.5h8a.5.5 0 0 1 .5.5v2a.5.5 0 0 0 1 0v-2A1.5 1.5 0 0 0 9.5 2h-8A1.5 1.5 0 0 0 0 3.5v9A1.5 1.5 0 0 0 1.5 14h8a1.5 1.5 0 0 0 1.5-1.5v-2a.5.5 0 0 0-1 0z"/>
-                            <path fill-rule="evenodd" d="M15.854 8.354a.5.5 0 0 0 0-.708l-3-3a.5.5 0 0 0-.708.708L14.293 7.5H5.5a.5.5 0 0 0 0 1h8.793l-2.147 2.146a.5.5 0 0 0 .708.708z"/>
-                        </svg>
-                    </a>
                 </div>
+                <a class="btn btn-outline-warning w-100 py-2" style="font-size: 10px; letter-spacing: 2px;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">LOGOUT</a>
             </div>
         </aside>
 
         <section class="dashboard-main">
-            <header class="dashboard-topbar">
-                <div>
-                    <p class="text-gold small text-uppercase letter-spacing-2 mb-2"><?= htmlspecialchars($badge, ENT_QUOTES, 'UTF-8'); ?></p>
-                    <h2 class="dashboard-topbar-title font-display text-white"><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h2>
-                    <p class="dashboard-topbar-desc"><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?></p>
+            <header class="dashboard-topbar d-flex justify-content-between align-items-start border-bottom border-soft pb-4 mb-5">
+                <div class="animate-fade-in-up">
+                    <p class="text-gold small text-uppercase letter-spacing-2 mb-2"><?= htmlspecialchars($badge); ?></p>
+                    <h2 class="dashboard-topbar-title font-display text-white m-0" style="font-size: 32px;"><?= htmlspecialchars($title); ?></h2>
+                    <p class="text-secondary small mt-2 mb-0"><?= htmlspecialchars($description); ?></p>
                 </div>
-                <div class="text-end">
-                    <p class="text-secondary small text-uppercase letter-spacing-1 m-0"><?= date('d F Y'); ?></p>
+                <div class="d-none d-md-block text-end animate-fade-in-up" style="animation-delay: 0.2s;">
+                    <p class="text-muted small text-uppercase letter-spacing-1 m-0"><?= date('l, d F Y'); ?></p>
                 </div>
             </header>
 
             <?php render_flash_messages(); ?>
-            <?= $content; ?>
+            <div class="dashboard-content animate-fade-in-up" style="animation-delay: 0.3s;">
+                <?= $content; ?>
+            </div>
         </section>
     </main>
+
+    <script>
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const toggle = document.getElementById('sidebarToggle');
+
+        toggle?.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        });
+
+        overlay?.addEventListener('click', function() {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+        });
+
+        document.addEventListener('click', function(event) {
+            if (window.innerWidth < 992 && sidebar && !sidebar.contains(event.target) && !toggle.contains(event.target) && !overlay.contains(event.target)) {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            }
+        });
+    </script>
     <?php
 }
 
@@ -189,39 +191,48 @@ function render_public_shell(array $config, string $content): void
     $hideHero = $config['hide_hero'] ?? false;
     ?>
     <main class="shell">
-        <header class="container">
-            <div class="public-header d-flex justify-content-between align-items-center">
+        <nav class="navbar navbar-expand-lg navbar-dark border-bottom border-soft py-3 sticky-top bg-black">
+            <div class="container">
                 <a href="<?= base_url('pelanggan/dashboard.php') ?>" class="public-brand text-decoration-none">
-                    <?= htmlspecialchars($brand, ENT_QUOTES, 'UTF-8'); ?>
+                    <?= htmlspecialchars($brand); ?>
                 </a>
-                <nav class="public-nav">
-                    <?php foreach (public_nav_items() as $item): ?>
-                        <?php $active = is_active_path($item['href']); ?>
-                        <a class="public-nav-link <?= $active ? 'active' : ''; ?>" href="<?= htmlspecialchars($item['href'], ENT_QUOTES, 'UTF-8'); ?>" style="position: relative;">
-                            <?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8'); ?>
-                            <?php if ($item['label'] === 'Keranjang' && count($_SESSION['cart'] ?? []) > 0): ?>
-                                <span class="cart-count"><?= count($_SESSION['cart']); ?></span>
-                            <?php endif; ?>
-                        </a>
-                    <?php endforeach; ?>
-                    <a class="btn btn-outline-warning ms-2" style="padding: 8px 16px; font-size: 10px;" href="<?= htmlspecialchars(base_url('logout.php'), ENT_QUOTES, 'UTF-8'); ?>">Logout</a>
-                </nav>
+                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="publicNav">
+                    <ul class="navbar-nav ms-auto gap-lg-4 align-items-lg-center mt-4 mt-lg-0">
+                        <?php foreach (public_nav_items() as $item): ?>
+                            <li class="nav-item">
+                                <?php $active = is_active_path($item['href']); ?>
+                                <a class="public-nav-link text-decoration-none <?= $active ? 'active' : ''; ?> position-relative" href="<?= htmlspecialchars($item['href']); ?>">
+                                    <?= htmlspecialchars($item['label']); ?>
+                                    <?php if ($item['label'] === 'Keranjang' && count($_SESSION['cart'] ?? []) > 0): ?>
+                                        <span class="cart-count"><?= count($_SESSION['cart']); ?></span>
+                                    <?php endif; ?>
+                                </a>
+                            </li>
+                        <?php endforeach; ?>
+                        <li class="nav-item ms-lg-2">
+                            <a class="btn btn-outline-warning w-100 w-lg-auto" style="padding: 8px 16px; font-size: 10px;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">Logout</a>
+                        </li>
+                    </ul>
+                </div>
             </div>
-        </header>
+        </nav>
 
         <?php if (!$hideHero): ?>
-        <section class="container">
+        <section class="container mt-4">
             <div class="public-hero">
-                <div class="public-hero-eyebrow"><?= htmlspecialchars($eyebrow, ENT_QUOTES, 'UTF-8'); ?></div>
-                <h1 class="public-hero-title font-display text-white"><?= htmlspecialchars($title, ENT_QUOTES, 'UTF-8'); ?></h1>
-                <p class="public-hero-desc"><?= htmlspecialchars($description, ENT_QUOTES, 'UTF-8'); ?></p>
+                <div class="public-hero-eyebrow"><?= htmlspecialchars($eyebrow); ?></div>
+                <h1 class="public-hero-title font-display text-white"><?= htmlspecialchars($title); ?></h1>
+                <p class="public-hero-desc mx-auto"><?= htmlspecialchars($description); ?></p>
                 
                 <?php if (!empty($actions)): ?>
-                <div class="d-flex justify-content-center gap-3 mt-5">
+                <div class="d-flex justify-content-center flex-wrap gap-3 mt-5">
                     <?php foreach ($actions as $action): ?>
                         <?php $variant = $action['variant'] ?? 'primary'; ?>
-                        <a class="<?= $variant === 'secondary' ? 'btn btn-outline-warning' : 'btn btn-warning'; ?>" href="<?= htmlspecialchars($action['href'], ENT_QUOTES, 'UTF-8'); ?>">
-                            <?= htmlspecialchars($action['label'], ENT_QUOTES, 'UTF-8'); ?>
+                        <a class="<?= $variant === 'secondary' ? 'btn btn-outline-warning' : 'btn btn-warning'; ?>" href="<?= htmlspecialchars($action['href']); ?>">
+                            <?= htmlspecialchars($action['label']); ?>
                         </a>
                     <?php endforeach; ?>
                 </div>
@@ -230,13 +241,13 @@ function render_public_shell(array $config, string $content): void
         </section>
         <?php endif; ?>
 
-        <section class="container py-5 mb-5 flex-grow-1">
+        <section class="container py-4 flex-grow-1">
             <?php render_flash_messages(); ?>
             <?= $content; ?>
         </section>
         
-        <footer class="mt-auto py-5 border-top border-secondary text-center">
-            <p class="text-secondary small text-uppercase letter-spacing-2 m-0">© <?= date('Y') ?> <?= htmlspecialchars($brand, ENT_QUOTES, 'UTF-8'); ?>. All Rights Reserved.</p>
+        <footer class="mt-auto py-5 border-top border-soft text-center bg-black">
+            <p class="text-secondary small text-uppercase letter-spacing-2 m-0" style="font-size: 9px;">© <?= date('Y') ?> <?= htmlspecialchars($brand); ?>. All Rights Reserved.</p>
         </footer>
     </main>
     <?php

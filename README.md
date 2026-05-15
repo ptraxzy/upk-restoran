@@ -150,16 +150,11 @@ docs: dokumentasi         → docs: update README
 - Login / Logout / Register pembeli
 - Role guard (admin, karyawan, pembeli)
 - Layout & navigasi semua role
-- CRUD menu (form)
-- Form karyawan
-
-### 🔧 Perlu dilanjutkan
-
-- [ ] CRUD menu → sambungkan ke database
-- [ ] Data karyawan → sambungkan ke database
-- [ ] Pesanan → buat flow pemesanan lengkap
-- [ ] Pembayaran → proses pembayaran
-- [ ] Laporan → tampilkan data dari database
+- CRUD menu (Indeks, Tambah, Edit, Hapus) → tersambung database
+- CRUD karyawan (Indeks, Tambah, Edit, Hapus) → tersambung database
+- Pesanan → flow pemesanan lengkap (Keranjang, Checkout, Status)
+- Pembayaran → simulasi pembayaran QRIS & integrasi database
+- Laporan → ringkasan performa real-time (Revenue, Best-selling, Recent Trx)
 
 ---
 

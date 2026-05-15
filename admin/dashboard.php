@@ -5,138 +5,105 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/auth.php';
 require_role('admin');
 
-$title = 'Ringkasan';
+$title = 'Ikhtisar';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
 ob_start();
 ?>
-<section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-5">
+<section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-5 animate-fade-in-up">
     <div class="col">
-        <article class="card p-4 h-100">
-            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Total Pendapatan</p>
-            <p class="h2 text-gold font-display mb-0">Rp 24,85jt</p>
-            <p class="metric-note">Naik 12% dari minggu lalu dengan tingkat pesanan makan malam (dine-in) yang padat.</p>
+        <article class="card h-100 p-4">
+            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Pemasukan Hari Ini</p>
+            <p class="h2 text-white font-display mb-0">Rp 24,85jt</p>
+            <p class="metric-note">Ada kenaikan 12% dibanding pekan lalu karena ramainya kunjungan makan malam.</p>
         </article>
     </div>
     <div class="col">
-        <article class="card p-4 h-100">
-            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Pesanan Aktif</p>
-            <p class="h2 text-gold font-display mb-0">142</p>
-            <p class="metric-note">Pesanan layanan makan malam mendominasi arus masuk kitchen malam ini.</p>
+        <article class="card h-100 p-4">
+            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Meja Terisi</p>
+            <p class="h2 text-white font-display mb-0">142</p>
+            <p class="metric-note">Alur pesanan dari meja pelanggan sedang meningkat saat ini.</p>
         </article>
     </div>
     <div class="col">
-        <article class="card p-4 h-100">
-            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Menu Premium</p>
-            <p class="h2 text-gold font-display mb-0">18</p>
-            <p class="metric-note">Menu signature masih dipimpin Truffle Risotto dan Wagyu Selection.</p>
+        <article class="card h-100 p-4">
+            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Menu Andalan</p>
+            <p class="h2 text-white font-display mb-0">18</p>
+            <p class="metric-note">Hidangan seperti Truffle Risotto masih menjadi pilihan utama para tamu.</p>
         </article>
     </div>
     <div class="col">
-        <article class="card p-4 h-100">
-            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Karyawan Aktif</p>
-            <p class="h2 text-gold font-display mb-0">12</p>
-            <p class="metric-note">Shift malam terisi penuh untuk service, kasir, dan plating counter.</p>
+        <article class="card h-100 p-4">
+            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Tim Bertugas</p>
+            <p class="h2 text-white font-display mb-0">12</p>
+            <p class="metric-note">Seluruh staf di bagian pelayanan dan dapur siap melayani pesanan.</p>
         </article>
     </div>
 </section>
 
-<section class="row g-5">
-    <div class="col-lg-8 d-flex flex-column gap-5">
-        <article class="section-panel">
-            <div class="panel-header d-flex flex-column gap-3 flex-md-row justify-content-md-between align-items-md-end">
+<section class="row g-5 animate-fade-in-up" style="animation-delay: 0.2s;">
+    <div class="col-lg-8">
+        <article class="section-panel h-100">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom border-soft pb-4 mb-4 gap-3">
                 <div>
-                    <h3 class="panel-title">Ringkasan Operasional</h3>
-                    <p class="panel-desc">Pantau aktivitas restoran secara real-time, dari tingkat hunian meja hingga status pesanan malam ini.</p>
+                    <h3 class="font-display text-white m-0" style="font-size: 24px;">Status Restoran</h3>
+                    <p class="text-secondary small mb-0 mt-1">Pantauan aktivitas terkini di seluruh area operasional.</p>
                 </div>
-                <div class="d-flex flex-wrap gap-3">
-                    <a class="btn btn-outline-warning" href="<?= htmlspecialchars(base_url('admin/laporan.php'), ENT_QUOTES, 'UTF-8'); ?>">Lihat Laporan</a>
-                    <a class="btn btn-warning" href="<?= htmlspecialchars(base_url('admin/menu_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>">Tambah Menu</a>
+                <div class="d-flex gap-2">
+                    <a class="btn btn-outline-warning py-2 px-3" style="font-size: 10px;" href="<?= htmlspecialchars(base_url('admin/laporan.php'), ENT_QUOTES, 'UTF-8'); ?>">Buka Laporan</a>
+                    <a class="btn btn-warning py-2 px-3" style="font-size: 10px;" href="<?= htmlspecialchars(base_url('admin/menu_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>">Tambah Menu</a>
                 </div>
             </div>
 
             <div class="table-responsive">
-                <table class="table table-hover align-middle">
+                <table class="table align-middle">
                     <thead>
                         <tr>
-                            <th>Area</th>
-                            <th>Fokus</th>
-                            <th>Status</th>
-                            <th>Catatan</th>
+                            <th>Posisi</th>
+                            <th>Fokus Kerja</th>
+                            <th>Kondisi</th>
+                            <th>Keterangan</th>
                         </tr>
                     </thead>
                     <tbody>
                         <tr>
-                            <td>Main Dining</td>
-                            <td>Service Dinner</td>
-                            <td><span class="badge bg-warning">Padat</span></td>
-                            <td>Tingkat hunian meja penuh, arus pesanan tinggi.</td>
+                            <td>Ruang Utama</td>
+                            <td>Pelayanan Tamu</td>
+                            <td><span class="badge bg-warning text-dark">Ramai</span></td>
+                            <td>Hampir seluruh meja terisi, pesanan berjalan cepat.</td>
                         </tr>
                         <tr>
-                            <td>Kitchen Pass</td>
-                            <td>Plating Premium</td>
-                            <td><span class="badge bg-secondary">Stabil</span></td>
-                            <td>Signature tasting menu berjalan sesuai target waktu.</td>
+                            <td>Dapur</td>
+                            <td>Pengolahan Menu</td>
+                            <td><span class="badge bg-secondary">Lancar</span></td>
+                            <td>Proses masak berjalan tepat waktu sesuai standar dapur.</td>
                         </tr>
                         <tr>
                             <td>Kasir</td>
-                            <td>Pembayaran</td>
+                            <td>Administrasi</td>
                             <td><span class="badge bg-success">Aktif</span></td>
-                            <td>Lonjakan transaksi terjadi pada paket wine pairing.</td>
+                            <td>Proses transaksi berjalan tanpa kendala berarti malam ini.</td>
                         </tr>
                     </tbody>
                 </table>
             </div>
         </article>
-
-        <article class="section-panel">
-            <h3 class="panel-title mb-4">Shortcut Manajemen</h3>
-            <div class="mini-card-grid">
-                <a class="role-card text-decoration-none" href="<?= htmlspecialchars(base_url('admin/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">
-                    <p class="text-secondary small text-uppercase letter-spacing-2 mb-1">Catalog</p>
-                    <h4 class="font-display text-white mb-0" style="font-size: 28px;">Menu</h4>
-                    <p class="menu-card-copy">Kelola daftar menu, kategori, dan pembaruan item signature.</p>
-                </a>
-                <a class="role-card text-decoration-none" href="<?= htmlspecialchars(base_url('admin/pesanan/index.php'), ENT_QUOTES, 'UTF-8'); ?>">
-                    <p class="text-secondary small text-uppercase letter-spacing-2 mb-1">Orders</p>
-                    <h4 class="font-display text-white mb-0" style="font-size: 28px;">Pesanan</h4>
-                    <p class="menu-card-copy">Lihat alur pesanan, status, dan tekanan operasional malam ini.</p>
-                </a>
-            </div>
-        </article>
     </div>
 
-    <aside class="col-lg-4 d-flex flex-column gap-5">
-        <article class="chart-panel">
-            <div class="d-flex align-items-end justify-content-between position-relative z-1">
-                <div>
-                    <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Total Pendapatan</p>
-                    <p class="h3 text-gold font-display mb-0">Rp 24.850.000</p>
+    <aside class="col-lg-4">
+        <article class="section-panel h-100">
+            <h3 class="font-display text-white mb-4" style="font-size: 24px;">Catatan Hari Ini</h3>
+            <div class="d-flex flex-column gap-4">
+                <div class="pb-3 border-bottom border-soft">
+                    <p class="fw-medium text-white mb-1" style="font-size: 14px;">Periksa stok daging pilihan</p>
+                    <p class="small text-secondary mb-0">Pastikan stok Wagyu dan Scallop cukup untuk akhir pekan.</p>
+                    <span class="badge bg-secondary mt-2">Pukul 20:00</span>
                 </div>
-                <span class="badge bg-warning">+12%</span>
-            </div>
-            <!-- Decorative Background for Chart Panel -->
-            <div style="position: absolute; bottom: 0; left: 0; right: 0; height: 120px; background: linear-gradient(to top, rgba(212, 175, 55, 0.1), transparent); z-index: 0;"></div>
-            <div style="position: absolute; bottom: -20px; right: -20px; width: 150px; height: 150px; border-radius: 50%; background: radial-gradient(circle, rgba(212, 175, 55, 0.15) 0%, transparent 70%); z-index: 0;"></div>
-        </article>
-
-        <article class="section-panel">
-            <h3 class="panel-title mb-4">Agenda Admin</h3>
-            <div class="compact-list">
-                <div class="compact-list-item">
-                    <div>
-                        <p class="fw-medium text-white mb-1">Audit stok premium cuts</p>
-                        <p class="small text-secondary mb-0">Pastikan wagyu, foie gras, dan scallop tersedia untuk weekend service.</p>
-                    </div>
-                    <span class="badge bg-secondary ms-3">20:00</span>
-                </div>
-                <div class="compact-list-item">
-                    <div>
-                        <p class="fw-medium text-white mb-1">Review laporan harian</p>
-                        <p class="small text-secondary mb-0">Bandingkan average ticket dengan tasting menu bulan lalu.</p>
-                    </div>
-                    <span class="badge bg-secondary ms-3">21:30</span>
+                <div class="pb-3 border-bottom border-soft">
+                    <p class="fw-medium text-white mb-1" style="font-size: 14px;">Evaluasi pendapatan harian</p>
+                    <p class="small text-secondary mb-0">Bandingkan total rata-rata pesanan dengan bulan sebelumnya.</p>
+                    <span class="badge bg-secondary mt-2">Pukul 21:30</span>
                 </div>
             </div>
         </article>
@@ -145,9 +112,9 @@ ob_start();
 <?php
 $content = ob_get_clean();
 render_internal_shell([
-    'badge' => 'Administration',
-    'title' => 'Ringkasan',
-    'description' => 'Pusat pemantauan menu, pesanan, tim, dan performa keseluruhan restoran Anda.',
+    'badge' => 'Administrasi',
+    'title' => 'Ringkasan Aktivitas',
+    'description' => 'Pusat pantauan menu, pesanan, dan tim operasional restoran.',
     'nav_sections' => admin_nav_sections(),
 ], $content);
 

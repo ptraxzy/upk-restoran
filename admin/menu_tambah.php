@@ -21,49 +21,53 @@ ob_start();
             <form action="<?= htmlspecialchars(base_url('actions/menu/store.php'), ENT_QUOTES, 'UTF-8'); ?>" method="post">
                 <div class="form-grid-layout mb-4">
                     <div>
-                        <label class="form-label">Foto Makanan</label>
-                        <div class="image-upload-placeholder">Unggah Foto</div>
+                        <label class="form-label">URL Foto Makanan</label>
+                        <input class="form-control" type="text" name="gambar" placeholder="https://example.com/image.jpg">
                     </div>
                     <div class="d-flex flex-column gap-4">
                         <div>
                             <label class="form-label">Nama Hidangan</label>
-                            <input class="form-control" type="text" placeholder="E.g. Truffle Infused Wagyu">
+                            <input class="form-control" type="text" name="nama_menu" placeholder="E.g. Truffle Infused Wagyu" required>
                         </div>
                         <div>
                             <label class="form-label d-block mb-3">Kategori</label>
                             <div class="d-flex flex-wrap gap-2">
                                 <label class="badge bg-warning text-dark px-3 py-2 cursor-pointer border border-warning" style="cursor: pointer;">
-                                    <input type="radio" name="kategori" value="appetizer" class="d-none" checked> Appetizer
+                                    <input type="radio" name="id_kategori" value="2" class="d-none" checked> Appetizer
                                 </label>
                                 <label class="badge bg-secondary text-light px-3 py-2 cursor-pointer border border-secondary" style="cursor: pointer;">
-                                    <input type="radio" name="kategori" value="main" class="d-none"> Main Course
+                                    <input type="radio" name="id_kategori" value="1" class="d-none"> Main Course
                                 </label>
                                 <label class="badge bg-secondary text-light px-3 py-2 cursor-pointer border border-secondary" style="cursor: pointer;">
-                                    <input type="radio" name="kategori" value="dessert" class="d-none"> Dessert
+                                    <input type="radio" name="id_kategori" value="3" class="d-none"> Dessert
                                 </label>
                                 <label class="badge bg-secondary text-light px-3 py-2 cursor-pointer border border-secondary" style="cursor: pointer;">
-                                    <input type="radio" name="kategori" value="beverage" class="d-none"> Beverage
+                                    <input type="radio" name="id_kategori" value="4" class="d-none"> Beverage
                                 </label>
                             </div>
                         </div>
                         <div>
                             <label class="form-label">Deskripsi Kuliner</label>
-                            <textarea class="form-control" rows="4" placeholder="Deskripsikan profil rasa, tekstur, dan sisi visual utama hidangan elegan."></textarea>
+                            <textarea class="form-control" name="deskripsi" rows="4" placeholder="Deskripsikan profil rasa, tekstur, dan sisi visual utama hidangan elegan."></textarea>
                         </div>
                     </div>
                 </div>
                 
                 <div class="row g-4 mb-5">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">Harga</label>
-                        <input class="form-control" type="text" placeholder="Rp 195.000">
+                        <input class="form-control" type="number" name="harga" placeholder="195000" required>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <label class="form-label">Status Ketersediaan</label>
-                        <select class="form-select">
-                            <option>Tersedia</option>
-                            <option>Habis</option>
+                        <select class="form-select" name="status">
+                            <option value="Tersedia">Tersedia</option>
+                            <option value="Habis">Habis</option>
                         </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label">Jumlah Porsi</label>
+                        <input class="form-control" type="number" name="porsi" value="10" required>
                     </div>
                 </div>
                 

@@ -14,7 +14,7 @@ function env(string $key, ?string $default = null): ?string
     }
 
     if (!$loaded) {
-        $envPath = dirname(__DIR__, 2) . '/.env';
+        $envPath = dirname(__DIR__) . '/.env';
 
         if (is_file($envPath)) {
             $lines = file($envPath, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);

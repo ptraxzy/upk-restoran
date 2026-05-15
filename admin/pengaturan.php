@@ -11,67 +11,71 @@ require __DIR__ . '/../includes/header.php';
 
 ob_start();
 ?>
-<section class="row row-cols-1 row-cols-lg-2 g-4">
-    <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
-        <p class="text-muted small text-uppercase mb-1">Restaurant Profile</p>
-        <h3 class="h3 mb-1 text-warning mt-2">Pengaturan Restoran</h3>
-        <p class="text-muted small mb-4">Panel pengaturan untuk identitas restoran, kontak, dan preferensi layanan yang lebih rapi.</p>
+<section class="row g-5">
+    <div class="col-lg-8">
+        <article class="section-panel">
+            <div class="border-bottom border-soft pb-3 mb-4">
+                <h3 class="font-display text-white m-0" style="font-size: 24px;">Profil Restoran</h3>
+                <p class="text-secondary small mt-1">Kelola identitas publik dan kontak operasional.</p>
+            </div>
 
-        <form class="mt-4 d-flex flex-column gap-4">
-            <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
-                <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Nama Restoran</label>
-                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" value="L'Art Culinaire">
+            <form class="d-flex flex-column gap-4">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Nama Restoran</label>
+                        <input class="form-control" type="text" value="L'Art Culinaire">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Nomor Telepon</label>
+                        <input class="form-control" type="text" value="+62 812 555 1200">
+                    </div>
                 </div>
                 <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Nomor Telepon</label>
-                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" value="+62 812 555 1200">
+                    <label class="form-label">Alamat Lengkap</label>
+                    <textarea class="form-control" rows="3">Jl. Gastronomi 21, Fine Dining District, Jakarta</textarea>
                 </div>
-            </div>
-            <div>
-                <label class="form-label small text-muted text-uppercase mb-1">Alamat</label>
-                <textarea class="form-control bg-dark text-white border-secondary rounded-0">Jl. Gastronomi 21, Fine Dining District, Jakarta</textarea>
-            </div>
-            <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
-                <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Jam Operasional</label>
-                    <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" value="11:00 - 23:00">
+                <div class="row g-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Jam Operasional</label>
+                        <input class="form-control" type="text" value="11:00 - 23:00">
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Mode Layanan Utama</label>
+                        <select class="form-select">
+                            <option selected>Dine In & Delivery</option>
+                            <option>Dine In Only</option>
+                        </select>
+                    </div>
                 </div>
-                <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Mode Layanan</label>
-                    <select class="form-control bg-dark text-white border-secondary rounded-0">
-                        <option selected>Dine In & Delivery</option>
-                    </select>
+                <div class="pt-3 border-top border-soft mt-2">
+                    <button class="btn btn-warning px-5" type="submit">Simpan Pengaturan</button>
                 </div>
-            </div>
-            <button class="btn btn-warning rounded-0 text-uppercase fw-medium px-4 py-2" type="submit">Simpan Pengaturan</button>
-        </form>
-    </article>
+            </form>
+        </article>
+    </div>
 
-    <aside class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
-        <h3 class="h3 mb-1 text-warning">Nada Brand</h3>
-        <div class="compact-list mt-4">
-            <div class="compact-list-item">
+    <aside class="col-lg-4">
+        <article class="section-panel h-100">
+            <h3 class="font-display text-white mb-4" style="font-size: 24px;">Filosofi Brand</h3>
+            <div class="d-flex flex-column gap-4">
+                <div class="pb-3 border-bottom border-soft">
+                    <p class="fw-medium text-gold mb-2" style="font-size: 14px;">Arah Visual</p>
+                    <p class="text-secondary small m-0">Dark luxury, brass accent, dan fotografi kuliner yang presisi.</p>
+                </div>
                 <div>
-                    <p class="fw-medium text-light">Arah Visual</p>
-                    <p class="mt-2 small text-muted">Dark luxury, brass accent, dan foto makanan yang bersih.</p>
+                    <p class="fw-medium text-gold mb-2" style="font-size: 14px;">Nada Layanan</p>
+                    <p class="text-secondary small m-0">Hangat, tenang, dan premium tanpa kompromi pada kecepatan.</p>
                 </div>
             </div>
-            <div class="compact-list-item">
-                <div>
-                    <p class="fw-medium text-light">Nada Layanan</p>
-                    <p class="mt-2 small text-muted">Hangat, presisi, dan premium tanpa terasa berisik.</p>
-                </div>
-            </div>
-        </div>
+        </article>
     </aside>
 </section>
 <?php
 $content = ob_get_clean();
 render_internal_shell([
     'badge' => 'Administration',
-    'title' => 'Pengaturan',
-    'description' => 'Area kontrol identitas restoran dan preferensi utama layanan.',
+    'title' => 'Pengaturan Sistem',
+    'description' => 'Konfigurasi identitas restoran dan preferensi layanan global.',
     'nav_sections' => admin_nav_sections(),
 ], $content);
 require __DIR__ . '/../includes/footer.php';

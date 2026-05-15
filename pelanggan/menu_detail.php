@@ -9,37 +9,71 @@ $title = 'Detail Menu';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
+require_once __DIR__ . '/../includes/database.php';
+
+$id = $_GET['id'] ?? null;
+$menu = null;
+
+if ($id) {
+    $stmt = db()->prepare("
+        SELECT m.*, k.nama_kategori
+        FROM menu m
+        JOIN kategori k ON m.id_kategori = k.id_kategori
+        WHERE m.id_menu = ?
+    ");
+    $stmt->execute([$id]);
+    $menu = $stmt->fetch();
+}
+
+if (!$menu) {
+    set_flash('error', 'Menu tidak ditemukan.');
+    redirect(base_url('pelanggan/menu.php'));
+}
+
 ob_start();
 ?>
-<section class="detail-layout">
-    <div class="detail-media" style="background-image:url('https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1600&q=80');"></div>
-    <article class="detail-body">
-        <p class="text-gold small text-uppercase letter-spacing-2 mb-2">Menu Utama • Pasta Plate</p>
-        <h2 class="font-display text-white mb-2" style="font-size: 48px;">Truffle Mushroom Risotto</h2>
-        <p class="price-inline" style="font-size: 18px;">Rp 195.000</p>
-        <p class="detail-copy">Sebuah interpretasi kuliner klasik dari kitchen artisan. Beras carnaroli premium yang dimasak perlahan hingga mencapai tekstur al dente yang menyatu, melapisi parmesan hangat dan mushroom glaze pekat. Diakhiri dengan irisan truffle hitam, veal jus lembut, dan sentuhan akhir buttery yang tenang namun tegas.</p>
-
-        <div class="mt-4 d-flex flex-wrap gap-2">
-            <span class="badge bg-secondary">Mushroom & Umami</span>
-            <span class="badge bg-secondary">Rich Butter</span>
-            <span class="badge bg-secondary">Autumn Selection</span>
-        </div>
-
-        <form method="post" action="<?= htmlspecialchars(base_url('actions/cart_add.php'), ENT_QUOTES, 'UTF-8'); ?>">
-            <div class="detail-actions">
-                <div class="qty-stepper">
-                    <button type="button" onclick="const i = document.getElementById('qty'); i.value = Math.max(1, parseInt(i.value) - 1); document.getElementById('qty-display').innerText = i.value;">-</button>
-                    <span id="qty-display">1</span>
-                    <input type="hidden" name="id_menu" value="3">
-                    <input type="hidden" name="qty" id="qty" value="1">
-                    <button type="button" onclick="const i = document.getElementById('qty'); i.value = parseInt(i.value) + 1; document.getElementById('qty-display').innerText = i.value;">+</button>
-                </div>
-                <div class="d-flex flex-wrap gap-3">
-                    <button type="submit" class="btn btn-warning">Tambah ke Keranjang</button>
-                    <a class="btn btn-outline-warning" href="<?= htmlspecialchars(base_url('pelanggan/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">Kembali</a>
-                </div>
+<section class="row g-5 align-items-center mt-2">
+    <div class="col-lg-6">
+        <?php if ($menu['gambar']): ?>
+            <div class="detail-media shadow-lg" style="background-image:url('<?= htmlspecialchars($menu['gambar']); ?>'); height: 500px; border: 1px solid var(--border);"></div>
+        <?php else: ?>
+            <div class="detail-media d-flex align-items-center justify-content-center bg-black border border-secondary" style="height: 500px;">
+                <span class="text-muted text-uppercase letter-spacing-2">No Image Available</span>
             </div>
-        </form>
+        <?php endif; ?>
+    </div>
+
+    <article class="col-lg-6">
+        <div class="ps-lg-4">
+            <p class="text-gold small text-uppercase letter-spacing-2 mb-2"><?= htmlspecialchars($menu['nama_kategori']); ?> • Signature Selection</p>
+            <h2 class="font-display text-white mb-3" style="font-size: 56px; line-height: 1.1;"><?= htmlspecialchars($menu['nama_menu']); ?></h2>
+            <p class="text-gold mb-4" style="font-size: 24px; font-family: var(--font-body); font-weight: 500;">Rp <?= number_format((float)$menu['harga'], 0, ',', '.'); ?></p>
+
+            <p class="text-secondary mb-5" style="font-size: 15px; line-height: 1.8; max-width: 500px;">
+                <?= htmlspecialchars($menu['deskripsi'] ?? 'Tidak ada deskripsi untuk hidangan ini.'); ?>
+            </p>
+
+            <div class="mb-5 d-flex gap-2">
+                <span class="badge bg-secondary">Fresh Ingredients</span>
+                <span class="badge bg-secondary">Chef's Choice</span>
+            </div>
+
+            <form method="post" action="<?= htmlspecialchars(base_url('actions/cart_add.php'), ENT_QUOTES, 'UTF-8'); ?>">
+                <div class="d-flex flex-wrap align-items-center gap-4 border-top border-soft pt-5">
+                    <div class="qty-stepper">
+                        <button type="button" onclick="const i = document.getElementById('qty'); i.value = Math.max(1, parseInt(i.value) - 1); document.getElementById('qty-display').innerText = i.value;">-</button>
+                        <span id="qty-display" style="width: 40px; text-align: center; font-size: 14px;">1</span>
+                        <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string)$menu['id_menu']); ?>">
+                        <input type="hidden" name="qty" id="qty" value="1">
+                        <button type="button" onclick="const i = document.getElementById('qty'); i.value = parseInt(i.value) + 1; document.getElementById('qty-display').innerText = i.value;">+</button>
+                    </div>
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-warning px-5">Add to Order</button>
+                        <a class="btn btn-outline-warning" href="<?= htmlspecialchars(base_url('pelanggan/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">Back</a>
+                    </div>
+                </div>
+            </form>
+        </div>
     </article>
 </section>
 <?php

@@ -21,77 +21,38 @@ ob_start();
         
         <div class="row g-5 mb-5 pb-5 border-bottom border-soft">
             <div class="col-md-4">
-                <h4 class="text-white mb-2" style="font-size: 16px;">Data Diri</h4>
-                <p class="text-muted small">Informasi identitas dasar karyawan untuk keperluan administrasi dan komunikasi.</p>
+                <h4 class="text-white mb-2" style="font-size: 16px;">Kredensial Login</h4>
+                <p class="text-muted small">Informasi yang digunakan karyawan untuk masuk ke sistem.</p>
             </div>
             <div class="col-md-8">
                 <div class="mb-4">
-                    <label class="form-label">Nama Lengkap</label>
-                    <input class="form-control" type="text" placeholder="Otic Alexander Perdana" required>
+                    <label class="form-label">Username</label>
+                    <input class="form-control" type="text" name="username" placeholder="contoh: kasir.elisa" required>
                 </div>
-                <div class="row g-4">
-                    <div class="col-sm-6">
-                        <label class="form-label">Alamat Email</label>
-                        <input class="form-control" type="email" placeholder="email@domain.com" required>
-                    </div>
-                    <div class="col-sm-6">
-                        <label class="form-label">Nomor Telepon</label>
-                        <input class="form-control" type="text" placeholder="+62 812 3456 7890" required>
-                    </div>
+                <div class="mb-4">
+                    <label class="form-label">Password</label>
+                    <input class="form-control" type="password" name="password" placeholder="Minimal 6 karakter" required>
                 </div>
             </div>
         </div>
 
         <div class="row g-5 mb-5 pb-5 border-bottom border-soft">
             <div class="col-md-4">
-                <h4 class="text-white mb-2" style="font-size: 16px;">Peran & Penugasan</h4>
-                <p class="text-muted small">Tentukan peran operasional dan tanggung jawab di meja kerja.</p>
+                <h4 class="text-white mb-2" style="font-size: 16px;">Hak Akses & Peran</h4>
+                <p class="text-muted small">Tentukan tingkat akses sistem untuk karyawan ini.</p>
             </div>
             <div class="col-md-8">
-                <label class="form-label mb-3">Posisi Utama</label>
+                <label class="form-label mb-3">Tingkat Akses (Level)</label>
                 <div class="d-flex flex-wrap gap-3 mb-4">
                     <label class="role-select flex-grow-1 text-center border border-secondary p-3 cursor-pointer transition-all" style="cursor: pointer;">
-                        <input type="radio" name="role" value="chef" class="d-none">
+                        <input type="radio" name="level" value="admin" class="d-none">
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 text-secondary mx-auto"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                        <span class="d-block small text-uppercase letter-spacing-1 text-secondary fw-medium">Chef</span>
+                        <span class="d-block small text-uppercase letter-spacing-1 text-secondary fw-medium">Admin</span>
                     </label>
                     <label class="role-select flex-grow-1 text-center border border-gold bg-gold-dim p-3 cursor-pointer transition-all" style="cursor: pointer; background: rgba(212,175,55,0.1);">
-                        <input type="radio" name="role" value="waiter" class="d-none" checked>
+                        <input type="radio" name="level" value="kasir" class="d-none" checked>
                         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" class="mb-2 mx-auto"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>
-                        <span class="d-block small text-uppercase letter-spacing-1 text-gold fw-medium">Waiter</span>
-                    </label>
-                    <label class="role-select flex-grow-1 text-center border border-secondary p-3 cursor-pointer transition-all" style="cursor: pointer;">
-                        <input type="radio" name="role" value="manager" class="d-none">
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-2 text-secondary mx-auto"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-                        <span class="d-block small text-uppercase letter-spacing-1 text-secondary fw-medium">Manager</span>
-                    </label>
-                </div>
-                <div>
-                    <label class="form-label">Tanggal Mulai Efektif</label>
-                    <input class="form-control" type="date">
-                </div>
-            </div>
-        </div>
-
-        <div class="row g-5 mb-5">
-            <div class="col-md-4">
-                <h4 class="text-white mb-2" style="font-size: 16px;">Jadwal Kerja</h4>
-                <p class="text-muted small">Preferensi murni shift untuk penjadwalan mingguan.</p>
-            </div>
-            <div class="col-md-8">
-                <label class="form-label mb-3">Preferensi Shift</label>
-                <div class="d-flex flex-column gap-3">
-                    <label class="d-flex align-items-center gap-3 cursor-pointer" style="cursor: pointer;">
-                        <input type="checkbox" class="form-check-input bg-dark border-secondary rounded-0 shadow-none m-0" style="width: 18px; height: 18px;">
-                        <span class="text-secondary small">Shift Pagi (08:00 - 16:00)</span>
-                    </label>
-                    <label class="d-flex align-items-center gap-3 cursor-pointer" style="cursor: pointer;">
-                        <input type="checkbox" class="form-check-input bg-dark border-secondary rounded-0 shadow-none m-0" style="width: 18px; height: 18px;">
-                        <span class="text-secondary small">Shift Malam (16:00 - 24:00)</span>
-                    </label>
-                    <label class="d-flex align-items-center gap-3 cursor-pointer" style="cursor: pointer;">
-                        <input type="checkbox" class="form-check-input bg-dark border-secondary rounded-0 shadow-none m-0" style="width: 18px; height: 18px;" checked>
-                        <span class="text-white small">Fleksibel (Sesuai Butuh)</span>
+                        <span class="d-block small text-uppercase letter-spacing-1 text-gold fw-medium">Kasir</span>
                     </label>
                 </div>
             </div>

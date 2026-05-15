@@ -61,7 +61,7 @@ ob_start();
         <a class="text-secondary hover-gold text-uppercase small letter-spacing-1 text-decoration-none pb-3 whitespace-nowrap flex-shrink-0" href="#">SIAP SAJI (<?= $countSiap ?>)</a>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4">
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
         <?php if ($countSemua === 0): ?>
             <div class="col-12 w-100 py-5 text-center">
                 <p class="text-muted">Tidak ada pesanan aktif saat ini.</p>
@@ -79,27 +79,27 @@ ob_start();
                 $statusText = 'Belum Bayar';
             } elseif ($p['status_pesanan'] === 'Siap Saji') {
                 $statusClass = 'text-success';
-                $borderOp = 'opacity: 0.8;';
+                $borderOp = 'opacity: 0.9; border-color: var(--gold);';
             }
             ?>
             <div class="col">
-                <article class="p-4 border border-secondary h-100 d-flex flex-column bg-card" style="<?= $borderOp ?>">
-                    <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-soft">
-                        <div class="d-flex align-items-center gap-3">
-                            <span class="font-display text-white" style="font-size: 32px; line-height: 1;"><?= htmlspecialchars($p['no_meja'], ENT_QUOTES, 'UTF-8') ?></span>
+                <article class="p-3 border border-secondary h-100 d-flex flex-column bg-card" style="<?= $borderOp ?>">
+                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-soft">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="font-display text-white" style="font-size: 24px; line-height: 1;"><?= htmlspecialchars($p['no_meja'], ENT_QUOTES, 'UTF-8') ?></span>
                             <div>
-                                <p class="text-secondary small text-uppercase letter-spacing-1 m-0">MEJA</p>
-                                <p class="<?= $statusClass ?> small fw-medium m-0"><?= $statusText ?> • <?= $p['menit_menunggu'] ?>m</p>
+                                <p class="text-secondary small text-uppercase letter-spacing-1 m-0" style="font-size: 9px;">MEJA</p>
+                                <p class="<?= $statusClass ?> m-0" style="font-size: 10px; font-weight: 500;"><?= $statusText ?> • <?= $p['menit_menunggu'] ?>m</p>
                             </div>
                         </div>
                     </div>
                     
-                    <div class="d-flex flex-column gap-2 mb-4 flex-grow-1">
+                    <div class="d-flex flex-column gap-1 mb-3 flex-grow-1">
                         <?php if (isset($pesananDetails[$p['id_pesanan']])): ?>
                             <?php foreach ($pesananDetails[$p['id_pesanan']] as $detail): ?>
                             <div class="d-flex gap-2">
-                                <span class="text-gold small fw-medium"><?= $detail['jumlah'] ?>x</span>
-                                <span class="text-white small"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="text-gold fw-medium" style="font-size: 11px;"><?= $detail['jumlah'] ?>x</span>
+                                <span class="text-white" style="font-size: 11px;"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -109,13 +109,13 @@ ob_start();
 
                     <div class="d-flex gap-2 mt-auto">
                         <?php if ($p['status_pesanan'] === 'Menunggu Pembayaran'): ?>
-                            <button class="btn btn-outline-danger w-100 py-2" disabled>TUNGGU PEMBAYARAN</button>
+                            <button class="btn btn-outline-danger w-100 py-2" style="font-size: 10px; padding: 8px !important;" disabled>MENUNGGU BAYAR</button>
                         <?php elseif ($p['status_pesanan'] === 'Diproses'): ?>
-                            <button class="btn btn-warning w-100 py-2" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Sedang Disiapkan') ?>'">MULAI MENYIAPKAN</button>
+                            <button class="btn btn-warning w-100 py-2" style="font-size: 10px; padding: 8px !important;" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Sedang Disiapkan') ?>'">MENYIAPKAN</button>
                         <?php elseif ($p['status_pesanan'] === 'Sedang Disiapkan'): ?>
-                            <button class="btn btn-warning w-100 py-2" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Siap Saji') ?>'">SIAP DIHIDANGKAN</button>
+                            <button class="btn btn-warning w-100 py-2" style="font-size: 10px; padding: 8px !important;" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Siap Saji') ?>'">SIAP SAJI</button>
                         <?php elseif ($p['status_pesanan'] === 'Siap Saji'): ?>
-                            <button class="btn btn-outline-secondary w-100 py-2 text-white border-secondary" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Selesai') ?>'">TANDAI SELESAI</button>
+                            <button class="btn btn-outline-secondary w-100 py-2 text-white border-secondary" style="font-size: 10px; padding: 8px !important;" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Selesai') ?>'">SELESAI</button>
                         <?php endif; ?>
                     </div>
                 </article>

@@ -26,7 +26,9 @@ class QrisCepat
      */
     public function deposit($amount): ?array
     {
-        $endpoint = sprintf('deposit/%s/%s', $amount, $this->apiKey);
+        // Pastikan amount adalah integer tanpa desimal/koma
+        $intAmount = (int) round((float)$amount);
+        $endpoint = sprintf('deposit/%d/%s', $intAmount, $this->apiKey);
         return $this->request($endpoint);
     }
 
@@ -41,7 +43,8 @@ class QrisCepat
      */
     public function withdraw($amount, string $bank, string $rekening): ?array
     {
-        $endpoint = sprintf('withdraw/%s/%s/%s/%s', $amount, $bank, $rekening, $this->apiKey);
+        $intAmount = (int) round((float)$amount);
+        $endpoint = sprintf('withdraw/%d/%s/%s/%s', $intAmount, $bank, $rekening, $this->apiKey);
         return $this->request($endpoint);
     }
 
@@ -66,13 +69,19 @@ class QrisCepat
      */
     private function request(string $endpoint): ?array
     {
+        if (empty($this->apiKey)) {
+            error_log('QrisCepat API Error: API Key is not set in configuration.');
+            return ['status' => 'error', 'message' => 'Konfigurasi API Key belum diatur.'];
+        }
+
         $url = $this->baseUrl . ltrim($endpoint, '/');
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, $url);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        // Sesuaikan dengan environment, jika local mungkin butuh CURLOPT_SSL_VERIFYPEER false jika tidak pakai sertifikat valid
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_USERAGENT, 'UPK-Restoran-Client/1.0');
         
         $response = curl_exec($ch);
         $error = curl_error($ch);

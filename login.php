@@ -5,13 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/./includes/bootstrap.php';
 require_once __DIR__ . '/./includes/database.php';
 
-// Capture table number from QR code scan
-if (isset($_GET['meja']) && trim($_GET['meja']) !== '') {
-    $_SESSION['scanned_meja'] = trim($_GET['meja']);
-}
-
 $currentRole = $_SESSION['user_role'] ?? $_SESSION['level'] ?? null;
-
 if (is_string($currentRole) && $currentRole !== '') {
     redirect(role_dashboard_path($currentRole));
 }
@@ -24,28 +18,22 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $password = $_POST['password'] ?? '';
 
     if ($username === '' || $password === '') {
-        $error = 'Username dan password wajib diisi.';
+        $error = 'Nama pengguna dan kata sandi jangan dikosongkan ya.';
     } else {
         $statement = db()->prepare('SELECT id_user, username, password, level FROM user WHERE username = :username LIMIT 1');
         $statement->execute(['username' => $username]);
         $user = $statement->fetch();
 
         $isValid = false;
-
         if ($user) {
             $storedPassword = (string) $user['password'];
-
-            if (is_hashed_password($storedPassword)) {
-                $isValid = password_verify($password, $storedPassword);
+            if (password_verify($password, $storedPassword)) {
+                $isValid = true;
             } elseif ($storedPassword === $password) {
                 $isValid = true;
-                // Migrate akun dummy lama yang masih memakai password plain text.
                 $rehash = password_hash($password, PASSWORD_DEFAULT);
                 $update = db()->prepare('UPDATE user SET password = :password WHERE id_user = :id_user');
-                $update->execute([
-                    'password' => $rehash,
-                    'id_user' => $user['id_user'],
-                ]);
+                $update->execute(['password' => $rehash, 'id_user' => $user['id_user']]);
             }
         }
 
@@ -53,17 +41,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $_SESSION['user_id'] = (int) $user['id_user'];
             $_SESSION['user_name'] = (string) $user['username'];
             $_SESSION['user_role'] = (string) $user['level'];
-            $_SESSION['username'] = (string) $user['username'];
-            $_SESSION['level'] = (string) $user['level'];
-
-            if ($user['level'] === 'pelanggan') {
-                $_SESSION['meja_aktif'] = $_SESSION['scanned_meja'] ?? '01';
-            }
-
             redirect(role_dashboard_path((string) $user['level']));
         }
-
-        $error = 'Username atau password salah.';
+        $error = 'Maaf, nama pengguna atau sandi Anda salah.';
     }
 }
 ?>
@@ -72,54 +52,287 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOCTRA | Akses Portal</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="<?= base_url('assets/css/style.css') ?>?v=<?= time(); ?>">
+    <title>NOCTRA | Selamat Datang</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
-        .login-bg {
-            background-image: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.8)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1920&q=80');
+        :root {
+            --bg: #0a0a0a;
+            --card-bg: rgba(10, 10, 10, 0.92);
+            --gold: #C9A84C;
+            --font-display: 'Cormorant Garamond', serif;
+            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --ease: cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            background-color: var(--bg);
+            color: #ffffff;
+            font-family: var(--font-body);
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .bg-layer {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(0, 0, 0, 0.75), rgba(0, 0, 0, 0.85)), url('https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=1920&q=80');
             background-size: cover;
             background-position: center;
+            animation: bgZoom 30s infinite alternate ease-in-out;
+            z-index: -1;
         }
-        .login-card {
-            background: rgba(10, 10, 10, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(212, 175, 55, 0.2);
-            padding: 48px;
+
+        @keyframes bgZoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+
+        .login-box {
+            position: relative;
+            background: var(--card-bg);
+            padding: 40px; /* Diperkecil */
             width: 100%;
-            max-width: 400px;
+            max-width: 350px; /* Diperkecil */
+            text-align: center;
+            animation: fadeUp 0.8s 0.2s both;
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.03);
         }
+
+        .login-box::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: 1px solid var(--gold);
+            animation: traceIn 1.4s 0.5s var(--ease) both;
+            clip-path: inset(0 100% 0 0);
+            pointer-events: none;
+        }
+
+        @keyframes traceIn { to { clip-path: inset(0 0% 0 0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fieldFade { to { opacity: 1; } }
+
+        .brand-logo {
+            font-family: var(--font-display);
+            font-size: 26px; /* Diperkecil dari 38px */
+            letter-spacing: 8px;
+            color: var(--gold);
+            margin-bottom: 2px;
+            text-transform: uppercase;
+        }
+
+        .brand-subtitle {
+            font-size: 9px; /* Diperkecil dari 11px */
+            text-transform: uppercase;
+            letter-spacing: 2.5px;
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .form-group {
+            margin-bottom: 16px; /* Diperkecil */
+            text-align: left;
+            opacity: 0;
+            animation: fieldFade 0.6s forwards;
+        }
+        .form-group:nth-child(1) { animation-delay: 0.8s; }
+        .form-group:nth-child(2) { animation-delay: 1.0s; }
+
+        .field-label {
+            display: block;
+            font-size: 8.5px; /* Diperkecil dari 10px */
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: var(--gold);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .input-control {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 10px 12px; /* Diperkecil */
+            color: white;
+            font-family: var(--font-body);
+            font-size: 13px; /* Diperkecil dari 14px */
+            transition: all 0.3s var(--ease);
+        }
+
+        .input-control:focus {
+            outline: none;
+            border-color: var(--gold);
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        .forgot-link {
+            display: block;
+            text-align: right;
+            font-size: 10px;
+            color: var(--gold);
+            margin-top: 8px;
+            text-decoration: none;
+        }
+
+        .btn-wrap {
+            margin-top: 25px; /* Diperkecil */
+            opacity: 0;
+            animation: fieldFade 0.6s 1.2s forwards;
+        }
+
+        .btn-primary {
+            width: 100%;
+            background: var(--gold);
+            color: #000;
+            border: none;
+            padding: 12px; /* Diperkecil */
+            font-size: 11px; /* Diperkecil dari 13px */
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            cursor: pointer;
+            transition: all 0.3s var(--ease);
+        }
+
+        .btn-primary:hover {
+            background: #f3e5ab;
+            box-shadow: 0 5px 20px rgba(201, 168, 76, 0.2);
+        }
+
+        .footer-links {
+            margin-top: 25px;
+            font-size: 11px; /* Diperkecil */
+            color: #777;
+        }
+
+        .footer-links a { color: var(--gold); text-decoration: none; font-weight: 600; }
+
+        .alert {
+            font-size: 10px; /* Diperkecil */
+            padding: 8px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .alert-danger { background: rgba(220, 53, 69, 0.1); color: #ff6b6b; }
+        .alert-success { background: rgba(40, 167, 69, 0.1); color: #51cf66; }
+
+        .hidden { display: none; opacity: 0; }
     </style>
 </head>
-<body class="login-bg min-vh-100 d-flex align-items-center justify-content-center">
-    <main class="w-100 d-flex justify-content-center px-3">
-        <section class="login-card">
-            <header class="text-center mb-5">
-                <h1 class="font-display text-gold mb-2" style="font-size: 36px; letter-spacing: 6px;">NOCTRA</h1>
-                <p class="text-secondary small text-uppercase letter-spacing-2 m-0">Akses Portal</p>
-            </header>
+<body>
+    <div class="bg-layer"></div>
 
-            <?php if ($error !== null): ?>
-                <div class="alert alert-danger rounded-0 small p-3 mb-4 border-0 bg-danger bg-opacity-10 text-danger text-center text-uppercase letter-spacing-1"><?= htmlspecialchars($error, ENT_QUOTES, 'UTF-8'); ?></div>
-            <?php elseif ($success !== null): ?>
-                <div class="alert alert-success rounded-0 small p-3 mb-4 border-0 bg-success bg-opacity-10 text-success text-center text-uppercase letter-spacing-1"><?= htmlspecialchars($success, ENT_QUOTES, 'UTF-8'); ?></div>
+    <main class="login-box">
+        <header>
+            <h1 class="brand-logo">NOCTRA</h1>
+            <p class="brand-subtitle">Silakan Masuk</p>
+        </header>
+
+        <div id="alert-container">
+            <?php if ($error): ?>
+                <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
             <?php endif; ?>
+            <?php if ($success): ?>
+                <div class="alert alert-success"><?= htmlspecialchars($success) ?></div>
+            <?php endif; ?>
+        </div>
 
-            <form method="post" action="<?= htmlspecialchars(base_url('login.php'), ENT_QUOTES, 'UTF-8'); ?>">
-                <div class="mb-4">
-                    <input id="username" name="username" type="text" class="form-control" autocomplete="username" placeholder="Username" required>
+        <!-- Bagian Login -->
+        <div id="login-section">
+            <form method="post" action="login.php">
+                <div class="form-group">
+                    <label class="field-label">Nama Pengguna</label>
+                    <input type="text" name="username" class="input-control" placeholder="Nama akun Anda" required>
                 </div>
 
-                <div class="mb-5">
-                    <input id="password" name="password" type="password" class="form-control" autocomplete="current-password" placeholder="Kata Sandi" required>
+                <div class="form-group">
+                    <label class="field-label">Kata Sandi</label>
+                    <input type="password" name="password" class="input-control" placeholder="••••••••" required>
+                    <a href="#" class="forgot-link" onclick="toggleSection('forgot')">Lupa kata sandi?</a>
                 </div>
 
-                <button class="btn btn-warning w-100 mb-4" type="submit">MASUK</button>
+                <div class="btn-wrap">
+                    <button type="submit" class="btn-primary">Masuk Sekarang</button>
+                </div>
             </form>
 
-            <p class="text-center small text-muted m-0">Bukan staf kami? <a class="text-gold text-decoration-none border-bottom border-gold pb-1" href="<?= htmlspecialchars(base_url('register.php'), ENT_QUOTES, 'UTF-8'); ?>">Daftar Member</a></p>
-        </section>
+            <footer class="footer-links">
+                Baru di sini? <a href="register.php">Buat Akun</a>
+            </footer>
+        </div>
+
+        <!-- Bagian Lupa Password -->
+        <div id="forgot-section" class="hidden">
+            <p class="text-secondary small mb-4" style="color:#aaa; font-size:11px; line-height:1.4;">Masukkan email Anda, nanti kami kirimkan cara buat sandi baru.</p>
+            <form id="forgot-password-form">
+                <div class="form-group" style="opacity: 1;">
+                    <label class="field-label">Alamat Email</label>
+                    <input type="email" id="forgot-email" class="input-control" placeholder="email@anda.com" required>
+                </div>
+
+                <div class="btn-wrap" style="opacity: 1;">
+                    <button type="submit" id="forgot-btn" class="btn-primary">Kirimkan Link</button>
+                </div>
+            </form>
+
+            <footer class="footer-links">
+                <a href="#" onclick="toggleSection('login')">Kembali masuk</a>
+            </footer>
+        </div>
     </main>
+
+    <script>
+        function toggleSection(section) {
+            const loginSection = document.getElementById('login-section');
+            const forgotSection = document.getElementById('forgot-section');
+            const alertContainer = document.getElementById('alert-container');
+
+            if (section === 'forgot') {
+                loginSection.classList.add('hidden');
+                forgotSection.classList.remove('hidden');
+                alertContainer.innerHTML = '';
+            } else {
+                loginSection.classList.remove('hidden');
+                forgotSection.classList.add('hidden');
+            }
+        }
+
+        document.getElementById('forgot-password-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('forgot-email').value;
+            const btn = document.getElementById('forgot-btn');
+            const alertContainer = document.getElementById('alert-container');
+
+            btn.innerText = 'SEBENTAR...';
+            btn.disabled = true;
+
+            fetch('forgot_password.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: 'email=' + encodeURIComponent(email)
+            })
+            .then(response => response.json())
+            .then(data => {
+                btn.innerText = 'Kirimkan Link';
+                btn.disabled = false;
+                if (data.success) {
+                    alertContainer.innerHTML = '<div class="alert alert-success">Cek email Anda ya, link buat sandi baru sudah dikirim.</div>';
+                    document.getElementById('forgot-email').value = '';
+                } else {
+                    alertContainer.innerHTML = '<div class="alert alert-danger">' + data.message + '</div>';
+                }
+            })
+            .catch(error => {
+                btn.innerText = 'Kirimkan Link';
+                btn.disabled = false;
+                alertContainer.innerHTML = '<div class="alert alert-danger">Maaf, ada kendala koneksi.</div>';
+            });
+        });
+    </script>
 </body>
 </html>
