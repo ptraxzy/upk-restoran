@@ -25,7 +25,7 @@ Pastikan sudah terinstall di komputer:
    ```
 
 3. **Buka di browser**
-   - Aplikasi: http://localhost:8001/frontend/login.php
+   - Aplikasi: http://localhost:8001/login.php
    - phpMyAdmin: http://localhost:8080
 
 ---
@@ -48,8 +48,8 @@ Pastikan sudah terinstall di komputer:
    - Sesuaikan `DB_HOST`, `DB_USER`, `DB_PASS` sesuai settingan Laragon-mu (biasanya user `root` dan password kosong).
 
 4. **Buka di browser**
-   - URL: http://localhost/upk-restoran/frontend/login.php
-   - (Atau http://upk-restoran.test/frontend/login.php jika pakai auto-virtualhost Laragon).
+   - URL: http://localhost/upk-restoran/login.php
+   - (Atau http://upk-restoran.test/login.php jika pakai auto-virtualhost Laragon).
 
 ---
 
@@ -101,18 +101,15 @@ docker compose up -d --build
 
 ```text
 upk-restoran/
-├── frontend/           # Halaman yang dilihat user
-│   ├── login.php
-│   ├── admin/          # Panel admin
-│   ├── karyawan/       # Panel karyawan/kasir
-│   ├── pembeli/        # Panel pembeli/member
-│   └── assets/css/     # Stylesheet
-├── backend/
-│   ├── actions/        # Endpoint proses form (POST handler)
-│   ├── auth/           # Middleware cek login & role
-│   ├── config/         # Konfigurasi app, env, database
-│   ├── functions/      # Helper functions
-│   └── includes/       # Template header, footer, sidebar
+├── login.php           # Halaman login utama
+├── register.php        # Halaman daftar member
+├── admin/              # Panel admin
+├── kasir/              # Panel kasir
+├── pelanggan/          # Panel pelanggan/member
+├── actions/            # Endpoint proses form (POST handler)
+├── config/             # Konfigurasi app, env, database
+├── includes/           # Helper dan template UI
+├── assets/css/         # Stylesheet
 ├── database/sql/       # SQL init (auto-import saat docker up)
 ├── storage/            # Upload & log (git-ignored)
 ├── Dockerfile
