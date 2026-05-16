@@ -15,6 +15,6 @@ $app = require __DIR__ . '/../config/app.php';
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" crossorigin="anonymous">
-    <link rel="stylesheet" href="<?= htmlspecialchars(($assetBase ?? '../assets') . '/css/style.css', ENT_QUOTES, 'UTF-8'); ?>?v=<?= time(); ?>">
+    <link rel="stylesheet" href="<?= htmlspecialchars(base_url('assets/css/style.css'), ENT_QUOTES, 'UTF-8'); ?>?v=<?= time(); ?>">
 </head>
 <body>
