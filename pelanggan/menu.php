@@ -97,6 +97,22 @@ ob_start();
         padding-top: 15px;
         border-top: 1px solid var(--border-soft);
     }
+    .product-card-footer form {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        width: 100%;
+        flex-wrap: wrap;
+    }
+    .product-card-footer button {
+        min-width: 92px;
+        font-size: 10px;
+        padding: 8px 10px;
+    }
+    .product-card-footer .detail-link {
+        font-size: 10px;
+    }
 </style>
 <section>
     <div class="mb-5 pb-4 border-bottom border-secondary">
@@ -137,8 +153,13 @@ ob_start();
                     <h3 class="product-card-title"><?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?></h3>
                     <p class="product-card-copy"><?= htmlspecialchars($item['deskripsi'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
                     <div class="product-card-footer">
-                        <span class="price-inline">Rp <?= number_format((float)$item['harga'], 0, ',', '.'); ?></span>
-                        <a class="text-gold text-decoration-none text-uppercase small letter-spacing-1 fw-medium" href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" style="font-size: 10px;">Detail</a>
+                        <form method="post" action="<?= htmlspecialchars(base_url('actions/tambah_keranjang.php'), ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string)$item['id_menu'], ENT_QUOTES, 'UTF-8'); ?>">
+                            <input type="hidden" name="qty" value="1">
+                            <span class="price-inline">Rp <?= number_format((float)$item['harga'], 0, ',', '.'); ?></span>
+                            <button type="submit" class="btn btn-warning">Tambah</button>
+                        </form>
+                        <a class="text-gold text-decoration-none text-uppercase small letter-spacing-1 fw-medium detail-link" href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">Detail</a>
                     </div>
                 </div>
             </article>

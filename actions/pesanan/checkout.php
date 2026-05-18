@@ -14,7 +14,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     redirect(base_url('pelanggan/keranjang.php'));
 }
 
-$cart = $_SESSION['cart'] ?? [];
+$pdo = db();
+$userId = $_SESSION['user_id'] ?? 0;
+$stmtCart = $pdo->prepare("SELECT k.qty, m.id_menu, m.nama_menu, m.harga FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.user_id = ? ORDER BY k.id_keranjang DESC");
+$stmtCart->execute([$userId]);
+$cart = $stmtCart->fetchAll();
+
 if (empty($cart)) {
     set_flash('error', 'Keranjang Anda kosong.');
     redirect(base_url('pelanggan/keranjang.php'));
@@ -22,7 +27,7 @@ if (empty($cart)) {
 
 $subtotal = 0;
 foreach ($cart as $item) {
-    $subtotal += ($item['harga'] * $item['jumlah']);
+    $subtotal += ((float)$item['harga'] * (int)$item['qty']);
 }
 
 $discount = (float) ($_SESSION['active_discount'] ?? 0);
@@ -54,7 +59,7 @@ try {
         $stmtDetail->execute([
             $id_pesanan,
             $item['id_menu'],
-            $item['jumlah'],
+            $item['qty'],
             $item['harga']
         ]);
     }
@@ -67,10 +72,12 @@ try {
     ");
     $stmtBayar->execute([$id_pesanan, $total, $trx_id]);
 
+    // Hapus item keranjang pengguna setelah pesanan dicatat
+    $stmtClear = $pdo->prepare('DELETE FROM keranjang WHERE user_id = ?');
+    $stmtClear->execute([$userId]);
+
     $pdo->commit();
 
-    // Clear cart session because order is placed
-    unset($_SESSION['cart']);
     unset($_SESSION['active_voucher']);
     unset($_SESSION['active_discount']);
 

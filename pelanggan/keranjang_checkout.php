@@ -14,8 +14,18 @@ $title = 'Checkout';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
-$cart = $_SESSION['cart'] ?? [];
+$pdo = db();
 $isPaymentPhase = isset($_GET['action']) && $_GET['action'] === 'pay' && isset($_GET['id_pesanan']);
+$userId = $_SESSION['user_id'] ?? 0;
+$cart = [];
+
+if (!$isPaymentPhase) {
+    $stmtCart = $pdo->prepare(
+        "SELECT k.qty, m.nama_menu, m.harga FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.user_id = ? ORDER BY k.id_keranjang DESC"
+    );
+    $stmtCart->execute([$userId]);
+    $cart = $stmtCart->fetchAll();
+}
 
 // Security check: if not paying and cart empty, back to cart
 if (empty($cart) && !$isPaymentPhase) {
@@ -65,12 +75,12 @@ if ($isPaymentPhase) {
     }
     $tax = $subtotal * 0.11; // Approx
 } else {
-    // Phase: Review before checkout (Cart still in session)
+    // Phase: Review before checkout (Cart data fetched dari DB)
     foreach ($cart as $item) {
-        $subtotal += ((float)$item['harga'] * (int)$item['jumlah']);
+        $subtotal += ((float)$item['harga'] * (int)$item['qty']);
         $orderItems[] = [
             'nama_menu' => $item['nama_menu'],
-            'jumlah' => $item['jumlah'],
+            'jumlah' => $item['qty'],
             'harga_satuan' => $item['harga']
         ];
     }

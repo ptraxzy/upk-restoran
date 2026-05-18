@@ -295,7 +295,7 @@ body {
 
     .item-tall {
         grid-column: 8 / 13;
-        grid-row: 1 / 3;
+        grid-row: 1 / 1;
     }
 
     .item-standard-1 {

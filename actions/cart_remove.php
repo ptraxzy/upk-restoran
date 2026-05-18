@@ -3,14 +3,15 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/database.php';
+require_role('pelanggan');
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+$id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
+$userId = $_SESSION['user_id'] ?? 0;
 
-if (isset($_GET['index']) && isset($_SESSION['cart'][$_GET['index']])) {
-    unset($_SESSION['cart'][$_GET['index']]);
-    $_SESSION['cart'] = array_values($_SESSION['cart']); // Re-index
+if ($id > 0 && $userId > 0) {
+    $stmt = db()->prepare('DELETE FROM keranjang WHERE id_keranjang = ? AND user_id = ?');
+    $stmt->execute([$id, $userId]);
     set_flash('success', 'Item dihapus dari keranjang.');
 }
 

@@ -14,9 +14,9 @@ function db(): PDO
 
     $host = env('DB_HOST', '127.0.0.1');
     $port = env('DB_PORT', '3306');
-    $name = env('DB_NAME', 'upk_restoran');
-    $user = env('DB_USER', 'upk_user');
-    $pass = env('DB_PASS', 'upk_password');
+    $name = env('DB_NAME', 'upk-restoran');
+    $user = env('DB_USER', 'root');
+    $pass = env('DB_PASS', '');
 
     $dsn = sprintf('mysql:host=%s;port=%s;dbname=%s;charset=utf8mb4', $host, $port, $name);
 

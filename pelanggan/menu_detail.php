@@ -58,7 +58,7 @@ ob_start();
                 <span class="badge bg-secondary">Chef's Choice</span>
             </div>
 
-            <form method="post" action="<?= htmlspecialchars(base_url('actions/cart_add.php'), ENT_QUOTES, 'UTF-8'); ?>">
+            <form method="post" action="<?= htmlspecialchars(base_url('actions/tambah_keranjang.php'), ENT_QUOTES, 'UTF-8'); ?>">
                 <div class="d-flex flex-wrap align-items-center gap-4 border-top border-soft pt-5">
                     <div class="qty-stepper">
                         <button type="button" onclick="const i = document.getElementById('qty'); i.value = Math.max(1, parseInt(i.value) - 1); document.getElementById('qty-display').innerText = i.value;">-</button>
@@ -68,8 +68,8 @@ ob_start();
                         <button type="button" onclick="const i = document.getElementById('qty'); i.value = parseInt(i.value) + 1; document.getElementById('qty-display').innerText = i.value;">+</button>
                     </div>
                     <div class="d-flex gap-3">
-                        <button type="submit" class="btn btn-warning px-5">Add to Order</button>
-                        <a class="btn btn-outline-warning" href="<?= htmlspecialchars(base_url('pelanggan/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">Back</a>
+                        <button type="submit" class="btn btn-warning px-5">Tambah ke Keranjang</button>
+                        <a class="btn btn-outline-warning" href="<?= htmlspecialchars(base_url('pelanggan/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">Kembali</a>
                     </div>
                 </div>
             </form>

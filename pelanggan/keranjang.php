@@ -10,10 +10,18 @@ $title = 'Keranjang';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
-$cart = $_SESSION['cart'] ?? [];
+$userId = $_SESSION['user_id'] ?? 0;
+$cart = [];
 $subtotal = 0;
-foreach ($cart as $item) {
-    $subtotal += ((float)$item['harga'] * (int)$item['jumlah']);
+
+if ($userId > 0) {
+    $stmt = db()->prepare("SELECT k.id_keranjang, k.qty, m.id_menu, m.nama_menu, m.harga, m.gambar FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.user_id = ? ORDER BY k.id_keranjang DESC");
+    $stmt->execute([$userId]);
+    $cart = $stmt->fetchAll();
+
+    foreach ($cart as $item) {
+        $subtotal += ((float)$item['harga'] * (int)$item['qty']);
+    }
 }
 $tax = $subtotal * 0.11;
 $total = $subtotal + $tax;
@@ -67,12 +75,12 @@ ob_start();
                         <div class="d-flex align-items-start justify-content-between">
                             <div>
                                 <h3 class="cart-item-title text-white font-display"><?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?></h3>
-                                <p class="text-muted small mb-0"><?= $item['jumlah']; ?>x @ <?= rupiah((float)$item['harga']); ?></p>
+                                <p class="text-muted small mb-0"><?= (int)$item['qty']; ?>x @ <?= rupiah((float)$item['harga']); ?></p>
                             </div>
-                            <span class="text-gold fw-medium" style="font-size: 14px;"><?= rupiah((float)$item['harga'] * (int)$item['jumlah']); ?></span>
+                            <span class="text-gold fw-medium" style="font-size: 14px;"><?= rupiah((float)$item['harga'] * (int)$item['qty']); ?></span>
                         </div>
                         <div class="mt-2">
-                            <a href="<?= htmlspecialchars(base_url('actions/cart_remove.php?index=' . $index), ENT_QUOTES, 'UTF-8'); ?>" class="text-danger small text-uppercase letter-spacing-1 text-decoration-none" style="font-size: 10px;">Hapus</a>
+                            <a href="<?= htmlspecialchars(base_url('actions/cart_remove.php?id=' . $item['id_keranjang']), ENT_QUOTES, 'UTF-8'); ?>" class="text-danger small text-uppercase letter-spacing-1 text-decoration-none" style="font-size: 10px;">Hapus</a>
                         </div>
                     </div>
                 </div>

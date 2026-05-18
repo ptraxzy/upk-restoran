@@ -25,7 +25,26 @@ function public_nav_items(): array
         ['label' => 'Pesanan Saya', 'href' => base_url('pelanggan/pesanan.php')],
         ['label' => 'Profil', 'href' => base_url('pelanggan/profil.php')],
     ];
-}       
+}
+
+function cart_count(): int
+{
+    if (!isset($_SESSION['user_id'])) {
+        return count($_SESSION['cart'] ?? []);
+    }
+
+    require_once __DIR__ . '/database.php';
+
+    try {
+        $stmt = db()->prepare('SELECT SUM(qty) AS total FROM keranjang WHERE user_id = ?');
+        $stmt->execute([$_SESSION['user_id']]);
+        $row = $stmt->fetch();
+
+        return (int) ($row['total'] ?? 0);
+    } catch (Throwable) {
+        return count($_SESSION['cart'] ?? []);
+    }
+}
 
 function admin_nav_sections(): array
 {
@@ -206,8 +225,8 @@ function render_public_shell(array $config, string $content): void
                                 <?php $active = is_active_path($item['href']); ?>
                                 <a class="public-nav-link text-decoration-none <?= $active ? 'active' : ''; ?> position-relative" href="<?= htmlspecialchars($item['href']); ?>">
                                     <?= htmlspecialchars($item['label']); ?>
-                                    <?php if ($item['label'] === 'Keranjang' && count($_SESSION['cart'] ?? []) > 0): ?>
-                                        <span class="cart-count"><?= count($_SESSION['cart']); ?></span>
+                                    <?php if ($item['label'] === 'Keranjang' && cart_count() > 0): ?>
+                                        <span class="cart-count"><?= cart_count(); ?></span>
                                     <?php endif; ?>
                                 </a>
                             </li>
