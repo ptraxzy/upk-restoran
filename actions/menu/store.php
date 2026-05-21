@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
 require_once __DIR__ . '/../../includes/database.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_role('admin');
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     redirect(base_url('admin/menu_tambah.php'));
@@ -23,8 +25,8 @@ if (empty($nama_menu) || empty($id_kategori) || empty($harga)) {
 }
 
 try {
-    $stmt = db()->prepare("INSERT INTO menu (id_kategori, nama_menu, deskripsi, harga, gambar, status, porsi) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$id_kategori, $nama_menu, $deskripsi, $harga, $gambar, $status, $porsi]);
+    $stmt = db()->prepare("INSERT INTO menu (id_kategori, nama_menu, deskripsi, harga, gambar, status, porsi, id_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$id_kategori, $nama_menu, $deskripsi, $harga, $gambar, $status, $porsi, $_SESSION['id_user'] ?? null]);
 
     set_flash('success', 'Menu baru berhasil ditambahkan.');
 } catch (Exception $e) {

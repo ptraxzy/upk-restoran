@@ -13,12 +13,17 @@ if ($username === '' || $password === '') {
     redirect(base_url('login.php'));
 }
 
-$statement = db()->prepare('SELECT id_user, username, password, level FROM user WHERE username = :username LIMIT 1');
+$statement = db()->prepare('SELECT id_user, username, password, level, nama_user, status FROM user WHERE username = :username LIMIT 1');
 $statement->execute(['username' => $username]);
 $user = $statement->fetch();
 
 if (!$user) {
     set_flash('error', 'Username atau password salah.');
+    redirect(base_url('login.php'));
+}
+
+if (($user['status'] ?? 'Aktif') === 'Nonaktif') {
+    set_flash('error', 'Akun Anda telah dinonaktifkan. Silakan hubungi administrator.');
     redirect(base_url('login.php'));
 }
 
@@ -44,7 +49,7 @@ if (!$isValid) {
     redirect(base_url('login.php'));
 }
 
-$_SESSION['user_id'] = (int) $user['id_user'];
+$_SESSION['id_user'] = (int) $user['id_user'];
 $_SESSION['user_name'] = (string) $user['username'];
 $_SESSION['user_role'] = (string) $user['level'];
 $_SESSION['username'] = (string) $user['username'];

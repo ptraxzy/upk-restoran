@@ -13,7 +13,7 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 $id_pesanan = (int) ($_GET['id'] ?? 0);
 $status = $_GET['status'] ?? '';
 
-$valid_statuses = ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai', 'Dibatalkan'];
+$valid_statuses = ['Menunggu Pembayaran', 'Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai', 'Dibatalkan'];
 
 if ($id_pesanan <= 0 || !in_array($status, $valid_statuses, true)) {
     set_flash('error', 'Permintaan tidak valid.');
@@ -31,4 +31,15 @@ try {
     set_flash('error', 'Gagal mengubah status: ' . $e->getMessage());
 }
 
-redirect(base_url('kasir/pesanan.php'));
+// Dynamically determine the best filter tab for the new status
+$new_filter = 'semua';
+if ($status === 'Sedang Disiapkan' || $status === 'Diproses') {
+    $new_filter = 'disiapkan';
+} elseif ($status === 'Siap Saji') {
+    $new_filter = 'siap';
+}
+
+$redirectUrl = 'kasir/pesanan.php?filter=' . $new_filter;
+
+redirect(base_url($redirectUrl));
+

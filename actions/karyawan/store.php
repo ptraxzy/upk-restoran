@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/../../includes/bootstrap.php';
 require_once __DIR__ . '/../../includes/database.php';
+require_once __DIR__ . '/../../includes/auth.php';
+require_role('admin');
 
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     redirect(base_url('admin/karyawan_tambah.php'));
@@ -23,17 +25,18 @@ if (!in_array($level, ['admin', 'kasir'])) {
 }
 
 try {
-    // Cek apakah username sudah ada
-    $stmtCheck = db()->prepare("SELECT id_user FROM user WHERE username = ?");
+    // Cek apakah username sudah ada di user
+    $stmtCheck = db()->prepare("SELECT 1 FROM user WHERE username = ? LIMIT 1");
     $stmtCheck->execute([$username]);
+
     if ($stmtCheck->fetch()) {
         set_flash('error', 'Username sudah terdaftar.');
         redirect(base_url('admin/karyawan_tambah.php'));
     }
 
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = db()->prepare("INSERT INTO user (username, password, level) VALUES (?, ?, ?)");
-    $stmt->execute([$username, $hashedPassword, $level]);
+    $stmt = db()->prepare("INSERT INTO user (nama_user, username, password, level) VALUES (?, ?, ?, ?)");
+    $stmt->execute([$username, $username, $hashedPassword, $level]);
 
     set_flash('success', 'Karyawan berhasil ditambahkan.');
 } catch (Exception $e) {

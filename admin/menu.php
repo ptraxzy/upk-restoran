@@ -12,15 +12,22 @@ require __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/database.php';
 
 $stmt = db()->query("
-    SELECT m.*, k.nama_kategori
+    SELECT m.*, k.nama_kategori, a.username AS pembuat, a.level AS pembuat_role
     FROM menu m
     LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
+    LEFT JOIN user a ON m.id_user = a.id_user
+    WHERE m.deleted_at IS NULL
     ORDER BY m.id_menu DESC
 ");
 $menuItems = $stmt->fetchAll();
 
 ob_start();
 ?>
+<div class="d-flex justify-content-end mb-4 gap-2">
+    <a href="<?= htmlspecialchars(base_url('admin/menu_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-warning rounded-0 text-dark fw-medium px-4">Tambah Menu</a>
+    <a href="<?= htmlspecialchars(base_url('admin/menu_riwayat_hapus.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Riwayat Hapus Menu</a>
+</div>
+
 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
     <?php foreach ($menuItems as $item): ?>
         <div class="col">
@@ -29,7 +36,7 @@ ob_start();
                     <img src="<?= htmlspecialchars($item['gambar'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="w-100 object-cover mb-3" style="height: 160px; border: 1px solid var(--border);">
                 <?php else: ?>
                     <div class="w-100 mb-3 d-flex align-items-center justify-content-center bg-black" style="height: 160px; border: 1px solid var(--border);">
-                        <span class="text-secondary small text-uppercase letter-spacing-2" style="font-size: 10px;">No Image</span>
+                        <span class="text-secondary small" style="font-size: 12px;">No Image</span>
                     </div>
                 <?php endif; ?>
 
@@ -38,16 +45,21 @@ ob_start();
                 </div>
                 <p class="text-gold small fw-medium mb-2">Rp <?= number_format((float)$item['harga'], 0, ',', '.'); ?></p>
 
-                <p class="text-secondary small mb-3 flex-grow-1" style="line-height: 1.5; font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?= htmlspecialchars($item['deskripsi'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
+                <p class="text-secondary small mb-2 flex-grow-1" style="line-height: 1.5; font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?= htmlspecialchars($item['deskripsi'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
+
+                <div class="mb-3 d-flex align-items-center gap-1 text-secondary" style="font-size: 11px; opacity: 0.85;">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="me-1"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"/></svg>
+                    <span>Oleh: <?= htmlspecialchars($item['pembuat'] ?? 'Sistem', ENT_QUOTES, 'UTF-8'); ?> <span class="text-gold" style="font-size: 9px; text-transform: uppercase;">(<?= htmlspecialchars($item['pembuat_role'] ?? 'admin', ENT_QUOTES, 'UTF-8'); ?>)</span></span>
+                </div>
 
                 <div class="d-flex align-items-center justify-content-between pt-3 border-top border-soft mt-auto">
                     <div class="d-flex align-items-center gap-2">
                         <span style="width: 6px; height: 6px; border-radius: 50%; background-color: <?= $item['status'] === 'Tersedia' ? 'var(--gold)' : '#dc3545'; ?>;"></span>
-                        <span class="text-secondary" style="font-size: 10px;"><?= htmlspecialchars($item['status'], ENT_QUOTES, 'UTF-8'); ?> • <?= htmlspecialchars((string)$item['porsi'], ENT_QUOTES, 'UTF-8'); ?> Porsi</span>
+                        <span class="text-secondary" style="font-size: 12px;"><?= htmlspecialchars($item['status'], ENT_QUOTES, 'UTF-8'); ?> • <?= htmlspecialchars((string)$item['porsi'], ENT_QUOTES, 'UTF-8'); ?> Porsi</span>
                     </div>
                     <div class="d-flex gap-2">
-                        <a href="<?= htmlspecialchars(base_url('admin/menu_edit.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="text-gold text-decoration-none" style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px;">Edit</a>
-                        <a href="<?= htmlspecialchars(base_url('actions/menu/delete.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="text-danger text-decoration-none" style="font-size: 10px; text-transform: uppercase; letter-spacing: 1px;" onclick="return confirm('Hapus menu ini?')">Hapus</a>
+                        <a href="<?= htmlspecialchars(base_url('admin/menu_edit.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="text-gold text-decoration-none" style="font-size: 12px; font-weight: 500;">Edit</a>
+                        <a href="<?= htmlspecialchars(base_url('actions/menu/delete.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="text-danger text-decoration-none" style="font-size: 12px; font-weight: 500;" onclick="return confirm('Hapus menu ini?')">Hapus</a>
                     </div>
                 </div>
             </article>
@@ -57,7 +69,7 @@ ob_start();
 <?php
 $content = ob_get_clean();
 render_internal_shell([
-    'brand' => 'NOCTRA',
+    'brand' => 'Lumière',
     'badge' => 'Menu Management',
     'title' => 'Indeks Kuliner',
     'description' => 'Katalog menu restoran, kategori, dan ketersediaan aktif.',

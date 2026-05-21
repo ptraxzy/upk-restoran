@@ -10,13 +10,13 @@ $title = 'Layanan Aktif';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
-// Fetch active orders from database
+// Fetch active and recently completed orders from database
 $pdo = db();
 $stmt = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.status_pesanan, p.tanggal_pesanan,
            TIMESTAMPDIFF(MINUTE, p.tanggal_pesanan, NOW()) as menit_menunggu
     FROM pesanan p
-    WHERE p.status_pesanan IN ('Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Menunggu Pembayaran')
+    WHERE p.status_pesanan IN ('Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Menunggu Pembayaran', 'Selesai')
     ORDER BY p.tanggal_pesanan ASC
 ");
 $pesananList = $stmt->fetchAll();
@@ -40,66 +40,125 @@ if (count($pesananList) > 0) {
     }
 }
 
-// Calculate counts
-$countSemua = count($pesananList);
+// Calculate active orders (excluding completed Selesai)
+$activeOrders = array_filter($pesananList, fn($p) => $p['status_pesanan'] !== 'Selesai');
+$countActive = count($activeOrders);
+
+// "Needs attention" count: active orders that are unpaid OR waiting for more than 30 minutes
+$countPerhatian = count(array_filter($activeOrders, fn($p) => $p['status_pesanan'] === 'Menunggu Pembayaran' || $p['menit_menunggu'] >= 30));
+
+// Calculate counts for all tabs
+$countSemua = $countActive;
 $countDisiapkan = count(array_filter($pesananList, fn($p) => $p['status_pesanan'] === 'Sedang Disiapkan' || $p['status_pesanan'] === 'Diproses'));
 $countSiap = count(array_filter($pesananList, fn($p) => $p['status_pesanan'] === 'Siap Saji'));
+$countSelesai = count(array_filter($pesananList, fn($p) => $p['status_pesanan'] === 'Selesai'));
+
+// Filter display list
+$filter = $_GET['filter'] ?? 'semua';
+$displayList = $pesananList;
+if ($filter === 'semua') {
+    $displayList = $activeOrders;
+} elseif ($filter === 'disiapkan') {
+    $displayList = array_filter($pesananList, fn($p) => $p['status_pesanan'] === 'Sedang Disiapkan' || $p['status_pesanan'] === 'Diproses');
+} elseif ($filter === 'siap') {
+    $displayList = array_filter($pesananList, fn($p) => $p['status_pesanan'] === 'Siap Saji');
+} elseif ($filter === 'selesai') {
+    $displayList = array_filter($pesananList, fn($p) => $p['status_pesanan'] === 'Selesai');
+}
 
 ob_start();
 ?>
 <section style="background: transparent; border: none; padding: 0;">
     <div class="d-flex flex-column gap-3 flex-md-row justify-content-md-between align-items-md-start mb-5">
         <div style="max-width: 600px;">
-            <h2 class="font-display text-white mb-2" style="font-size: 36px;">Layanan Aktif</h2>
-            <p class="text-secondary small" style="line-height: 1.6;">Memantau <?= $countSemua ?> meja aktif. Harap perhatikan urutan waktu pemesanan.</p>
+            <h2 class="font-display text-white mb-2" style="font-size: 36px; font-weight: normal; letter-spacing: -0.01em;">Layanan Aktif</h2>
+            <p class="text-secondary small" style="line-height: 1.6; font-size: 13px;">
+                Memantau <?= $countActive ?> meja aktif. <?= $countPerhatian ?> membutuhkan perhatian segera.
+            </p>
+        </div>
+        <div class="d-flex align-items-center gap-2 text-secondary" style="font-size: 13px;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+            <span><?= date('H:i T') ?></span>
         </div>
     </div>
 
     <div class="d-flex gap-4 mb-5 border-bottom border-soft overflow-auto" style="scrollbar-width: none;">
-        <a class="text-gold text-uppercase small letter-spacing-1 fw-medium text-decoration-none pb-3 border-bottom border-gold border-2 whitespace-nowrap flex-shrink-0" href="#">SEMUA AKTIF (<?= $countSemua ?>)</a>
-        <a class="text-secondary hover-gold text-uppercase small letter-spacing-1 text-decoration-none pb-3 whitespace-nowrap flex-shrink-0" href="#">SEDANG DISIAPKAN (<?= $countDisiapkan ?>)</a>
-        <a class="text-secondary hover-gold text-uppercase small letter-spacing-1 text-decoration-none pb-3 whitespace-nowrap flex-shrink-0" href="#">SIAP SAJI (<?= $countSiap ?>)</a>
+        <a class="<?= $filter === 'semua' ? 'text-gold border-bottom border-gold border-2' : 'text-secondary hover-gold' ?> small fw-medium text-decoration-none pb-3 whitespace-nowrap flex-shrink-0" href="?filter=semua" style="letter-spacing: 0.06em; text-transform: uppercase;">Semua Aktif (<?= $countSemua ?>)</a>
+        <a class="<?= $filter === 'disiapkan' ? 'text-gold border-bottom border-gold border-2' : 'text-secondary hover-gold' ?> small fw-medium text-decoration-none pb-3 whitespace-nowrap flex-shrink-0" href="?filter=disiapkan" style="letter-spacing: 0.06em; text-transform: uppercase;">Sedang Disiapkan (<?= $countDisiapkan ?>)</a>
+        <a class="<?= $filter === 'siap' ? 'text-gold border-bottom border-gold border-2' : 'text-secondary hover-gold' ?> small fw-medium text-decoration-none pb-3 whitespace-nowrap flex-shrink-0" href="?filter=siap" style="letter-spacing: 0.06em; text-transform: uppercase;">Siap Saji (<?= $countSiap ?>)</a>
+        <a class="<?= $filter === 'selesai' ? 'text-gold border-bottom border-gold border-2' : 'text-secondary hover-gold' ?> small fw-medium text-decoration-none pb-3 whitespace-nowrap flex-shrink-0" href="?filter=selesai" style="letter-spacing: 0.06em; text-transform: uppercase;">Selesai (<?= $countSelesai ?>)</a>
     </div>
 
-    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4">
-        <?php if ($countSemua === 0): ?>
+    <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 row-cols-xxl-4 g-4">
+        <?php if (empty($displayList)): ?>
             <div class="col-12 w-100 py-5 text-center">
-                <p class="text-muted">Tidak ada pesanan aktif saat ini.</p>
+                <p class="text-muted">Tidak ada pesanan untuk kategori ini.</p>
             </div>
         <?php endif; ?>
 
-        <?php foreach ($pesananList as $p): ?>
+        <?php foreach ($displayList as $p): ?>
             <?php
-            $statusClass = 'text-warning';
-            $statusText = $p['status_pesanan'];
-            $borderOp = '';
+            $statusClass = 'order-badge-pill-waiting';
+            $statusText = 'DIPROSES';
             
             if ($p['status_pesanan'] === 'Menunggu Pembayaran') {
-                $statusClass = 'text-danger';
-                $statusText = 'Belum Bayar';
+                $statusClass = 'order-badge-pill-unpaid';
+                $statusText = 'BELUM BAYAR';
+            } elseif ($p['status_pesanan'] === 'Sedang Disiapkan') {
+                $statusClass = 'order-badge-pill-preparing';
+                $statusText = 'SEDANG DISIAPKAN';
             } elseif ($p['status_pesanan'] === 'Siap Saji') {
-                $statusClass = 'text-success';
-                $borderOp = 'opacity: 0.9; border-color: var(--gold);';
+                $statusClass = 'order-badge-pill-ready';
+                $statusText = 'SIAP DIAMBIL';
+            } elseif ($p['status_pesanan'] === 'Selesai') {
+                $statusClass = 'order-badge-pill-completed';
+                $statusText = 'SELESAI';
+            }
+            
+            $cardBorder = '';
+            if ($p['status_pesanan'] === 'Siap Saji') {
+                $cardBorder = 'border-color: rgba(201, 168, 76, 0.4); box-shadow: 0 0 20px rgba(201, 168, 76, 0.05);';
+            } elseif ($p['status_pesanan'] === 'Menunggu Pembayaran') {
+                $cardBorder = 'border-color: rgba(220, 53, 69, 0.25);';
+            }
+
+            // Check if there is Asparagus in the order details
+            $hasAsparagus = false;
+            if (isset($pesananDetails[$p['id_pesanan']])) {
+                foreach ($pesananDetails[$p['id_pesanan']] as $detail) {
+                    if (stripos($detail['nama_menu'], 'Asparagus') !== false) {
+                        $hasAsparagus = true;
+                        break;
+                    }
+                }
             }
             ?>
-            <div class="col">
-                <article class="p-3 border border-secondary h-100 d-flex flex-column bg-card" style="<?= $borderOp ?>">
-                    <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom border-soft">
+            <div class="col animate-fade-in-up">
+                <article class="premium-card-glass h-100 d-flex flex-column" style="border-radius: 0; padding: 24px; <?= $cardBorder ?>">
+                    <div class="d-flex align-items-center justify-content-between mb-4 pb-3 border-bottom border-soft">
                         <div class="d-flex align-items-center gap-2">
-                            <span class="font-display text-white" style="font-size: 24px; line-height: 1;"><?= htmlspecialchars($p['no_meja'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <span class="font-display text-white" style="font-size: 32px; line-height: 1; font-weight: bold;"><?= htmlspecialchars($p['no_meja'], ENT_QUOTES, 'UTF-8') ?></span>
                             <div>
-                                <p class="text-secondary small text-uppercase letter-spacing-1 m-0" style="font-size: 9px;">MEJA</p>
-                                <p class="<?= $statusClass ?> m-0" style="font-size: 10px; font-weight: 500;"><?= $statusText ?> • <?= $p['menit_menunggu'] ?>m</p>
+                                <p class="text-secondary small m-0" style="font-size: 10px; letter-spacing: 0.06em;">MEJA</p>
                             </div>
+                        </div>
+                        
+                        <div class="order-badge-pill <?= $statusClass ?>">
+                            <span class="badge-time">
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+                                <?= $p['menit_menunggu'] ?>m
+                            </span>
+                            <span style="font-weight: bold; font-size: 9px;"><?= $statusText ?></span>
                         </div>
                     </div>
                     
-                    <div class="d-flex flex-column gap-1 mb-3 flex-grow-1">
+                    <!-- Menu items list container (scrolls if > 3 items) -->
+                    <div class="card-menu-list flex-grow-1 mb-3">
                         <?php if (isset($pesananDetails[$p['id_pesanan']])): ?>
                             <?php foreach ($pesananDetails[$p['id_pesanan']] as $detail): ?>
-                            <div class="d-flex gap-2">
-                                <span class="text-gold fw-medium" style="font-size: 11px;"><?= $detail['jumlah'] ?>x</span>
-                                <span class="text-white" style="font-size: 11px;"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8') ?></span>
+                            <div class="d-flex gap-2 align-items-baseline mb-2">
+                                <span class="text-gold fw-medium" style="font-size: 11px; font-family: var(--font-sans);"><?= $detail['jumlah'] ?>x</span>
+                                <span class="text-white" style="font-size: 12px; font-family: var(--font-sans); opacity: 0.95;"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -107,26 +166,99 @@ ob_start();
                         <?php endif; ?>
                     </div>
 
-                    <div class="d-flex gap-2 mt-auto">
-                        <?php if ($p['status_pesanan'] === 'Menunggu Pembayaran'): ?>
-                            <button class="btn btn-outline-danger w-100 py-2" style="font-size: 10px; padding: 8px !important;" disabled>MENUNGGU BAYAR</button>
-                        <?php elseif ($p['status_pesanan'] === 'Diproses'): ?>
-                            <button class="btn btn-warning w-100 py-2" style="font-size: 10px; padding: 8px !important;" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Sedang Disiapkan') ?>'">MENYIAPKAN</button>
-                        <?php elseif ($p['status_pesanan'] === 'Sedang Disiapkan'): ?>
-                            <button class="btn btn-warning w-100 py-2" style="font-size: 10px; padding: 8px !important;" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Siap Saji') ?>'">SIAP SAJI</button>
-                        <?php elseif ($p['status_pesanan'] === 'Siap Saji'): ?>
-                            <button class="btn btn-outline-secondary w-100 py-2 text-white border-secondary" style="font-size: 10px; padding: 8px !important;" onclick="window.location.href='<?= base_url('actions/pesanan/update_status.php?id='.$p['id_pesanan'].'&status=Selesai') ?>'">SELESAI</button>
-                        <?php endif; ?>
+                    <!-- Allergen Alert Box (Markdown-style) -->
+                    <?php if ($hasAsparagus): ?>
+                        <blockquote style="border-left: 3px solid #ff6b6b; background: rgba(220, 53, 69, 0.05); padding: 12px; margin: 12px 0 16px 0; font-size: 11px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); font-family: var(--font-sans); font-style: normal;">
+                            <strong style="color: #ff6b6b; letter-spacing: 0.04em; font-size: 9px; display: block; margin-bottom: 4px; text-transform: uppercase;">PERINGATAN ALERGI</strong>
+                            Dilarang keras menggunakan produk susu untuk persiapan Asparagus. Gunakan minyak zaitun.
+                        </blockquote>
+                    <?php endif; ?>
+
+                    <!-- Action buttons area -->
+                    <div class="mt-auto pt-3 border-top border-soft">
+                        <div id="actions-<?= $p['id_pesanan'] ?>" class="d-flex gap-2 w-100">
+                            <?php if ($p['status_pesanan'] === 'Menunggu Pembayaran'): ?>
+                                <button type="button" class="btn-figma-secondary px-3" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)" aria-label="Ubah status">
+                                    UBAH
+                                </button>
+                                <a href="<?= base_url('kasir/pembayaran_cetak.php?id=' . $p['id_pesanan']) ?>" class="btn-figma-primary flex-grow-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="2" y="4" width="20" height="16" rx="2"></rect><line x1="12" y1="10" x2="12" y2="10"></line><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                                    PROSES BAYAR
+                                </a>
+                            <?php elseif ($p['status_pesanan'] === 'Diproses'): ?>
+                                <button type="button" class="btn-figma-secondary px-3" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)" aria-label="Ubah status">
+                                    UBAH
+                                </button>
+                                <a href="<?= base_url('actions/pesanan/update_status.php?id=' . $p['id_pesanan'] . '&status=Sedang+Disiapkan&filter=' . $filter) ?>" class="btn-figma-primary flex-grow-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+                                    MULAI MENYIAPKAN
+                                </a>
+                            <?php elseif ($p['status_pesanan'] === 'Sedang Disiapkan'): ?>
+                                <button type="button" class="btn-figma-secondary px-3" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)" aria-label="Ubah status">
+                                    UBAH
+                                </button>
+                                <a href="<?= base_url('actions/pesanan/update_status.php?id=' . $p['id_pesanan'] . '&status=Siap+Saji&filter=' . $filter) ?>" class="btn-figma-primary flex-grow-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>
+                                    SIAP DIHIDANGKAN
+                                </a>
+                            <?php elseif ($p['status_pesanan'] === 'Siap Saji'): ?>
+                                <button type="button" class="btn-figma-secondary px-3" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)" aria-label="Ubah status">
+                                    UBAH
+                                </button>
+                                <a href="<?= base_url('actions/pesanan/update_status.php?id=' . $p['id_pesanan'] . '&status=Selesai&filter=' . $filter) ?>" class="btn-figma-primary flex-grow-1">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                    TANDAI SELESAI
+                                </a>
+                            <?php elseif ($p['status_pesanan'] === 'Selesai'): ?>
+                                <button type="button" class="btn-figma-secondary w-100" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)">
+                                    UBAH STATUS
+                                </button>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Dropdown fallback form (toggled on Ubah) -->
+                        <form id="form-<?= $p['id_pesanan'] ?>" method="get" action="<?= base_url('actions/pesanan/update_status.php') ?>" class="m-0 d-none">
+                            <input type="hidden" name="id" value="<?= $p['id_pesanan'] ?>">
+                            <input type="hidden" name="filter" value="<?= htmlspecialchars($filter, ENT_QUOTES, 'UTF-8') ?>">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <label class="small text-secondary" style="font-size: 10px; letter-spacing: 0.04em;">Perbarui Status</label>
+                                <button type="button" class="btn p-0 text-secondary border-0 small" style="font-size: 10px;" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)">Batal</button>
+                            </div>
+                            <select name="status" class="form-select bg-black text-white border-secondary rounded-0" onchange="this.form.submit()" style="font-size: 12px; font-family: var(--font-sans); cursor: pointer; padding: 8px 12px; line-height: 1.2;">
+                                <option value="Menunggu Pembayaran" <?= $p['status_pesanan'] === 'Menunggu Pembayaran' ? 'selected' : '' ?>>Menunggu Pembayaran</option>
+                                <option value="Diproses" <?= $p['status_pesanan'] === 'Diproses' ? 'selected' : '' ?>>Diproses</option>
+                                <option value="Sedang Disiapkan" <?= $p['status_pesanan'] === 'Sedang Disiapkan' ? 'selected' : '' ?>>Sedang Disiapkan</option>
+                                <option value="Siap Saji" <?= $p['status_pesanan'] === 'Siap Saji' ? 'selected' : '' ?>>Siap Saji</option>
+                                <option value="Selesai" <?= $p['status_pesanan'] === 'Selesai' ? 'selected' : '' ?>>Selesai</option>
+                                <option value="Dibatalkan" <?= $p['status_pesanan'] === 'Dibatalkan' ? 'selected' : '' ?>>Dibatalkan</option>
+                            </select>
+                        </form>
                     </div>
                 </article>
             </div>
         <?php endforeach; ?>
     </div>
 </section>
+
+<script>
+function toggleStatusSelector(id) {
+    const actionsDiv = document.getElementById('actions-' + id);
+    const formEl = document.getElementById('form-' + id);
+    if (actionsDiv && formEl) {
+        if (actionsDiv.classList.contains('d-none')) {
+            actionsDiv.classList.remove('d-none');
+            formEl.classList.add('d-none');
+        } else {
+            actionsDiv.classList.add('d-none');
+            formEl.classList.remove('d-none');
+        }
+    }
+}
+</script>
 <?php
 $content = ob_get_clean();
 render_internal_shell([
-    'brand' => 'NOCTRA',
+    'brand' => 'Lumière',
     'badge' => 'Service Floor',
     'title' => 'Layanan Aktif',
     'description' => 'Memantau meja aktif dan pesanan real-time.',

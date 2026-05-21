@@ -49,7 +49,7 @@ $safeResetLink = htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8');
 $emailContent = "
     <div style='font-family: serif; color: #333; padding: 20px; border: 1px solid #ddd;'>
         <h2 style='color: #C9A84C;'>Halo, $username.</h2>
-        <p>Kami menerima permintaan untuk mengatur ulang kata sandi Anda di <b>NOCTRA</b>.</p>
+        <p>Kami menerima permintaan untuk mengatur ulang kata sandi Anda di <b>Lumière</b>.</p>
         <p>Silakan klik tombol di bawah ini untuk membuat sandi baru (berlaku 1 jam):</p>
         <p style='margin: 30px 0;'>
             <a href='$safeResetLink' style='background: #C9A84C; color: #fff; padding: 12px 25px; text-decoration: none; border-radius: 4px; font-weight: bold;'>Buat Sandi Baru</a>
@@ -58,7 +58,7 @@ $emailContent = "
     </div>
 ";
 
-$sent = send_mail($email, "Atur Ulang Kata Sandi NOCTRA", $emailContent);
+$sent = send_mail($email, "Atur Ulang Kata Sandi Lumière", $emailContent);
 
 if ($sent) {
     echo json_encode(['success' => true, 'message' => 'Instruksi sudah kami kirim ke email Anda ya.']);

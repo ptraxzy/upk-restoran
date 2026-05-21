@@ -78,3 +78,34 @@ function is_hashed_password(string $password): bool
 {
     return password_get_info($password)['algo'] !== null;
 }
+
+// Ambil nilai pengaturan dari database berdasarkan kunci
+function get_setting(string $key, string $default = ''): string
+{
+    try {
+        require_once __DIR__ . '/database.php';
+        $stmt = db()->prepare("SELECT nilai FROM pengaturan WHERE kunci = ?");
+        $stmt->execute([$key]);
+        $val = $stmt->fetchColumn();
+        return $val !== false ? (string)$val : $default;
+    } catch (Throwable) {
+        return $default;
+    }
+}
+
+// Ambil semua data pengaturan dari database
+function get_all_settings(): array
+{
+    try {
+        require_once __DIR__ . '/database.php';
+        $rows = db()->query("SELECT kunci, nilai FROM pengaturan")->fetchAll();
+        $settings = [];
+        foreach ($rows as $row) {
+            $settings[$row['kunci']] = $row['nilai'];
+        }
+        return $settings;
+    } catch (Throwable) {
+        return [];
+    }
+}
+

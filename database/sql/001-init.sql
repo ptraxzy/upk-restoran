@@ -9,6 +9,7 @@ CREATE TABLE IF NOT EXISTS `user` (
   `email` varchar(100) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `level` enum('admin','kasir','pelanggan') NOT NULL,
+  `status` enum('Aktif','Nonaktif') NOT NULL DEFAULT 'Aktif',
   PRIMARY KEY (`id_user`),
   UNIQUE KEY `user_username_unique` (`username`),
   UNIQUE KEY `user_email_unique` (`email`)
@@ -29,7 +30,9 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
 CREATE TABLE IF NOT EXISTS `kategori` (
   `id_kategori` int NOT NULL AUTO_INCREMENT,
   `nama_kategori` varchar(50) NOT NULL,
-  PRIMARY KEY (`id_kategori`)
+  `id_user` int DEFAULT NULL,
+  PRIMARY KEY (`id_kategori`),
+  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `menu` (
@@ -41,9 +44,28 @@ CREATE TABLE IF NOT EXISTS `menu` (
   `gambar` varchar(255),
   `status` enum('Tersedia', 'Habis') DEFAULT 'Tersedia',
   `porsi` int DEFAULT 10,
+  `id_user` int DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int DEFAULT NULL,
   PRIMARY KEY (`id_menu`),
-  FOREIGN KEY (`id_kategori`) REFERENCES `kategori` (`id_kategori`) ON DELETE CASCADE
+  FOREIGN KEY (`id_kategori`) REFERENCES `kategori` (`id_kategori`) ON DELETE CASCADE,
+  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL,
+  FOREIGN KEY (`deleted_by`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `keranjang` (
+  `id_keranjang` int NOT NULL AUTO_INCREMENT,
+  `id_user` int NOT NULL,
+  `id_menu` int NOT NULL,
+  `qty` int NOT NULL DEFAULT 1,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_keranjang`),
+  UNIQUE KEY `keranjang_user_menu_unique` (`id_user`, `id_menu`),
+  KEY `keranjang_menu_index` (`id_menu`),
+  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE CASCADE,
+  FOREIGN KEY (`id_menu`) REFERENCES `menu` (`id_menu`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `pesanan` (
   `id_pesanan` int NOT NULL AUTO_INCREMENT,
@@ -75,8 +97,28 @@ CREATE TABLE IF NOT EXISTS `pembayaran` (
   `metode` enum('QRIS', 'Tunai', 'Kartu Kredit') NOT NULL,
   `status` enum('Menunggu', 'Lunas', 'Gagal') DEFAULT 'Menunggu',
   `trx_id` varchar(100),
+  `id_user` int DEFAULT NULL,
   PRIMARY KEY (`id_pembayaran`),
-  FOREIGN KEY (`id_pesanan`) REFERENCES `pesanan` (`id_pesanan`) ON DELETE CASCADE
+  FOREIGN KEY (`id_pesanan`) REFERENCES `pesanan` (`id_pesanan`) ON DELETE CASCADE,
+  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `voucher` (
+  `id_voucher` int NOT NULL AUTO_INCREMENT,
+  `kode_voucher` varchar(50) NOT NULL,
+  `nama_voucher` varchar(255) NOT NULL,
+  `jenis_voucher` enum('Persentase','Nominal') NOT NULL,
+  `nilai_voucher` decimal(15,2) NOT NULL,
+  `tanggal_mulai` date NOT NULL,
+  `tanggal_berakhir` date NOT NULL,
+  `status_voucher` enum('Active','Scheduled','Expired') DEFAULT 'Active',
+  `id_user` int DEFAULT NULL,
+  `deleted_at` datetime DEFAULT NULL,
+  `deleted_by` int DEFAULT NULL,
+  PRIMARY KEY (`id_voucher`),
+  UNIQUE KEY `voucher_kode_unique` (`kode_voucher`),
+  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL,
+  FOREIGN KEY (`deleted_by`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Seed data menu

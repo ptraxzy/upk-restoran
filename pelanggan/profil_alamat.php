@@ -18,7 +18,7 @@ ob_start();
                 <h3 class="h3 mb-1 text-warning">Alamat Saya</h3>
                 <p class="text-muted small mb-4">Kelola alamat untuk pengiriman atau informasi pribadi.</p>
             </div>
-            <a class="btn btn-outline-warning rounded-0 text-uppercase fw-medium px-4 py-2 text-white" href="<?= htmlspecialchars(base_url('pelanggan/profil.php'), ENT_QUOTES, 'UTF-8'); ?>">Kembali ke Profil</a>
+            <a class="btn btn-outline-warning rounded-0 fw-medium px-4 py-2 text-white" href="<?= htmlspecialchars(base_url('pelanggan/profil.php'), ENT_QUOTES, 'UTF-8'); ?>">Kembali ke Profil</a>
         </div>
 
         <div class="compact-list mt-4">
@@ -49,23 +49,23 @@ ob_start();
             <form class="mt-4 d-flex flex-column gap-4" action="#" method="post">
                 <div class="row row-cols-1 row-cols-md-2 g-3 mb-3">
                     <div>
-                        <label class="form-label small text-muted text-uppercase mb-1">Label Alamat</label>
+                        <label class="form-label small text-muted mb-1">Label Alamat</label>
                         <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" name="label" placeholder="Contoh: Rumah, Kantor">
                     </div>
                     <div>
-                        <label class="form-label small text-muted text-uppercase mb-1">Kota</label>
+                        <label class="form-label small text-muted mb-1">Kota</label>
                         <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" name="kota" placeholder="Jakarta Selatan">
                     </div>
                 </div>
                 <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Alamat Lengkap</label>
+                    <label class="form-label small text-muted mb-1">Alamat Lengkap</label>
                     <textarea class="form-control bg-dark text-white border-secondary rounded-0" name="alamat" placeholder="Jl. Nama Jalan No. XX, RT/RW, Kelurahan, Kecamatan"></textarea>
                 </div>
                 <div>
-                    <label class="form-label small text-muted text-uppercase mb-1">Kode Pos</label>
+                    <label class="form-label small text-muted mb-1">Kode Pos</label>
                     <input class="form-control bg-dark text-white border-secondary rounded-0" type="text" name="kode_pos" placeholder="12345" style="max-width: 200px;">
                 </div>
-                <button class="btn btn-warning rounded-0 text-uppercase fw-medium px-4 py-2" type="submit">Simpan Alamat</button>
+                <button class="btn btn-warning rounded-0 fw-medium px-4 py-2" type="submit">Simpan Alamat</button>
             </form>
         </div>
     </article>
@@ -74,11 +74,11 @@ ob_start();
         <h3 class="h3 mb-1 text-warning">Info</h3>
         <div class="row g-3 mt-4">
             <article class="order-stat">
-                <p class="text-muted small text-uppercase mb-2">Total Alamat</p>
+                <p class="text-muted small mb-2">Total Alamat</p>
                 <p class="h2 text-warning mb-0 !text-[2rem]">2</p>
             </article>
             <article class="order-stat">
-                <p class="text-muted small text-uppercase mb-2">Alamat Utama</p>
+                <p class="text-muted small mb-2">Alamat Utama</p>
                 <p class="h2 text-warning mb-0 !text-[2rem]">Rumah</p>
             </article>
         </div>
@@ -88,7 +88,7 @@ ob_start();
 $content = ob_get_clean();
 render_public_shell([
     'brand' => "L'Essence",
-    'text-muted small text-uppercase mb-1' => 'Address Book',
+    'text-muted small mb-1' => 'Address Book',
     'title' => 'Kelola alamat pengiriman dan informasi lokasi.',
     'description' => 'Tambah, edit, atau hapus alamat yang tersimpan di akun Anda.',
     'actions' => [

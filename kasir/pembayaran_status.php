@@ -9,6 +9,25 @@ $title = 'Status Pembayaran';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
+require_once __DIR__ . '/../includes/database.php';
+$pdo = db();
+
+// Fetch all payments with order and user info
+$stmt = $pdo->query("
+    SELECT py.id_pembayaran, py.total_bayar, py.metode, py.status, py.trx_id,
+           p.id_pesanan, p.no_meja,
+           u.username
+    FROM pembayaran py
+    JOIN pesanan p ON py.id_pesanan = p.id_pesanan
+    LEFT JOIN user u ON p.id_user = u.id_user
+    ORDER BY py.tanggal_pembayaran DESC
+    LIMIT 20
+");
+$payments = $stmt->fetchAll();
+
+$countMenunggu = count(array_filter($payments, fn($p) => $p['status'] === 'Menunggu'));
+$countLunas = count(array_filter($payments, fn($p) => $p['status'] === 'Lunas'));
+
 ob_start();
 ?>
 <section class="row g-5">
@@ -36,27 +55,28 @@ ob_start();
                         </tr>
                     </thead>
                     <tbody>
+                        <?php foreach ($payments as $pay): ?>
                         <tr>
-                            <td class="text-white fw-medium">#K-110</td>
-                            <td>Naomi Hart</td>
-                            <td class="text-gold">Rp 875.000</td>
-                            <td>QRIS</td>
-                            <td><span class="badge bg-warning">Menunggu</span></td>
+                            <td class="text-white fw-medium">#LP-<?= $pay['id_pesanan']; ?></td>
+                            <td><?= htmlspecialchars($pay['username'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="text-gold"><?= rupiah((float)$pay['total_bayar']); ?></td>
+                            <td><?= htmlspecialchars($pay['metode'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td>
+                                <?php
+                                $badgeClass = match($pay['status']) {
+                                    'Menunggu' => 'bg-warning text-dark',
+                                    'Lunas' => 'bg-success',
+                                    'Gagal' => 'bg-danger',
+                                    default => 'bg-secondary',
+                                };
+                                ?>
+                                <span class="badge <?= $badgeClass; ?>"><?= htmlspecialchars($pay['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            </td>
                         </tr>
-                        <tr>
-                            <td class="text-white fw-medium">#K-111</td>
-                            <td>Luca Stone</td>
-                            <td class="text-gold">Rp 1.450.000</td>
-                            <td>QRIS</td>
-                            <td><span class="badge bg-secondary">Lunas</span></td>
-                        </tr>
-                        <tr>
-                            <td class="text-white fw-medium">#K-112</td>
-                            <td>Clara Vance</td>
-                            <td class="text-gold">Rp 420.000</td>
-                            <td>Tunai</td>
-                            <td><span class="badge bg-secondary">Lunas</span></td>
-                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($payments)): ?>
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Belum ada transaksi pembayaran.</td></tr>
+                        <?php endif; ?>
                     </tbody>
                 </table>
             </div>
@@ -69,14 +89,14 @@ ob_start();
             <div class="row row-cols-2 g-4">
                 <div class="col">
                     <article class="card p-4 h-100">
-                        <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Menunggu Bayar</p>
-                        <p class="h2 text-gold font-display mb-0">1</p>
+                        <p class="text-secondary small mb-2">Menunggu Bayar</p>
+                        <p class="h2 text-gold font-display mb-0"><?= $countMenunggu; ?></p>
                     </article>
                 </div>
                 <div class="col">
                     <article class="card p-4 h-100">
-                        <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Sudah Lunas</p>
-                        <p class="h2 text-gold font-display mb-0">2</p>
+                        <p class="text-secondary small mb-2">Sudah Lunas</p>
+                        <p class="h2 text-gold font-display mb-0"><?= $countLunas; ?></p>
                     </article>
                 </div>
             </div>

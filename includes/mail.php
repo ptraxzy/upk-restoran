@@ -12,7 +12,7 @@ function send_mail(string $to, string $subject, string $message): bool
 {
     $apiKey = env('RESEND_API_KEY', '');
     $from = env('MAIL_FROM', 'no-reply@ultramaxo.tech');
-    $name = env('MAIL_NAME', 'NOCTRA');
+    $name = env('MAIL_NAME', 'Lumière');
 
     if (empty($apiKey)) {
         error_log("Mail Error: RESEND_API_KEY tidak ditemukan di .env");

@@ -24,10 +24,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         $error = 'Format email Anda sepertinya salah.';
     } else {
         $pdo = db();
-        $statement = $pdo->prepare('SELECT id_user FROM user WHERE username = :username OR email = :email LIMIT 1');
-        $statement->execute(['username' => $username, 'email' => $email]);
+        
+        // Cek apakah username/email sudah dipakai di tabel user
+        $exists = false;
+        
+        $chkUser = $pdo->prepare('SELECT 1 FROM user WHERE username = :username OR email = :email LIMIT 1');
+        $chkUser->execute(['username' => $username, 'email' => $email]);
+        if ($chkUser->fetch()) {
+            $exists = true;
+        }
 
-        if ($statement->fetch()) {
+        if ($exists) {
             $error = 'Nama pengguna atau email ini sudah ada yang pakai.';
         } else {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
@@ -53,15 +60,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOCTRA | Gabung Member</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Lumière | Gabung Member</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #0a0a0a;
             --card-bg: rgba(10, 10, 10, 0.92);
             --gold: #C9A84C;
-            --font-display: 'Cormorant Garamond', serif;
-            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Libre Baskerville', serif;
+            --font-body: 'DM Sans', sans-serif;
             --ease: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -78,6 +85,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             overflow: hidden;
             position: relative;
             padding: 20px;
+            -webkit-font-smoothing: antialiased;
         }
 
         .bg-layer {
@@ -90,18 +98,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             z-index: -1;
         }
 
-        @keyframes bgZoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+        @keyframes bgZoom { from { transform: scale(1); } to { transform: scale(1.06); } }
 
         .register-box {
             position: relative;
             background: var(--card-bg);
-            padding: 45px;
+            padding: 44px;
             width: 100%;
             max-width: 400px;
             text-align: center;
-            animation: fadeUp 0.8s 0.2s both;
+            animation: fadeUp 0.7s 0.15s both;
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.04);
         }
 
         .register-box::before {
@@ -109,34 +117,34 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             position: absolute;
             inset: 0;
             border: 1px solid var(--gold);
-            animation: traceIn 1.4s 0.5s var(--ease) both;
+            animation: traceIn 1.2s 0.4s var(--ease) both;
             clip-path: inset(0 100% 0 0);
             pointer-events: none;
         }
 
         @keyframes traceIn { to { clip-path: inset(0 0% 0 0); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fieldFade { to { opacity: 1; } }
 
-        h1 { font-family: var(--font-display); color: var(--gold); letter-spacing: 8px; margin-bottom: 2px; font-size: 34px; text-transform: uppercase; }
-        .subtitle { font-size: 11px; text-transform: uppercase; letter-spacing: 3px; color: #666; margin-bottom: 30px; }
+        h1 { font-family: var(--font-display); color: var(--gold); letter-spacing: 0.06em; margin-bottom: 4px; font-size: 28px; }
+        .subtitle { font-size: 13px; color: #666; margin-bottom: 32px; }
 
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 18px;
             text-align: left;
             opacity: 0;
-            animation: fieldFade 0.6s forwards;
+            animation: fieldFade 0.5s forwards;
         }
 
-        .label { display: block; font-size: 10px; color: var(--gold); text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 6px; font-weight: 600; }
-        .input { width: 100%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px; color: white; box-sizing: border-box; transition: all 0.3s var(--ease); font-size: 14px; font-family: var(--font-body); }
+        .label { display: block; font-size: 12px; color: var(--gold); margin-bottom: 7px; font-weight: 600; }
+        .input { width: 100%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 14px; color: white; box-sizing: border-box; transition: all 0.25s var(--ease); font-size: 14px; font-family: var(--font-body); }
         .input:focus { outline: none; border-color: var(--gold); background: rgba(255, 255, 255, 0.06); }
 
-        .btn { width: 100%; background: var(--gold); color: black; border: none; padding: 15px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; cursor: pointer; margin-top: 10px; transition: all 0.3s var(--ease); font-size: 12px; }
-        .btn:hover { background: #f3e5ab; box-shadow: 0 5px 20px rgba(201, 168, 76, 0.2); }
+        .btn { width: 100%; background: var(--gold); color: black; border: none; padding: 13px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: all 0.25s var(--ease); font-size: 14px; }
+        .btn:hover { background: #f3e5ab; box-shadow: 0 4px 16px rgba(201, 168, 76, 0.2); }
 
-        .alert { background: rgba(220, 53, 69, 0.1); color: #ff6b6b; padding: 12px; font-size: 11px; margin-bottom: 25px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
-        .footer { text-align: center; margin-top: 30px; font-size: 12px; color: #777; }
+        .alert { background: rgba(220, 53, 69, 0.1); color: #ff6b6b; padding: 12px; font-size: 13px; margin-bottom: 24px; text-align: center; border: 1px solid rgba(255,255,255,0.05); }
+        .footer { text-align: center; margin-top: 28px; font-size: 13px; color: #777; }
         .footer a { color: var(--gold); text-decoration: none; font-weight: 600; }
     </style>
 </head>
@@ -144,7 +152,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     <div class="bg-layer"></div>
 
     <main class="register-box">
-        <h1>NOCTRA</h1>
+        <h1>Lumière</h1>
         <p class="subtitle">Gabung Member</p>
 
         <?php if ($error): ?>

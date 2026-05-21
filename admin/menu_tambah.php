@@ -11,85 +11,147 @@ require __DIR__ . '/../includes/header.php';
 
 ob_start();
 ?>
-<section class="row g-5">
-    <div class="col-lg-8">
-        <article class="section-panel">
-            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">New Signature</p>
-            <h3 class="panel-title mb-1">Tambah Menu Baru</h3>
-            <p class="panel-desc mb-5">Masukkan detail menu baru untuk ditambahkan ke katalog restoran.</p>
+<div class="mb-5 animate-fade-in-up">
+    <a href="<?= htmlspecialchars(base_url('admin/menu.php'), ENT_QUOTES, 'UTF-8'); ?>" class="premium-back-link">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="align-middle me-1"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Kembali Ke Inventaris
+    </a>
+</div>
 
-            <form action="<?= htmlspecialchars(base_url('actions/menu/store.php'), ENT_QUOTES, 'UTF-8'); ?>" method="post">
-                <div class="form-grid-layout mb-4">
-                    <div>
-                        <label class="form-label">URL Foto Makanan</label>
-                        <input class="form-control" type="text" name="gambar" placeholder="https://example.com/image.jpg">
-                    </div>
-                    <div class="d-flex flex-column gap-4">
-                        <div>
-                            <label class="form-label">Nama Hidangan</label>
-                            <input class="form-control" type="text" name="nama_menu" placeholder="E.g. Truffle Infused Wagyu" required>
+<section class="premium-card-glass animate-fade-in-up" style="animation-delay: 0.1s;">
+    <form action="<?= htmlspecialchars(base_url('actions/menu/store.php'), ENT_QUOTES, 'UTF-8'); ?>" method="post">
+        <div class="row g-5">
+            <!-- Left Column: Aspect-ratio 4:5 Photo Box -->
+            <div class="col-lg-5 col-md-12">
+                <div class="mb-4">
+                    <label class="form-label text-secondary small mb-3">Tinjau Visual Menu</label>
+                    <div class="premium-photo-box" id="photoPreviewContainer">
+                        <div class="text-center p-4" id="photoPlaceholder">
+                            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" class="mb-3 mx-auto d-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                            <span class="d-block text-secondary small mb-1">Visualisasi Hidangan</span>
+                            <span class="d-block text-muted" style="font-size: 11px;">Rasio 4:5 direkomendasikan</span>
                         </div>
-                        <div>
-                            <label class="form-label d-block mb-3">Kategori</label>
-                            <div class="d-flex flex-wrap gap-2">
-                                <label class="badge bg-warning text-dark px-3 py-2 cursor-pointer border border-warning" style="cursor: pointer;">
-                                    <input type="radio" name="id_kategori" value="2" class="d-none" checked> Appetizer
-                                </label>
-                                <label class="badge bg-secondary text-light px-3 py-2 cursor-pointer border border-secondary" style="cursor: pointer;">
-                                    <input type="radio" name="id_kategori" value="1" class="d-none"> Main Course
-                                </label>
-                                <label class="badge bg-secondary text-light px-3 py-2 cursor-pointer border border-secondary" style="cursor: pointer;">
-                                    <input type="radio" name="id_kategori" value="3" class="d-none"> Dessert
-                                </label>
-                                <label class="badge bg-secondary text-light px-3 py-2 cursor-pointer border border-secondary" style="cursor: pointer;">
-                                    <input type="radio" name="id_kategori" value="4" class="d-none"> Beverage
-                                </label>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="form-label">Deskripsi Kuliner</label>
-                            <textarea class="form-control" name="deskripsi" rows="4" placeholder="Deskripsikan profil rasa, tekstur, dan sisi visual utama hidangan elegan."></textarea>
-                        </div>
+                        <img src="" alt="Preview Makanan" id="photoPreview" style="display: none;">
                     </div>
                 </div>
-                
-                <div class="row g-4 mb-5">
-                    <div class="col-md-4">
-                        <label class="form-label">Harga</label>
-                        <input class="form-control" type="number" name="harga" placeholder="195000" required>
+                <div>
+                    <label class="form-label text-secondary small mb-2">URL Foto Makanan</label>
+                    <input class="form-control premium-input-standard" type="text" name="gambar" id="gambarInput" placeholder="Masukkan atau tempel URL gambar..." autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Right Column: Details Fields -->
+            <div class="col-lg-7 col-md-12 d-flex flex-column gap-4">
+                <div>
+                    <label class="form-label text-secondary small mb-1">Nama Hidangan</label>
+                    <input class="form-control premium-input-large" type="text" name="nama_menu" placeholder="E.g. Truffle Infused Wagyu" required autocomplete="off">
+                </div>
+
+                <div>
+                    <label class="form-label text-secondary small mb-3">Kategori</label>
+                    <div class="premium-category-container">
+                        <label class="premium-chip-label">
+                            <input type="radio" name="id_kategori" value="2" class="premium-chip-input" checked>
+                            <div class="premium-chip-box">Appetizer</div>
+                        </label>
+                        <label class="premium-chip-label">
+                            <input type="radio" name="id_kategori" value="1" class="premium-chip-input">
+                            <div class="premium-chip-box">Main Course</div>
+                        </label>
+                        <label class="premium-chip-label">
+                            <input type="radio" name="id_kategori" value="3" class="premium-chip-input">
+                            <div class="premium-chip-box">Dessert</div>
+                        </label>
+                        <label class="premium-chip-label">
+                            <input type="radio" name="id_kategori" value="4" class="premium-chip-input">
+                            <div class="premium-chip-box">Beverage</div>
+                        </label>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Status Ketersediaan</label>
-                        <select class="form-select" name="status">
-                            <option value="Tersedia">Tersedia</option>
+                </div>
+
+                <div>
+                    <label class="form-label text-secondary small mb-2">Deskripsi Kuliner</label>
+                    <textarea class="form-control premium-textarea" name="deskripsi" rows="5" placeholder="Deskripsikan profil rasa, tekstur, bahan baku eksklusif, dan daya tarik visual utama dari hidangan premium ini."></textarea>
+                </div>
+
+                <div class="row g-4">
+                    <div class="col-sm-6">
+                        <label class="form-label text-secondary small mb-2">Harga Hidangan</label>
+                        <div class="input-group">
+                            <span class="premium-currency-badge">IDR</span>
+                            <input class="form-control premium-input-standard" type="number" name="harga" placeholder="195000" required style="border-top-left-radius: 0; border-bottom-left-radius: 0;">
+                        </div>
+                    </div>
+                    <div class="col-sm-6">
+                        <label class="form-label text-secondary small mb-2">Jumlah Porsi</label>
+                        <input class="form-control premium-input-standard" type="number" name="porsi" value="10" required>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="form-label text-secondary small mb-2">Aktivasi Katalog</label>
+                    <div class="premium-switch">
+                        <div style="min-width: 0; padding-right: 16px;">
+                            <span class="text-white fw-medium d-block" style="font-size: 14px;">Status Ketersediaan</span>
+                            <span class="text-muted d-block" style="font-size: 12px; line-height: 1.4;">Menu ini langsung aktif dan dapat dipesan pelanggan jika ketersediaan aktif.</span>
+                        </div>
+                        <select class="form-select premium-input-standard" name="status" style="width: auto; min-width: 140px;">
+                            <option value="Tersedia" selected>Tersedia</option>
                             <option value="Habis">Habis</option>
                         </select>
                     </div>
-                    <div class="col-md-4">
-                        <label class="form-label">Jumlah Porsi</label>
-                        <input class="form-control" type="number" name="porsi" value="10" required>
+                </div>
+
+                <div>
+                    <label class="form-label text-secondary small mb-2">Petugas Input</label>
+                    <div class="premium-input-standard bg-black d-flex align-items-center gap-3" style="padding: 12px 16px; border: 1px dashed rgba(197, 160, 89, 0.25);">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"/></svg>
+                        <span class="text-white small" style="font-size: 13px;">
+                            <?= htmlspecialchars($_SESSION['user_name'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?>
+                            <span class="text-secondary ms-2" style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em;">(<?= htmlspecialchars($_SESSION['user_role'] ?? 'admin', ENT_QUOTES, 'UTF-8'); ?>)</span>
+                        </span>
                     </div>
                 </div>
-                
-                <div class="d-flex flex-wrap gap-3 pt-4 border-top border-soft">
-                    <button class="btn btn-warning" type="submit">Simpan Menu</button>
-                    <a class="btn btn-outline-warning" href="<?= htmlspecialchars(base_url('admin/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">Batal</a>
-                </div>
-            </form>
-        </article>
-    </div>
 
-    <aside class="col-lg-4">
-        <article class="hero-card">
-            <p class="text-secondary small text-uppercase letter-spacing-1 mb-2">Preview Mood</p>
-            <div class="mt-4" style="height: 300px; background-image: url('https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80'); background-size: cover; background-position: center; border: 1px solid var(--border);"></div>
-            <p class="mt-4 small text-secondary line-height-1.6">Gunakan panel ini untuk menjaga tone visual menu baru tetap seragam dengan presentasi akhir ke pelanggan.</p>
-        </article>
-    </aside>
+                <div class="d-flex justify-content-end gap-3 pt-4 mt-2" style="border-top: 1px solid rgba(197, 160, 89, 0.1);">
+                    <a class="btn premium-btn-outline" href="<?= htmlspecialchars(base_url('admin/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">Batal</a>
+                    <button class="btn premium-btn-gold" type="submit">Simpan Menu</button>
+                </div>
+            </div>
+        </div>
+    </form>
 </section>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const gambarInput = document.getElementById('gambarInput');
+    const photoPreview = document.getElementById('photoPreview');
+    const photoPlaceholder = document.getElementById('photoPlaceholder');
+
+    const updatePreview = () => {
+        const url = gambarInput.value.trim();
+        if (url) {
+            photoPreview.src = url;
+            photoPreview.style.display = 'block';
+            photoPlaceholder.style.display = 'none';
+        } else {
+            photoPreview.style.display = 'none';
+            photoPlaceholder.style.display = 'block';
+        }
+    };
+
+    // Listen to changes
+    gambarInput.addEventListener('input', updatePreview);
+    gambarInput.addEventListener('change', updatePreview);
+    
+    // Initial run
+    updatePreview();
+});
+</script>
 <?php
 $content = ob_get_clean();
 render_internal_shell([
+    'brand' => 'Lumière',
     'badge' => 'Administration',
     'title' => 'Tambah Menu Baru',
     'description' => 'Gunakan formulir ini untuk merancang sajian baru yang sesuai dengan standar estetika restoran.',

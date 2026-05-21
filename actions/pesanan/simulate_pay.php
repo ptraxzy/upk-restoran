@@ -20,9 +20,14 @@ $pdo = db();
 $pdo->beginTransaction();
 
 try {
-    // Update pembayaran
-    $stmtBayar = $pdo->prepare("UPDATE pembayaran SET status = 'Lunas' WHERE id_pesanan = ?");
-    $stmtBayar->execute([$id_pesanan]);
+    // Update pembayaran with creator (pelanggan) auditing info
+    $stmtBayar = $pdo->prepare("
+        UPDATE pembayaran 
+        SET status = 'Lunas', 
+            id_user = ? 
+        WHERE id_pesanan = ?
+    ");
+    $stmtBayar->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
 
     // Update pesanan agar masuk ke antrian kasir/dapur
     $stmtPesanan = $pdo->prepare("UPDATE pesanan SET status_pesanan = 'Diproses' WHERE id_pesanan = ?");

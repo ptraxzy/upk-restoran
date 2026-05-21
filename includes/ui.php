@@ -8,11 +8,11 @@ function render_flash_messages(): void
     $success = get_flash('success');
 
     if ($error !== null) {
-        echo '<div class="alert alert-danger rounded-0 small mb-4 border-0 text-center text-uppercase letter-spacing-1">' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8') . '</div>';
+        echo '<div class="alert alert-danger rounded-0 small mb-4 border-0 text-center">' . htmlspecialchars($error, ENT_QUOTES, 'UTF-8') . '</div>';
     }
 
     if ($success !== null) {
-        echo '<div class="alert alert-success rounded-0 small mb-4 border-0 text-center text-uppercase letter-spacing-1">' . htmlspecialchars($success, ENT_QUOTES, 'UTF-8') . '</div>';
+        echo '<div class="alert alert-success rounded-0 small mb-4 border-0 text-center">' . htmlspecialchars($success, ENT_QUOTES, 'UTF-8') . '</div>';
     }
 }
 
@@ -29,15 +29,15 @@ function public_nav_items(): array
 
 function cart_count(): int
 {
-    if (!isset($_SESSION['user_id'])) {
+    if (!isset($_SESSION['id_user'])) {
         return count($_SESSION['cart'] ?? []);
     }
 
     require_once __DIR__ . '/database.php';
 
     try {
-        $stmt = db()->prepare('SELECT SUM(qty) AS total FROM keranjang WHERE user_id = ?');
-        $stmt->execute([$_SESSION['user_id']]);
+        $stmt = db()->prepare('SELECT COUNT(*) AS total FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_user = ?');
+        $stmt->execute([$_SESSION['id_user']]);
         $row = $stmt->fetch();
 
         return (int) ($row['total'] ?? 0);
@@ -54,6 +54,7 @@ function admin_nav_sections(): array
         ],
         'Pengelolaan' => [
             ['label' => 'Data Menu', 'href' => base_url('admin/menu.php')],
+            ['label' => 'Pesanan Restoran', 'href' => base_url('admin/pesanan.php')],
             ['label' => 'Promo & Diskon', 'href' => base_url('admin/diskon.php')],
             ['label' => 'Data Tim', 'href' => base_url('admin/karyawan.php')],
         ],
@@ -72,6 +73,7 @@ function staff_nav_sections(): array
         ],
         'Layanan' => [
             ['label' => 'Daftar Pesanan', 'href' => base_url('kasir/pesanan.php')],
+            ['label' => 'Daftar Menu', 'href' => base_url('kasir/menu.php')],
             ['label' => 'Proses Bayar', 'href' => base_url('kasir/pembayaran.php')],
         ],
         'Akun' => [
@@ -93,7 +95,7 @@ function render_internal_shell(array $config, string $content): void
     $badge = $config['badge'] ?? '';
     $title = $config['title'] ?? '';
     $description = $config['description'] ?? '';
-    $brand = $config['brand'] ?? "L'Art Culinaire";
+    $brand = $config['brand'] ?? get_setting('nama_restoran', "Lumière");
     $userName = htmlspecialchars($_SESSION['user_name'] ?? 'User', ENT_QUOTES, 'UTF-8');
     $roleName = htmlspecialchars(role_label($_SESSION['user_role'] ?? ''), ENT_QUOTES, 'UTF-8');
 
@@ -148,23 +150,23 @@ function render_internal_shell(array $config, string $content): void
             <div class="mt-auto p-4 border-top border-soft">
                 <div class="d-flex align-items-center justify-content-between mb-3">
                     <div style="min-width: 0;">
-                        <p class="text-gold m-0 text-uppercase" style="font-size: 9px; letter-spacing: 1px;"><?= $roleName; ?></p>
-                        <p class="text-white m-0 fw-medium text-truncate" style="font-size: 13px;"><?= $userName; ?></p>
+                        <p class="text-gold m-0" style="font-size: 11px;"><?= $roleName; ?></p>
+                        <p class="text-white m-0 fw-medium text-truncate" style="font-size: 14px;"><?= $userName; ?></p>
                     </div>
                 </div>
-                <a class="btn btn-outline-warning w-100 py-2" style="font-size: 10px; letter-spacing: 2px;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">LOGOUT</a>
+                <a class="btn btn-outline-warning w-100 py-2" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">Logout</a>
             </div>
         </aside>
 
         <section class="dashboard-main">
             <header class="dashboard-topbar d-flex justify-content-between align-items-start border-bottom border-soft pb-4 mb-5">
                 <div class="animate-fade-in-up">
-                    <p class="text-gold small text-uppercase letter-spacing-2 mb-2"><?= htmlspecialchars($badge); ?></p>
-                    <h2 class="dashboard-topbar-title font-display text-white m-0" style="font-size: 32px;"><?= htmlspecialchars($title); ?></h2>
-                    <p class="text-secondary small mt-2 mb-0"><?= htmlspecialchars($description); ?></p>
+                    <p class="text-gold small mb-2" style="font-size: 12px;"><?= htmlspecialchars($badge); ?></p>
+                    <h2 class="dashboard-topbar-title font-display text-white m-0" style="font-size: 28px;"><?= htmlspecialchars($title); ?></h2>
+                    <p class="text-secondary mt-2 mb-0" style="font-size: 13px;"><?= htmlspecialchars($description); ?></p>
                 </div>
                 <div class="d-none d-md-block text-end animate-fade-in-up" style="animation-delay: 0.2s;">
-                    <p class="text-muted small text-uppercase letter-spacing-1 m-0"><?= date('l, d F Y'); ?></p>
+                    <p class="text-muted m-0" style="font-size: 13px;"><?= date('l, d F Y'); ?></p>
                 </div>
             </header>
 
@@ -205,7 +207,7 @@ function render_public_shell(array $config, string $content): void
     $title = $config['title'] ?? '';
     $description = $config['description'] ?? '';
     $eyebrow = $config['eyebrow'] ?? 'Member Area';
-    $brand = $config['brand'] ?? "L'Art Culinaire";
+    $brand = ($config['brand'] ?? "L'Art Culinaire") === "L'Art Culinaire" ? get_setting('nama_restoran', "Lumière") : $config['brand'];
     $actions = $config['actions'] ?? [];
     $hideHero = $config['hide_hero'] ?? false;
     ?>
@@ -225,14 +227,14 @@ function render_public_shell(array $config, string $content): void
                                 <?php $active = is_active_path($item['href']); ?>
                                 <a class="public-nav-link text-decoration-none <?= $active ? 'active' : ''; ?> position-relative" href="<?= htmlspecialchars($item['href']); ?>">
                                     <?= htmlspecialchars($item['label']); ?>
-                                    <?php if ($item['label'] === 'Keranjang' && cart_count() > 0): ?>
-                                        <span class="cart-count"><?= cart_count(); ?></span>
+                                    <?php if ($item['label'] === 'Keranjang'): ?>
+                                        <span class="cart-count js-cart-count" style="<?= cart_count() > 0 ? '' : 'display: none;' ?>"><?= cart_count(); ?></span>
                                     <?php endif; ?>
                                 </a>
                             </li>
                         <?php endforeach; ?>
                         <li class="nav-item ms-lg-2">
-                            <a class="btn btn-outline-warning w-100 w-lg-auto" style="padding: 8px 16px; font-size: 10px;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">Logout</a>
+                            <a class="btn btn-outline-warning w-100 w-lg-auto" style="padding: 8px 16px; font-size: 12px;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">Logout</a>
                         </li>
                     </ul>
                 </div>
@@ -266,7 +268,7 @@ function render_public_shell(array $config, string $content): void
         </section>
         
         <footer class="mt-auto py-5 border-top border-soft text-center bg-black">
-            <p class="text-secondary small text-uppercase letter-spacing-2 m-0" style="font-size: 9px;">© <?= date('Y') ?> <?= htmlspecialchars($brand); ?>. All Rights Reserved.</p>
+            <p class="text-secondary m-0" style="font-size: 12px;">© <?= date('Y') ?> <?= htmlspecialchars($brand); ?>. All Rights Reserved.</p>
         </footer>
     </main>
     <?php

@@ -9,105 +9,136 @@ $title = 'Dashboard Karyawan';
 $assetBase = '../../assets';
 require __DIR__ . '/../includes/header.php';
 
+require_once __DIR__ . '/../includes/database.php';
+$pdo = db();
+
+// Dynamic metrics
+$stmtAktif = $pdo->query("SELECT COUNT(*) FROM pesanan WHERE status_pesanan IN ('Diproses','Sedang Disiapkan','Siap Saji','Menunggu Pembayaran')");
+$countAktif = (int)$stmtAktif->fetchColumn();
+
+$stmtSelesai = $pdo->query("SELECT COUNT(*) FROM pesanan WHERE status_pesanan = 'Selesai'");
+$countSelesai = (int)$stmtSelesai->fetchColumn();
+
+$stmtBelumBayar = $pdo->query("SELECT COUNT(*) FROM pesanan WHERE status_pesanan = 'Menunggu Pembayaran'");
+$countBelumBayar = (int)$stmtBelumBayar->fetchColumn();
+
+// Recent active orders (limit 5)
+$stmtRecent = $pdo->query("
+    SELECT p.id_pesanan, p.no_meja, p.status_pesanan, p.tanggal_pesanan,
+           u.username
+    FROM pesanan p
+    LEFT JOIN user u ON p.id_user = u.id_user
+    WHERE p.status_pesanan IN ('Diproses','Sedang Disiapkan','Siap Saji','Menunggu Pembayaran')
+    ORDER BY p.tanggal_pesanan DESC
+    LIMIT 5
+");
+$recentOrders = $stmtRecent->fetchAll();
+
+// Get details for recent orders
+$recentDetails = [];
+if (count($recentOrders) > 0) {
+    $ids = array_column($recentOrders, 'id_pesanan');
+    $ph = implode(',', array_fill(0, count($ids), '?'));
+    $stmtD = $pdo->prepare("SELECT dp.id_pesanan, m.nama_menu, dp.jumlah FROM detail_pesanan dp JOIN menu m ON dp.id_menu = m.id_menu WHERE dp.id_pesanan IN ($ph)");
+    $stmtD->execute($ids);
+    foreach ($stmtD->fetchAll() as $d) {
+        $recentDetails[$d['id_pesanan']][] = $d;
+    }
+}
+
 ob_start();
 ?>
 <section class="row row-cols-1 row-cols-md-3 g-3 mb-4">
     <article class="card bg-dark text-white border-secondary p-3 rounded-0 h-100">
-        <p class="text-muted small text-uppercase mb-2">Pesanan Aktif</p>
-        <p class="h2 text-warning mb-0">24</p>
-        <p class="metric-note">Arus service malam didominasi tasting menu dan premium pairings.</p>
+        <p class="text-muted small mb-2">Pesanan Aktif</p>
+        <p class="h2 text-warning mb-0"><?= $countAktif; ?></p>
+        <p class="metric-note">Jumlah pesanan yang sedang dalam proses layanan.</p>
     </article>
     <article class="card bg-dark text-white border-secondary p-3 rounded-0 h-100">
-        <p class="text-muted small text-uppercase mb-2">Pesanan Selesai</p>
-        <p class="h2 text-warning mb-0">12</p>
-        <p class="metric-note">Terselesaikan dalam shift malam tanpa eskalasi kitchen.</p>
+        <p class="text-muted small mb-2">Pesanan Selesai</p>
+        <p class="h2 text-warning mb-0"><?= $countSelesai; ?></p>
+        <p class="metric-note">Total pesanan yang sudah diselesaikan.</p>
     </article>
     <article class="card bg-dark text-white border-secondary p-3 rounded-0 h-100">
-        <p class="text-muted small text-uppercase mb-2">Total Shift</p>
-        <p class="h2 text-warning mb-0">8j</p>
-        <p class="metric-note">Service berjalan dalam window operasional malam hingga pukul 22:00.</p>
-    </article>
-    <article class="card bg-dark text-white border-secondary p-3 rounded-0 h-100">
-        <p class="text-muted small text-uppercase mb-2">Status Meja</p>
-        <p class="h2 text-warning mb-0">08</p>
-        <p class="metric-note">Meja aktif masih menunggu update plating dan pembayaran.</p>
+        <p class="text-muted small mb-2">Belum Dibayar</p>
+        <p class="h2 text-warning mb-0"><?= $countBelumBayar; ?></p>
+        <p class="metric-note">Pesanan yang menunggu proses pembayaran.</p>
     </article>
 </section>
 
-<section class="row row-cols-1 row-cols-lg-2 g-4 mt-4">
-    <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
-        <div class="d-flex flex-column gap-2 flex-md-row align-items-md-end justify-content-md-between">
-            <div>
-                <h3 class="h3 mb-1 text-warning">Daftar Pesanan Masuk</h3>
-                <p class="text-muted small mb-4">Daftar pesanan aktif saat ini.</p>
+<section class="row g-4 mt-4">
+    <div class="col-lg-8">
+        <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0 h-100">
+            <div class="d-flex flex-column gap-2 flex-md-row align-items-md-end justify-content-md-between">
+                <div>
+                    <h3 class="h3 mb-1 text-warning">Daftar Pesanan Masuk</h3>
+                    <p class="text-muted small mb-4">Pesanan aktif terbaru dari pelanggan.</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a class="btn btn-outline-warning rounded-0 fw-medium px-4 py-2 text-white" href="<?= htmlspecialchars(base_url('kasir/pesanan.php'), ENT_QUOTES, 'UTF-8'); ?>">Lihat Semua</a>
+                </div>
             </div>
-            <div class="d-flex flex-wrap gap-2">
-                <a class="btn btn-outline-warning rounded-0 text-uppercase fw-medium px-4 py-2 text-white" href="<?= htmlspecialchars(base_url('kasir/pesanan_status.php'), ENT_QUOTES, 'UTF-8'); ?>">Update Status</a>
-                <a class="btn btn-warning rounded-0 text-uppercase fw-medium px-4 py-2" href="<?= htmlspecialchars(base_url('karyawan/pesanan/create.php'), ENT_QUOTES, 'UTF-8'); ?>">Tambah Pesanan</a>
-            </div>
-        </div>
 
-        <table class="table table-dark table-hover table-bordered border-secondary mt-4 mb-0 mt-4">
-            <thead>
-                <tr>
-                    <th>Kode</th>
-                    <th>Tamu</th>
-                    <th>Menu</th>
-                    <th>Meja</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>#K-110</td>
-                    <td>Naomi Hart</td>
-                    <td>Autumn Potage</td>
-                    <td>06</td>
-                    <td><span class="badge badge bg-warning text-dark">Diproses</span></td>
-                </tr>
-                <tr>
-                    <td>#K-111</td>
-                    <td>Luca Stone</td>
-                    <td>A5 Wagyu Ribeye</td>
-                    <td>VIP-2</td>
-                    <td><span class="badge badge bg-secondary text-light">Siap Bayar</span></td>
-                </tr>
-            </tbody>
-        </table>
-    </article>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-bordered border-secondary mt-4 mb-0">
+                    <thead>
+                        <tr>
+                            <th>Kode</th>
+                            <th>Tamu</th>
+                            <th>Menu</th>
+                            <th>Meja</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($recentOrders as $order): ?>
+                        <?php
+                            $menuList = [];
+                            if (isset($recentDetails[$order['id_pesanan']])) {
+                                foreach ($recentDetails[$order['id_pesanan']] as $d) {
+                                    $menuList[] = htmlspecialchars($d['nama_menu'], ENT_QUOTES, 'UTF-8');
+                                }
+                            }
+                            $statusClass = match($order['status_pesanan']) {
+                                'Menunggu Pembayaran' => 'bg-danger text-white',
+                                'Diproses', 'Sedang Disiapkan' => 'bg-warning text-dark',
+                                'Siap Saji' => 'bg-info text-dark',
+                                default => 'bg-secondary text-light',
+                            };
+                        ?>
+                        <tr>
+                            <td>#LP-<?= $order['id_pesanan']; ?></td>
+                            <td><?= htmlspecialchars($order['username'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><?= implode(', ', $menuList) ?: '-'; ?></td>
+                            <td><?= htmlspecialchars($order['no_meja'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td><span class="badge <?= $statusClass; ?>"><?= htmlspecialchars($order['status_pesanan'], ENT_QUOTES, 'UTF-8'); ?></span></td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($recentOrders)): ?>
+                            <tr><td colspan="5" class="text-center py-4 text-muted">Tidak ada pesanan aktif saat ini.</td></tr>
+                        <?php endif; ?>
+                    </tbody>
+                </table>
+            </div>
+        </article>
+    </div>
 
-    <aside class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
-        <h3 class="h3 mb-1 text-warning">Layanan Aktif</h3>
-        <div class="compact-list mt-4">
-            <div class="compact-list-item">
-                <div>
-                    <p class="fw-medium text-light">Meja 04</p>
-                    <p class="mt-2 small text-muted">Black Truffle Risotto • Wagyu Ribeye A5</p>
-                </div>
-                <span class="badge badge bg-warning text-dark">3 Item</span>
+    <div class="col-lg-4">
+        <aside class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0 h-100">
+            <h3 class="h3 mb-1 text-warning">Aksi Cepat</h3>
+            <div class="d-flex flex-column gap-3 mt-4">
+                <a class="btn btn-warning rounded-0 fw-medium py-3" href="<?= htmlspecialchars(base_url('kasir/pesanan.php'), ENT_QUOTES, 'UTF-8'); ?>">Kelola Pesanan</a>
+                <a class="btn btn-outline-warning rounded-0 fw-medium py-3 text-white" href="<?= htmlspecialchars(base_url('kasir/pembayaran.php'), ENT_QUOTES, 'UTF-8'); ?>">Proses Pembayaran</a>
+                <a class="btn btn-outline-warning rounded-0 fw-medium py-3 text-white" href="<?= htmlspecialchars(base_url('kasir/menu.php'), ENT_QUOTES, 'UTF-8'); ?>">Lihat Menu</a>
             </div>
-            <div class="compact-list-item">
-                <div>
-                    <p class="fw-medium text-light">Meja 12</p>
-                    <p class="mt-2 small text-muted">Oyster Hot Caesar • Smoked Scallops Pairing</p>
-                </div>
-                <span class="badge badge bg-secondary text-light">4 Item</span>
-            </div>
-            <div class="compact-list-item">
-                <div>
-                    <p class="fw-medium text-light">Meja 08</p>
-                    <p class="mt-2 small text-muted">Complimentary Dessert • Espresso</p>
-                </div>
-                <span class="badge badge bg-secondary text-light">2 Item</span>
-            </div>
-        </div>
-    </aside>
+        </aside>
+    </div>
 </section>
 <?php
 $content = ob_get_clean();
 render_internal_shell([
     'badge' => 'Service Floor',
-    'title' => 'Selamat malam, ' . ($_SESSION['user_name'] ?? 'Kasir') . '.',
+    'title' => 'Selamat datang, ' . ($_SESSION['user_name'] ?? 'Kasir') . '.',
     'description' => 'SHIFT HARI INI',
     'nav_sections' => staff_nav_sections(),
 ], $content);

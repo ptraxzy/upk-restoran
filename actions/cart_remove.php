@@ -7,10 +7,10 @@ require_once __DIR__ . '/../includes/database.php';
 require_role('pelanggan');
 
 $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
-$userId = $_SESSION['user_id'] ?? 0;
+$userId = $_SESSION['id_user'] ?? 0;
 
 if ($id > 0 && $userId > 0) {
-    $stmt = db()->prepare('DELETE FROM keranjang WHERE id_keranjang = ? AND user_id = ?');
+    $stmt = db()->prepare('DELETE FROM keranjang WHERE id_keranjang = ? AND id_user = ?');
     $stmt->execute([$id, $userId]);
     set_flash('success', 'Item dihapus dari keranjang.');
 }

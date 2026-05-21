@@ -10,27 +10,30 @@ $password = $_POST['password'] ?? '';
 
 if ($username === '' || $password === '') {
     set_flash('error', 'Username dan password wajib diisi.');
-    redirect(base_url('pembeli/auth/register.php'));
+    redirect(base_url('register.php'));
 }
 
-$check = db()->prepare('SELECT id_user FROM user WHERE username = :username LIMIT 1');
-$check->execute(['username' => $username]);
+$exists = false;
+$chkUser = db()->prepare('SELECT 1 FROM user WHERE username = :username LIMIT 1');
+$chkUser->execute(['username' => $username]);
+if ($chkUser->fetch()) {
+    $exists = true;
+}
 
-if ($check->fetch()) {
+if ($exists) {
     set_flash('error', 'Username sudah dipakai.');
-    redirect(base_url('pembeli/auth/register.php'));
+    redirect(base_url('register.php'));
 }
 
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
 $insert = db()->prepare(
-    'INSERT INTO user (username, password, level) VALUES (:username, :password, :level)'
+    'INSERT INTO user (nama_user, username, password, level) VALUES (:username, :username, :password, "pelanggan")'
 );
 
 $insert->execute([
     'username' => $username,
     'password' => $hashedPassword,
-    'level' => 'pelanggan',
 ]);
 
 set_flash('success', 'Register berhasil. Silakan login sebagai member.');

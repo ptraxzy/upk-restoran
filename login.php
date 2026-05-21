@@ -20,7 +20,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     if ($username === '' || $password === '') {
         $error = 'Nama pengguna dan kata sandi jangan dikosongkan ya.';
     } else {
-        $statement = db()->prepare('SELECT id_user, username, password, level FROM user WHERE username = :username LIMIT 1');
+        $statement = db()->prepare('SELECT id_user, username, password, level, nama_user FROM user WHERE username = :username LIMIT 1');
         $statement->execute(['username' => $username]);
         $user = $statement->fetch();
 
@@ -38,8 +38,8 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
 
         if ($user && $isValid) {
-            $_SESSION['user_id'] = (int) $user['id_user'];
-            $_SESSION['user_name'] = (string) $user['username'];
+            $_SESSION['id_user'] = (int) $user['id_user'];
+            $_SESSION['user_name'] = (string) ($user['nama_user'] ?: $user['username']);
             $_SESSION['user_role'] = (string) $user['level'];
             redirect(role_dashboard_path((string) $user['level']));
         }
@@ -52,15 +52,15 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NOCTRA | Selamat Datang</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Plus+Jakarta+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <title>Lumière | Selamat Datang</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg: #0a0a0a;
             --card-bg: rgba(10, 10, 10, 0.92);
             --gold: #C9A84C;
-            --font-display: 'Cormorant Garamond', serif;
-            --font-body: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Libre Baskerville', serif;
+            --font-body: 'DM Sans', sans-serif;
             --ease: cubic-bezier(0.16, 1, 0.3, 1);
         }
 
@@ -76,6 +76,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             justify-content: center;
             overflow: hidden;
             position: relative;
+            -webkit-font-smoothing: antialiased;
         }
 
         .bg-layer {
@@ -88,18 +89,18 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             z-index: -1;
         }
 
-        @keyframes bgZoom { from { transform: scale(1); } to { transform: scale(1.08); } }
+        @keyframes bgZoom { from { transform: scale(1); } to { transform: scale(1.06); } }
 
         .login-box {
             position: relative;
             background: var(--card-bg);
-            padding: 40px; /* Diperkecil */
+            padding: 44px;
             width: 100%;
-            max-width: 350px; /* Diperkecil */
+            max-width: 380px;
             text-align: center;
-            animation: fadeUp 0.8s 0.2s both;
+            animation: fadeUp 0.7s 0.15s both;
             backdrop-filter: blur(20px);
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.04);
         }
 
         .login-box::before {
@@ -107,48 +108,43 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             position: absolute;
             inset: 0;
             border: 1px solid var(--gold);
-            animation: traceIn 1.4s 0.5s var(--ease) both;
+            animation: traceIn 1.2s 0.4s var(--ease) both;
             clip-path: inset(0 100% 0 0);
             pointer-events: none;
         }
 
         @keyframes traceIn { to { clip-path: inset(0 0% 0 0); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes fieldFade { to { opacity: 1; } }
 
         .brand-logo {
             font-family: var(--font-display);
-            font-size: 26px; /* Diperkecil dari 38px */
-            letter-spacing: 8px;
+            font-size: 28px;
+            letter-spacing: 0.06em;
             color: var(--gold);
-            margin-bottom: 2px;
-            text-transform: uppercase;
+            margin-bottom: 4px;
         }
 
         .brand-subtitle {
-            font-size: 9px; /* Diperkecil dari 11px */
-            text-transform: uppercase;
-            letter-spacing: 2.5px;
+            font-size: 13px;
             color: #666;
-            margin-bottom: 30px;
+            margin-bottom: 32px;
         }
 
         .form-group {
-            margin-bottom: 16px; /* Diperkecil */
+            margin-bottom: 18px;
             text-align: left;
             opacity: 0;
-            animation: fieldFade 0.6s forwards;
+            animation: fieldFade 0.5s forwards;
         }
-        .form-group:nth-child(1) { animation-delay: 0.8s; }
-        .form-group:nth-child(2) { animation-delay: 1.0s; }
+        .form-group:nth-child(1) { animation-delay: 0.6s; }
+        .form-group:nth-child(2) { animation-delay: 0.75s; }
 
         .field-label {
             display: block;
-            font-size: 8.5px; /* Diperkecil dari 10px */
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
+            font-size: 12px;
             color: var(--gold);
-            margin-bottom: 6px;
+            margin-bottom: 7px;
             font-weight: 600;
         }
 
@@ -156,11 +152,11 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             width: 100%;
             background: rgba(255, 255, 255, 0.03);
             border: 1px solid rgba(255, 255, 255, 0.08);
-            padding: 10px 12px; /* Diperkecil */
+            padding: 12px 14px;
             color: white;
             font-family: var(--font-body);
-            font-size: 13px; /* Diperkecil dari 14px */
-            transition: all 0.3s var(--ease);
+            font-size: 14px;
+            transition: all 0.25s var(--ease);
         }
 
         .input-control:focus {
@@ -172,16 +168,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         .forgot-link {
             display: block;
             text-align: right;
-            font-size: 10px;
+            font-size: 12px;
             color: var(--gold);
             margin-top: 8px;
             text-decoration: none;
         }
 
         .btn-wrap {
-            margin-top: 25px; /* Diperkecil */
+            margin-top: 28px;
             opacity: 0;
-            animation: fieldFade 0.6s 1.2s forwards;
+            animation: fieldFade 0.5s 0.9s forwards;
         }
 
         .btn-primary {
@@ -189,31 +185,29 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             background: var(--gold);
             color: #000;
             border: none;
-            padding: 12px; /* Diperkecil */
-            font-size: 11px; /* Diperkecil dari 13px */
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 2px;
+            padding: 13px;
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s var(--ease);
+            transition: all 0.25s var(--ease);
         }
 
         .btn-primary:hover {
             background: #f3e5ab;
-            box-shadow: 0 5px 20px rgba(201, 168, 76, 0.2);
+            box-shadow: 0 4px 16px rgba(201, 168, 76, 0.2);
         }
 
         .footer-links {
-            margin-top: 25px;
-            font-size: 11px; /* Diperkecil */
+            margin-top: 28px;
+            font-size: 13px;
             color: #777;
         }
 
         .footer-links a { color: var(--gold); text-decoration: none; font-weight: 600; }
 
         .alert {
-            font-size: 10px; /* Diperkecil */
-            padding: 8px;
+            font-size: 13px;
+            padding: 10px;
             margin-bottom: 20px;
             text-align: center;
             border: 1px solid rgba(255,255,255,0.05);
@@ -229,7 +223,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
     <main class="login-box">
         <header>
-            <h1 class="brand-logo">NOCTRA</h1>
+            <h1 class="brand-logo">Lumière</h1>
             <p class="brand-subtitle">Silakan Masuk</p>
         </header>
 
