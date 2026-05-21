@@ -37,7 +37,7 @@ ob_start();
 :root {
     --gold: #C9A84C;
     --gold-dim: rgba(201, 168, 76, 0.15);
-    --bg-dark: #1E1E1E;
+    --bg-dark: #131313;
     --card-bg: rgba(15, 15, 15, 0.4);
     --text-primary: #E5E2E1;
     --text-secondary: #9A8F80;
