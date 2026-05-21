@@ -7,6 +7,9 @@ require_once __DIR__ . '/../includes/database.php';
 require_role('pelanggan');
 
 $title = 'Riwayat Pesanan';
+$assetBase = '../../assets';
+require __DIR__ . '/../includes/header.php';
+
 $userId = $_SESSION['id_user'] ?? 0;
 $pdo = db();
 
