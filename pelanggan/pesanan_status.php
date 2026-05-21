@@ -15,10 +15,11 @@ $pdo = db();
 
 // Fetch the latest active order
 $stmt = $pdo->prepare('
-    SELECT * 
-    FROM pesanan 
-    WHERE id_user = ? AND status_pesanan NOT IN ("Selesai", "Dibatalkan")
-    ORDER BY tanggal_pesanan DESC 
+    SELECT p.*, pb.metode AS metode_pembayaran, pb.status AS status_pembayaran, pb.trx_id
+    FROM pesanan p
+    LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
+    WHERE p.id_user = ? AND p.status_pesanan NOT IN ("Selesai", "Dibatalkan")
+    ORDER BY p.tanggal_pesanan DESC 
     LIMIT 1
 ');
 $stmt->execute([$userId]);
@@ -57,12 +58,43 @@ ob_start();
             <?php else: ?>
                 <?php
                 $status = $order['status_pesanan'];
-                // Steps mapping
-                $step1 = true; // Diterima is always true if order exists
-                $step2 = in_array($status, ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai']);
-                $step3 = in_array($status, ['Siap Saji', 'Selesai']);
-                $step4 = ($status === 'Selesai');
+                
+                // Done steps
+                $done1 = !in_array($status, ['Menunggu Pembayaran']);
+                $done2 = !in_array($status, ['Menunggu Pembayaran', 'Diproses']);
+                $done3 = !in_array($status, ['Menunggu Pembayaran', 'Diproses', 'Sedang Disiapkan']);
+                $done4 = !in_array($status, ['Menunggu Pembayaran', 'Diproses', 'Sedang Disiapkan', 'Siap Saji']);
+                $done5 = ($status === 'Selesai');
+
+                // Active steps (currently highlighted)
+                $active1 = ($status === 'Menunggu Pembayaran');
+                $active2 = ($status === 'Diproses');
+                $active3 = ($status === 'Sedang Disiapkan');
+                $active4 = ($status === 'Siap Saji');
+                $active5 = ($status === 'Selesai');
                 ?>
+
+                <?php if ($status === 'Menunggu Pembayaran'): ?>
+                    <div class="mb-4 p-4 border border-warning animate-fade-in-up" style="background: rgba(201, 168, 76, 0.05); border-color: var(--gold) !important;">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="text-gold" style="font-size: 24px;">
+                                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-circle"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
+                            </div>
+                            <div>
+                                <h5 class="text-gold font-display mb-1" style="font-size: 16px; font-weight: 600;">Menunggu Pembayaran</h5>
+                                <p class="text-secondary small mb-0">Pesanan Anda telah kami catat. Silakan selesaikan pembayaran untuk mengirimkan pesanan ke dapur dan memulai persiapan hidangan.</p>
+                            </div>
+                        </div>
+                        <div class="d-flex gap-3 mt-3">
+                            <?php if (($order['metode_pembayaran'] ?? 'QRIS') === 'QRIS'): ?>
+                                <a href="<?= base_url('pelanggan/keranjang_checkout.php?action=pay&trx=' . ($order['trx_id'] ?? '') . '&id_pesanan=' . $order['id_pesanan']); ?>" class="btn btn-warning py-2 px-4" style="font-size: 11px; font-weight: 600; border-radius: 0;">Selesaikan Pembayaran (QRIS)</a>
+                            <?php else: ?>
+                                <button class="btn btn-outline-warning py-2 px-4 text-white" style="font-size: 11px; font-weight: 600; border-radius: 0;" disabled>Silakan Lakukan Pembayaran Tunai di Kasir (Meja <?= htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?>)</button>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                <?php endif; ?>
+
                 <div class="mt-4 border border-soft bg-black p-4">
                     <div class="d-flex align-items-center justify-content-between mb-4 border-bottom border-soft pb-3">
                         <div>
@@ -75,34 +107,42 @@ ob_start();
                     <div class="d-flex flex-column gap-4 mt-2">
                         <!-- Step 1 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div class="d-flex h-8 w-8 align-items-center justify-content-center bg-warning text-dark fw-bold rounded-circle" style="font-size: 12px;">1</div>
+                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done1 || $active1) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">1</div>
                             <div>
-                                <p class="fw-semibold text-light mb-1" style="font-size: 14px;">Pesanan Diterima</p>
-                                <p class="small text-secondary mb-0">Pesanan telah masuk ke sistem kami • Meja <?= htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?></p>
+                                <p class="fw-semibold text-light mb-1" style="font-size: 14px;">Konfirmasi Pembayaran</p>
+                                <p class="small text-secondary mb-0"><?= $active1 ? 'Silakan selesaikan pembayaran via ' . htmlspecialchars($order['metode_pembayaran'] ?? 'QRIS') . ' Anda.' : 'Pembayaran terkonfirmasi • Lunas via ' . htmlspecialchars($order['metode_pembayaran'] ?? 'QRIS'); ?></p>
                             </div>
                         </div>
                         <!-- Step 2 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= $step2 ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">2</div>
+                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done2 || $active2) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">2</div>
                             <div>
-                                <p class="fw-semibold <?= $step2 ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Persiapan Hidangan</p>
-                                <p class="small text-secondary mb-0"><?= $step2 ? 'Chef sedang mengolah dan meracik bahan masakan Anda.' : 'Menunggu antrean dapur chef...'; ?></p>
+                                <p class="fw-semibold <?= ($done2 || $active2) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Pesanan Diterima</p>
+                                <p class="small text-secondary mb-0"><?= $active1 ? 'Menunggu pembayaran diselesaikan...' : 'Pesanan telah masuk ke antrean chef • Meja ' . htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?></p>
                             </div>
                         </div>
                         <!-- Step 3 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= $step3 ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">3</div>
+                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done3 || $active3) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">3</div>
                             <div>
-                                <p class="fw-semibold <?= $step3 ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Siap Disajikan</p>
-                                <p class="small text-secondary mb-0"><?= $step3 ? 'Hidangan matang sempurna dan siap disajikan oleh pelayan kami.' : 'Menunggu masakan matang...'; ?></p>
+                                <p class="fw-semibold <?= ($done3 || $active3) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Persiapan Hidangan</p>
+                                <p class="small text-secondary mb-0"><?= ($done3 || $active3) ? 'Chef sedang mengolah dan meracik bahan masakan Anda.' : 'Menunggu antrean dapur chef...'; ?></p>
                             </div>
                         </div>
                         <!-- Step 4 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= $step4 ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">4</div>
+                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done4 || $active4) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">4</div>
                             <div>
-                                <p class="fw-semibold <?= $step4 ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Selesai</p>
-                                <p class="small text-secondary mb-0"><?= $step4 ? 'Sajian lengkap dinikmati di meja Anda.' : 'Sedang diantar ke meja...'; ?></p>
+                                <p class="fw-semibold <?= ($done4 || $active4) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Siap Disajikan</p>
+                                <p class="small text-secondary mb-0"><?= ($done4 || $active4) ? 'Hidangan matang sempurna dan siap disajikan oleh pelayan kami.' : 'Menunggu masakan matang...'; ?></p>
+                            </div>
+                        </div>
+                        <!-- Step 5 -->
+                        <div class="d-flex align-items-start gap-3">
+                            <div class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done5 || $active5) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">5</div>
+                            <div>
+                                <p class="fw-semibold <?= ($done5 || $active5) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Selesai</p>
+                                <p class="small text-secondary mb-0"><?= $active5 ? 'Sajian lengkap dinikmati di meja Anda.' : 'Sedang diantar ke meja...'; ?></p>
                             </div>
                         </div>
                     </div>
