@@ -482,16 +482,18 @@ body {
                     <p class="menu-card-desc"><?= htmlspecialchars((string) ($item['deskripsi'] ?: 'Detail hidangan belum tersedia.'), ENT_QUOTES, 'UTF-8'); ?></p>
                     <div class="menu-card-footer">
                         <span class="menu-card-price"><?= rupiah((float) $item['harga']); ?></span>
-                        <form method="post" action="<?= htmlspecialchars(base_url('actions/tambah_keranjang.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-form">
-                            <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string) $item['id_menu'], ENT_QUOTES, 'UTF-8'); ?>">
-                            <input type="hidden" name="qty" value="1">
-                            <button type="submit" class="btn-add-to-cart">
-                                Tambah
-                                <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M5 0V10M0 5H10" stroke="currentColor" stroke-width="1.5"/>
-                                </svg>
-                            </button>
-                        </form>
+                        <div class="d-flex align-items-center gap-3">
+                            <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-to-cart" style="color: var(--text-secondary); text-decoration: none;">
+                                Detail
+                            </a>
+                            <form method="post" action="<?= htmlspecialchars(base_url('actions/tambah_keranjang.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-form">
+                                <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string) $item['id_menu'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <input type="hidden" name="qty" value="1">
+                                <button type="submit" class="btn-add-to-cart">
+                                    Tambah +
+                                </button>
+                            </form>
+                        </div>
                     </div>
                 </div>
             </article>
@@ -642,16 +644,18 @@ body {
                                         <p class="menu-card-desc">${item.deskripsi}</p>
                                         <div class="menu-card-footer">
                                             <span class="menu-card-price">${item.harga_formatted}</span>
-                                            <form method="post" action="${item.action_url}" class="btn-add-form">
-                                                <input type="hidden" name="id_menu" value="${item.id_menu}">
-                                                <input type="hidden" name="qty" value="1">
-                                                <button type="submit" class="btn-add-to-cart">
-                                                    Tambah
-                                                    <svg viewBox="0 0 10 10" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <path d="M5 0V10M0 5H10" stroke="currentColor" stroke-width="1.5"/>
-                                                    </svg>
-                                                </button>
-                                            </form>
+                                            <div class="d-flex align-items-center gap-3">
+                                                <a href="${item.detail_url}" class="btn-add-to-cart" style="color: var(--text-secondary); text-decoration: none;">
+                                                    Detail
+                                                </a>
+                                                <form method="post" action="${item.action_url}" class="btn-add-form">
+                                                    <input type="hidden" name="id_menu" value="${item.id_menu}">
+                                                    <input type="hidden" name="qty" value="1">
+                                                    <button type="submit" class="btn-add-to-cart">
+                                                        Tambah +
+                                                    </button>
+                                                </form>
+                                            </div>
                                         </div>
                                     </div>
                                 `;
