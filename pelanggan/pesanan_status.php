@@ -148,26 +148,12 @@ ob_start();
                     </div>
                 </div>
 
-                <div class="mt-4">
-                    <h4 class="small fw-semibold text-warning mb-3" style="font-size: 12px;">Rincian Menu Yang Dipesan</h4>
-                    <div class="compact-list bg-black p-3 border border-soft">
-                        <?php foreach ($details as $detail): ?>
-                            <div class="d-flex justify-content-between align-items-center border-bottom border-soft py-2 last:border-0" style="font-size: 13px;">
-                                <span class="text-white"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8'); ?> <span class="text-secondary small">x<?= $detail['jumlah']; ?></span></span>
-                                <span class="text-gold fw-medium"><?= rupiah((float)$detail['harga_satuan'] * $detail['jumlah']); ?></span>
-                            </div>
-                        <?php endforeach; ?>
-                        <div class="d-flex justify-content-between align-items-center pt-3 mt-1 font-display text-gold" style="font-size: 16px;">
-                            <span>Total Harga</span>
-                            <span><?= rupiah((float)$order['total_harga']); ?></span>
-                        </div>
-                    </div>
-                </div>
             <?php endif; ?>
         </article>
     </div>
 
     <aside class="col-lg-4 animate-fade-in-up" style="animation-delay: 0.2s;">
+        <!-- Card 1: Informasi Sajian -->
         <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
             <h3 class="h3 mb-4 text-warning font-display" style="font-size: 24px;">Informasi Sajian</h3>
             <div class="row g-3">
@@ -181,6 +167,25 @@ ob_start();
                 </article>
             </div>
         </article>
+
+        <!-- Card 2: Rincian Menu Yang Dipesan -->
+        <?php if ($order): ?>
+            <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
+                <h3 class="h3 mb-4 text-warning font-display" style="font-size: 20px;">Rincian Menu</h3>
+                <div class="compact-list bg-black p-3 border border-soft">
+                    <?php foreach ($details as $detail): ?>
+                        <div class="d-flex justify-content-between align-items-center border-bottom border-soft py-2 last:border-0" style="font-size: 13px;">
+                            <span class="text-white"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8'); ?> <span class="text-secondary small">x<?= $detail['jumlah']; ?></span></span>
+                            <span class="text-gold fw-medium"><?= rupiah((float)$detail['harga_satuan'] * $detail['jumlah']); ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                    <div class="d-flex justify-content-between align-items-center pt-3 mt-1 font-display text-gold" style="font-size: 16px;">
+                        <span>Total Harga</span>
+                        <span><?= rupiah((float)$order['total_harga']); ?></span>
+                    </div>
+                </div>
+            </article>
+        <?php endif; ?>
     </aside>
 </section>
 <?php
