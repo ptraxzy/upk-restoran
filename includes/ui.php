@@ -60,6 +60,7 @@ function admin_nav_sections(): array
         ],
         'Sistem' => [
             ['label' => 'Catatan Penjualan', 'href' => base_url('admin/laporan.php')],
+            ['label' => 'Ulasan Pelanggan', 'href' => base_url('admin/ulasan.php')],
             ['label' => 'Pengaturan', 'href' => base_url('admin/pengaturan.php')],
         ],
     ];
