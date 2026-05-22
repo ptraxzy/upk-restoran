@@ -192,3 +192,16 @@ SELECT 'member.nara', 'member789', 'pelanggan'
 WHERE NOT EXISTS (
   SELECT 1 FROM `user` WHERE `username` = 'member.nara'
 );
+
+CREATE TABLE IF NOT EXISTS `ulasan` (
+  `id_ulasan` INT NOT NULL AUTO_INCREMENT,
+  `id_pesanan` INT NOT NULL,
+  `id_user` INT NOT NULL,
+  `rating` INT NOT NULL CHECK (`rating` BETWEEN 1 AND 5),
+  `komentar` TEXT,
+  `tanggal_ulasan` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id_ulasan`),
+  UNIQUE KEY `ulasan_pesanan_unique` (`id_pesanan`),
+  FOREIGN KEY (`id_pesanan`) REFERENCES `pesanan` (`id_pesanan`) ON DELETE CASCADE,
+  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
