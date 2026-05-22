@@ -74,18 +74,37 @@ try {
     ]);
     $id_pesanan = (int) $pdo->lastInsertId();
 
-    // 2. Simpan detail pesanan
+    // 2. Simpan detail pesanan dan kurangi stok porsi menu
     $stmtDetail = $pdo->prepare("
         INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah, harga_satuan)
         VALUES (?, ?, ?, ?)
     ");
+    
+    $stmtCheckStock = $pdo->prepare("SELECT porsi, nama_menu FROM menu WHERE id_menu = ? FOR UPDATE");
+    $stmtUpdateStock = $pdo->prepare("UPDATE menu SET porsi = ?, status = ? WHERE id_menu = ?");
+
     foreach ($cart as $item) {
+        // Cek ketersediaan stok porsi
+        $stmtCheckStock->execute([$item['id_menu']]);
+        $menuItem = $stmtCheckStock->fetch();
+
+        if (!$menuItem || $menuItem['porsi'] < $item['qty']) {
+            throw new Exception("Stok untuk '" . ($menuItem['nama_menu'] ?? 'Menu') . "' tidak mencukupi (Tersedia: " . ($menuItem['porsi'] ?? 0) . " porsi).");
+        }
+
+        // Simpan detail pesanan
         $stmtDetail->execute([
             $id_pesanan,
             $item['id_menu'],
             $item['qty'],
             $item['harga']
         ]);
+
+        // Kurangi stok porsi dan ubah status jika porsi habis
+        $newPorsi = max(0, $menuItem['porsi'] - $item['qty']);
+        $newStatus = $newPorsi === 0 ? 'Habis' : 'Tersedia';
+        
+        $stmtUpdateStock->execute([$newPorsi, $newStatus, $item['id_menu']]);
     }
 
     // 3. Simpan data pembayaran (status Menunggu)
