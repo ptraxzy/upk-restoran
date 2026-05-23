@@ -115,10 +115,10 @@ try {
 
     $trx_id = 'ORD-' . date('ymd') . str_pad((string)$id_pesanan, 4, '0', STR_PAD_LEFT);
     $stmtBayar = $pdo->prepare("
-        INSERT INTO pembayaran (id_pesanan, total_bayar, metode, status, trx_id)
-        VALUES (?, ?, ?, 'Menunggu', ?)
+        INSERT INTO pembayaran (id_pesanan, total_bayar, metode, status, trx_id, id_user)
+        VALUES (?, ?, ?, 'Menunggu', ?, ?)
     ");
-    $stmtBayar->execute([$id_pesanan, $total, $metode, $trx_id]);
+    $stmtBayar->execute([$id_pesanan, $total, $metode, $trx_id, $_SESSION['id_user'] ?? null]);
 
     // Hapus item keranjang pengguna setelah pesanan dicatat
     $stmtClear = $pdo->prepare('DELETE FROM keranjang WHERE id_user = ?');

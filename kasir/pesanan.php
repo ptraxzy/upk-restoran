@@ -139,7 +139,8 @@ ob_start();
                         <div class="d-flex align-items-center gap-2">
                             <span class="font-display text-white" style="font-size: 32px; line-height: 1; font-weight: bold;"><?= htmlspecialchars($p['no_meja'], ENT_QUOTES, 'UTF-8') ?></span>
                             <div>
-                                <p class="text-secondary small m-0" style="font-size: 10px; letter-spacing: 0.06em;">MEJA</p>
+                                <p class="text-secondary small m-0" style="font-size: 10px; letter-spacing: 0.06em; font-weight: 600;">MEJA</p>
+                                <p class="text-muted small m-0" style="font-size: 9px; margin-top: 2px; white-space: nowrap;"><?= date('d M Y, H:i', strtotime($p['tanggal_pesanan'])) ?></p>
                             </div>
                         </div>
                         

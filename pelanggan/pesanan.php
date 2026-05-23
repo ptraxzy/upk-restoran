@@ -66,7 +66,7 @@ ob_start();
                     <div class="compact-list-item d-flex justify-content-between align-items-center border-bottom border-soft py-3">
                         <div>
                             <p class="fw-medium text-light mb-1">#LP-<?= $order['id_pesanan']; ?> • <?= htmlspecialchars((string)($order['items_summary'] ?: 'Menu Hidangan'), ENT_QUOTES, 'UTF-8'); ?></p>
-                            <p class="small text-secondary mb-0">Order aktif • Meja <?= htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?> • <?= date('H:i', strtotime($order['tanggal_pesanan'])); ?></p>
+                            <p class="small text-secondary mb-0">Order aktif • Meja <?= htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?> • <?= date('d M Y, H:i', strtotime($order['tanggal_pesanan'])); ?></p>
                         </div>
                         <span class="badge bg-warning text-dark"><?= htmlspecialchars($order['status_pesanan'], ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>

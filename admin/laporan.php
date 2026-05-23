@@ -219,6 +219,7 @@ ob_start();
                             <th>Order</th>
                             <th>Pelanggan</th>
                             <th>Meja</th>
+                            <th>Waktu</th>
                             <th>Total</th>
                             <th>Metode</th>
                             <th>Status</th>
@@ -243,9 +244,10 @@ ob_start();
                                     <span class="text-secondary small d-block" style="font-size: 10px; margin-top: 2px;">
                                         Oleh: <?= htmlspecialchars($trx['kasir']); ?> <span class="text-gold" style="font-size: 9px; text-transform: uppercase;">(<?= htmlspecialchars($trx['kasir_role']); ?>)</span>
                                     </span>
-                                <?php endif; ?>
+                                    <?php endif; ?>
                             </td>
                             <td class="text-secondary"><?= htmlspecialchars((string)$trx['no_meja']); ?></td>
+                            <td class="text-secondary" style="font-size: 11px;"><?= date('d M Y, H:i', strtotime($trx['tanggal_pesanan'])); ?></td>
                             <td class="text-white fw-medium"><?= rupiah((float)$trx['total_harga']); ?></td>
                             <td class="text-secondary" style="font-size: 11px;"><?= htmlspecialchars((string)($trx['metode'] ?? '-')); ?></td>
                             <td><span class="badge <?= $statusClass; ?>" style="font-size: 12px;"><?= htmlspecialchars($trx['status_pesanan']); ?></span></td>

@@ -67,7 +67,7 @@ ob_start();
                 <?php foreach ($riwayat as $trx): ?>
                 <tr>
                     <td class="text-gold"><?= htmlspecialchars($trx['trx_id'] ?? '#LP-' . $trx['id_pesanan'], ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?= date('d M Y', strtotime($trx['tanggal_pembayaran'])); ?></td>
+                    <td><?= date('d M Y, H:i', strtotime($trx['tanggal_pembayaran'])); ?></td>
                     <td><?= htmlspecialchars($trx['nama_pelanggan'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?></td>
                     <td class="text-white"><?= rupiah((float)$trx['total_bayar']); ?></td>
                     <td><?= htmlspecialchars($trx['metode'], ENT_QUOTES, 'UTF-8'); ?></td>

@@ -489,6 +489,11 @@ ob_start();
                 <p class="text-secondary small mb-0" style="font-size: 11px;">Silakan selesaikan pembayaran QRIS Anda dengan memindai kode QR di atas.</p>
             <?php endif; ?>
         </div>
+        
+        <a href="<?= base_url('actions/pesanan/simulate_pay.php?id_pesanan=' . $id_pesanan); ?>" class="btn btn-outline-success w-100 py-3 mb-2 fw-semibold text-uppercase" style="font-size: 11px; letter-spacing: 0.05em; border-radius: 0; border-color: #28a745 !important; color: #28a745 !important;">
+            Simulasi Bayar Lunas (Demo)
+        </a>
+
         <a href="<?= base_url('pelanggan/pesanan_status.php'); ?>" class="btn btn-warning w-100 py-3" style="font-size: 12px; font-weight: 600; border-radius: 0;">Pantau Sajian Anda</a>
         <a href="<?= base_url('pelanggan/dashboard.php'); ?>" class="btn btn-outline-warning w-100 py-3 mt-2" style="font-size: 12px; font-weight: 600; border-radius: 0;">Dashboard</a>
         <?php endif; ?>

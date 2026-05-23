@@ -27,17 +27,16 @@ try {
     $stmtP = $pdo->prepare("UPDATE pesanan SET status_pesanan = 'Diproses', id_karyawan = ? WHERE id_pesanan = ?");
     $stmtP->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
 
-    // 2. Update pembayaran status to 'Lunas' and record the employee in id_user and id_karyawan
+    // 2. Update pembayaran status to 'Lunas' and record the employee in id_karyawan
     $stmtB = $pdo->prepare("
         UPDATE pembayaran 
         SET status = 'Lunas', 
             metode = ?, 
             tanggal_pembayaran = NOW(), 
-            id_user = ?,
             id_karyawan = ?
         WHERE id_pesanan = ?
     ");
-    $stmtB->execute([$metode, $_SESSION['id_user'] ?? null, $_SESSION['id_user'] ?? null, $id_pesanan]);
+    $stmtB->execute([$metode, $_SESSION['id_user'] ?? null, $id_pesanan]);
 
     $pdo->commit();
 
