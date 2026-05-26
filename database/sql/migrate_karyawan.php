@@ -9,7 +9,7 @@ try {
 
     echo "Memulai migrasi kolom id_karyawan...\n";
 
-    // 1. Tambah kolom id_karyawan di tabel pesanan jika belum ada
+    // Migrasi skema: integrasi relasi karyawan ke entitas pesanan
     $stmtPesananCheck = $pdo->query("SHOW COLUMNS FROM pesanan LIKE 'id_karyawan'");
     if (!$stmtPesananCheck->fetch()) {
         echo "Menambahkan kolom id_karyawan ke tabel pesanan...\n";
@@ -23,7 +23,7 @@ try {
         echo "Kolom id_karyawan sudah ada di tabel pesanan.\n";
     }
 
-    // 2. Tambah kolom id_karyawan di tabel pembayaran jika belum ada
+    // Migrasi skema: integrasi relasi karyawan ke entitas pembayaran
     $stmtPembayaranCheck = $pdo->query("SHOW COLUMNS FROM pembayaran LIKE 'id_karyawan'");
     if (!$stmtPembayaranCheck->fetch()) {
         echo "Menambahkan kolom id_karyawan ke tabel pembayaran...\n";

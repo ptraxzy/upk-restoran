@@ -23,11 +23,11 @@ $pdo = db();
 $pdo->beginTransaction();
 
 try {
-    // 1. Update status pesanan to 'Diproses' and record the employee who handled it
+    // Perbarui status pesanan dan catat karyawan yang menangani transaksi
     $stmtP = $pdo->prepare("UPDATE pesanan SET status_pesanan = 'Diproses', id_karyawan = ? WHERE id_pesanan = ?");
     $stmtP->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
 
-    // 2. Update pembayaran status to 'Lunas' and record the employee in id_karyawan
+    // Konfirmasi status pembayaran dan rekam jejak kasir
     $stmtB = $pdo->prepare("
         UPDATE pembayaran 
         SET status = 'Lunas', 

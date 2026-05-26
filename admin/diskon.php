@@ -54,6 +54,14 @@ $vouchers = $stmt->fetchAll();
 // Get search-specific count
 $filteredCount = count($vouchers);
 
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 5;
+$totalPages = ceil($filteredCount / $limit);
+$paginatedVouchers = array_slice($vouchers, ($page - 1) * $limit, $limit);
+
+$startItem = ($filteredCount > 0) ? (($page - 1) * $limit) + 1 : 0;
+$endItem = min($page * $limit, $filteredCount);
+
 ob_start();
 ?>
 <style>
@@ -281,14 +289,14 @@ ob_start();
     <!-- Paginator summary row -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <div class="voucher-paginator-text">
-            Showing 1-<?= $filteredCount ?> of <?= $filteredCount ?> vouchers
+            Showing <?= $startItem ?>-<?= $endItem ?> of <?= $filteredCount ?> vouchers
         </div>
         <div class="d-flex gap-1">
-            <a href="#" class="paginator-arrow" aria-label="Previous page">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="15 18 9 12 15 6"></polyline></svg>
+            <a href="?filter=<?= urlencode($filter) ?><?= $search ? '&search='.urlencode($search) : '' ?>&page=<?= max(1, $page - 1) ?>" class="paginator-arrow <?= $page <= 1 ? 'opacity-50 pe-none' : '' ?>" aria-label="Previous page">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
             </a>
-            <a href="#" class="paginator-arrow" aria-label="Next page">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="9 18 15 12 9 6"></polyline></svg>
+            <a href="?filter=<?= urlencode($filter) ?><?= $search ? '&search='.urlencode($search) : '' ?>&page=<?= min(max(1, $totalPages), $page + 1) ?>" class="paginator-arrow <?= $page >= $totalPages ? 'opacity-50 pe-none' : '' ?>" aria-label="Next page">
+                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
             </a>
         </div>
     </div>
@@ -327,7 +335,7 @@ ob_start();
     </div>
 
     <div class="voucher-list">
-        <?php foreach ($vouchers as $v): ?>
+        <?php foreach ($paginatedVouchers as $v): ?>
             <?php
             // Date formatting
             $expiryFormatted = date('M d, Y', strtotime($v['tanggal_berakhir']));
@@ -367,6 +375,10 @@ ob_start();
                                 Oleh: <?= htmlspecialchars($v['pembuat'] ?? 'Sistem', ENT_QUOTES, 'UTF-8') ?> 
                                 <span class="text-gold" style="font-size: 9px; text-transform: uppercase;">(<?= htmlspecialchars($v['role'] ?? 'admin', ENT_QUOTES, 'UTF-8') ?>)</span>
                             </span>
+                            <span class="text-secondary small d-block" style="font-size: 10px; margin-top: 2px;">
+                                Min. Pembelian: <span class="text-white">Rp <?= number_format((float)$v['minimal_pembelian'], 0, ',', '.') ?></span>
+                                &bull; Min. Porsi: <span class="text-white"><?= (int)$v['minimal_porsi'] ?> porsi</span>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -401,7 +413,7 @@ ob_start();
             </div>
         <?php endforeach; ?>
 
-        <?php if (empty($vouchers)): ?>
+        <?php if (empty($paginatedVouchers)): ?>
             <div class="py-5 text-center bg-black-50 border border-secondary border-opacity-10 rounded-3">
                 <p class="text-secondary small mb-0">Tidak ada voucher ditemukan.</p>
                 <?php if ($search !== '' || $filter !== 'all'): ?>

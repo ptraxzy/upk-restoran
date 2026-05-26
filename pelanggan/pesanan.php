@@ -31,6 +31,12 @@ $historyOrders = [];
 $totalSpent = 0.0;
 $totalOrdersCount = 0;
 
+$search = trim($_GET['search'] ?? '');
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 5;
+
+$activeOrdersUnfilteredCount = 0;
+
 foreach ($orders as $order) {
     if (in_array($order['status_pesanan'], ['Selesai', 'Dibatalkan'])) {
         $historyOrders[] = $order;
@@ -39,9 +45,27 @@ foreach ($orders as $order) {
             $totalOrdersCount++;
         }
     } else {
-        $activeOrders[] = $order;
+        $activeOrdersUnfilteredCount++;
+        // Apply search filter for active orders
+        $match = true;
+        if ($search !== '') {
+            $searchLower = strtolower($search);
+            $itemsSummary = strtolower((string)($order['items_summary'] ?: 'Menu Hidangan'));
+            $idPesanan = strtolower((string)$order['id_pesanan']);
+            if (strpos($idPesanan, $searchLower) === false && strpos($itemsSummary, $searchLower) === false) {
+                $match = false;
+            }
+        }
+        if ($match) {
+            $activeOrders[] = $order;
+        }
     }
 }
+
+$totalActive = count($activeOrders);
+$totalPages = ceil($totalActive / $limit);
+$offset = ($page - 1) * $limit;
+$paginatedActiveOrders = array_slice($activeOrders, $offset, $limit);
 
 ob_start();
 ?>
@@ -61,8 +85,14 @@ ob_start();
 
             <!-- Active Orders -->
             <h3 class="h5 text-white mb-3 mt-4" style="font-size: 12px;">Pesanan Aktif</h3>
+            
+            <form method="GET" class="mb-4 d-flex gap-2">
+                <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari ID pesanan atau hidangan..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
+                <button type="submit" class="btn btn-warning rounded-0 px-4">Cari</button>
+            </form>
+
             <div class="compact-list mb-4">
-                <?php foreach ($activeOrders as $order): ?>
+                <?php foreach ($paginatedActiveOrders as $order): ?>
                     <div class="compact-list-item d-flex justify-content-between align-items-center border-bottom border-soft py-3">
                         <div>
                             <p class="fw-medium text-light mb-1">#LP-<?= $order['id_pesanan']; ?> • <?= htmlspecialchars((string)($order['items_summary'] ?: 'Menu Hidangan'), ENT_QUOTES, 'UTF-8'); ?></p>
@@ -71,10 +101,32 @@ ob_start();
                         <span class="badge bg-warning text-dark"><?= htmlspecialchars($order['status_pesanan'], ENT_QUOTES, 'UTF-8'); ?></span>
                     </div>
                 <?php endforeach; ?>
-                <?php if (empty($activeOrders)): ?>
+                <?php if (empty($paginatedActiveOrders)): ?>
                     <p class="text-secondary py-3 small">Tidak ada pesanan aktif saat ini.</p>
                 <?php endif; ?>
             </div>
+
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation" class="mt-4 mb-5">
+                    <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                        <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                                <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
 
             <!-- Last Orders -->
             <h3 class="h5 text-white mb-3 mt-4" style="font-size: 12px;">Pesanan Terakhir</h3>
@@ -101,7 +153,7 @@ ob_start();
             <div class="row g-3">
                 <article class="p-3 border border-soft bg-black d-flex flex-column h-100 w-100 mb-2">
                     <p class="text-secondary small mb-2">Aktif Sekarang</p>
-                    <p class="h2 text-gold font-display mb-0" style="font-size: 32px;"><?= str_pad((string)count($activeOrders), 2, '0', STR_PAD_LEFT); ?></p>
+                    <p class="h2 text-gold font-display mb-0" style="font-size: 32px;"><?= str_pad((string)$activeOrdersUnfilteredCount, 2, '0', STR_PAD_LEFT); ?></p>
                 </article>
                 <article class="p-3 border border-soft bg-black d-flex flex-column h-100 w-100 mb-2">
                     <p class="text-secondary small mb-2">Total Kunjungan</p>

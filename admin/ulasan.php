@@ -37,6 +37,28 @@ $stmt = $pdo->query("
 ");
 $reviews = $stmt->fetchAll();
 
+$search = trim($_GET['search'] ?? '');
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 5;
+
+$filteredReviews = [];
+foreach ($reviews as $rev) {
+    if ($search === '') {
+        $filteredReviews[] = $rev;
+    } else {
+        $s = strtolower($search);
+        $uStr = strtolower((string)$rev['username']);
+        $kStr = strtolower((string)$rev['komentar']);
+        if (strpos($uStr, $s) !== false || strpos($kStr, $s) !== false) {
+            $filteredReviews[] = $rev;
+        }
+    }
+}
+
+$totalRows = count($filteredReviews);
+$totalPages = ceil($totalRows / $limit);
+$paginatedReviews = array_slice($filteredReviews, ($page - 1) * $limit, $limit);
+
 // Calculate review statistics
 $totalReviews = count($reviews);
 $averageRating = 0.0;
@@ -86,15 +108,21 @@ ob_start();
     <!-- Feed Ulasan -->
     <div class="col-12">
         <article class="section-panel p-4">
-            <h3 class="font-display text-warning mb-4" style="font-size: 22px;">Semua Ulasan Kuliner</h3>
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center mb-4 gap-3">
+                <h3 class="font-display text-warning mb-0" style="font-size: 22px;">Semua Ulasan Kuliner</h3>
+                <form method="GET" class="d-flex gap-2">
+                    <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari nama atau ulasan..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
+                    <button type="submit" class="btn btn-warning rounded-0 px-3">Cari</button>
+                </form>
+            </div>
             
-            <?php if (empty($reviews)): ?>
+            <?php if (empty($paginatedReviews)): ?>
                 <div class="py-5 text-center">
                     <p class="text-secondary">Belum ada pelanggan yang mengirimkan ulasan.</p>
                 </div>
             <?php else: ?>
                 <div class="row g-4">
-                    <?php foreach ($reviews as $rev): ?>
+                    <?php foreach ($paginatedReviews as $rev): ?>
                         <div class="col-12 col-md-6 col-lg-4">
                             <div class="p-4 border border-soft bg-black d-flex flex-column justify-content-between h-100">
                                 <div>
@@ -131,6 +159,28 @@ ob_start();
                         </div>
                     <?php endforeach; ?>
                 </div>
+            <?php endif; ?>
+
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation" class="mt-5">
+                    <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                        <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                                <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
             <?php endif; ?>
         </article>
     </div>

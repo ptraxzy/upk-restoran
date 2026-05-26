@@ -80,7 +80,7 @@ ob_start();
                 <?php foreach ($cart as $index => $item): ?>
                 <div class="cart-item d-flex gap-3 border-bottom border-soft">
                     <?php if (isset($item['gambar']) && $item['gambar']): ?>
-                        <img class="cart-item-image" src="<?= htmlspecialchars($item['gambar'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>">
+                        <img class="cart-item-image" src="<?= htmlspecialchars(menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>">
                     <?php else: ?>
                         <div class="cart-item-image bg-black d-flex align-items-center justify-content-center border border-secondary">
                             <span class="text-muted" style="font-size: 12px;">N/A</span>

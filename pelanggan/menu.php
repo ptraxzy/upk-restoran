@@ -296,7 +296,7 @@ body {
             <div class="col-md-6">
                 <div class="card text-white border border-secondary p-0 rounded-0 overflow-hidden h-100 d-flex flex-row align-items-center" style="background-color: var(--card-bg);">
                     <?php if ($promo['gambar']): ?>
-                        <img src="<?= htmlspecialchars($promo['gambar'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($promo['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" style="width: 150px; height: 150px; object-fit: cover; border-right: 1px solid var(--border-soft);">
+                        <img src="<?= htmlspecialchars(menu_image($promo['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($promo['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" style="width: 150px; height: 150px; object-fit: cover; border-right: 1px solid var(--border-soft);">
                     <?php else: ?>
                         <div class="bg-dark text-muted d-flex align-items-center justify-content-center" style="width: 150px; height: 150px; border-right: 1px solid var(--border-soft);">
                             <span style="font-size: 12px;">N/A</span>
@@ -361,7 +361,7 @@ body {
             <article class="menu-card">
                 <div class="menu-card-img-wrapper">
                     <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">
-                        <img src="<?= htmlspecialchars((string) ($item['gambar'] ?: 'https://placehold.co/1200x800?text=Menu'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="menu-card-img">
+                        <img src="<?= htmlspecialchars((string) menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="menu-card-img">
                     </a>
                 </div>
                 <div class="menu-card-body">

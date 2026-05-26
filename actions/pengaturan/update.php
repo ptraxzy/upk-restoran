@@ -27,7 +27,7 @@ if (empty($fields['nama_restoran']) || empty($fields['nomor_telepon']) || empty(
     redirect(base_url('admin/pengaturan.php'));
 }
 
-try {
+try { 
     $pdo = db();
     $stmt = $pdo->prepare("
         INSERT INTO pengaturan (kunci, nilai)

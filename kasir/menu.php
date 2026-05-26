@@ -28,7 +28,7 @@ ob_start();
         <div class="col">
             <article class="h-100 d-flex flex-column position-relative p-3 card" style="background: var(--bg-card); border: 1px solid rgba(197, 160, 89, 0.15);">
                 <?php if ($item['gambar']): ?>
-                    <img src="<?= htmlspecialchars($item['gambar'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="w-100 object-cover mb-3" style="height: 160px; border: 1px solid var(--border);">
+                    <img src="<?= htmlspecialchars(menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="w-100 object-cover mb-3" style="height: 160px; object-fit: cover; border: 1px solid var(--border);">
                 <?php else: ?>
                     <div class="w-100 mb-3 d-flex align-items-center justify-content-center bg-black" style="height: 160px; border: 1px solid var(--border);">
                         <span class="text-secondary small" style="font-size: 12px;">No Image</span>

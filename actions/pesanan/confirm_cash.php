@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/database.php';
 
 // Allow both admin and kasir to confirm cash payments
-if (!is_logged_in() || !in_array($_SESSION['user_level'] ?? '', ['admin', 'kasir'])) {
+if (!isset($_SESSION['id_user']) || !in_array($_SESSION['level'] ?? $_SESSION['user_role'] ?? '', ['admin', 'kasir'])) {
     set_flash('error', 'Akses ditolak.');
     redirect(base_url());
 }
@@ -22,7 +22,6 @@ $pdo = db();
 $pdo->beginTransaction();
 
 try {
-    // 1. Fetch current payment details
     $stmtCheck = $pdo->prepare("SELECT * FROM pembayaran WHERE id_pesanan = ?");
     $stmtCheck->execute([$id_pesanan]);
     $pembayaran = $stmtCheck->fetch();
@@ -31,7 +30,6 @@ try {
         throw new Exception("Data pembayaran tidak ditemukan.");
     }
 
-    // 2. Update payment record to Lunas
     $stmtBayar = $pdo->prepare("
         UPDATE pembayaran 
         SET status = 'Lunas', 
@@ -42,7 +40,7 @@ try {
     ");
     $stmtBayar->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
 
-    // 3. Update order status to 'Diproses'
+    // Perbarui status pesanan
     $stmtPesanan = $pdo->prepare("UPDATE pesanan SET status_pesanan = 'Diproses', id_karyawan = ? WHERE id_pesanan = ?");
     $stmtPesanan->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
 

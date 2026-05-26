@@ -14,7 +14,7 @@ if (empty($token)) {
 
 $pdo = db();
 
-// 1. Cek Token valid & belum expired
+// Validasi integritas dan masa berlaku token
 $stmt = $pdo->prepare("SELECT email FROM password_resets WHERE token = ? AND expires_at > NOW() LIMIT 1");
 $stmt->execute([$token]);
 $reset = $stmt->fetch();
@@ -33,12 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } elseif ($password !== $confirm) {
         $error = 'Ketikan sandi Anda tidak cocok, coba cek lagi.';
     } else {
-        // 2. Update Kata Sandi Baru
+        // Perbarui kredensial kata sandi
         $hashed = password_hash($password, PASSWORD_DEFAULT);
         $stmtUpdate = $pdo->prepare("UPDATE user SET password = ? WHERE email = ?");
         $stmtUpdate->execute([$hashed, $reset['email']]);
 
-        // 3. Hapus Token lama
+        // Invalidate token pasca penggunaan
         $stmtDel = $pdo->prepare("DELETE FROM password_resets WHERE email = ?");
         $stmtDel->execute([$reset['email']]);
 

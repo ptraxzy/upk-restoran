@@ -40,7 +40,7 @@ ob_start();
 </div>
 
 <section class="premium-card-glass animate-fade-in-up" style="animation-delay: 0.1s;">
-    <form action="<?= htmlspecialchars(base_url('actions/menu/update.php'), ENT_QUOTES, 'UTF-8'); ?>" method="post">
+    <form action="<?= htmlspecialchars(base_url('actions/menu/update.php'), ENT_QUOTES, 'UTF-8'); ?>" method="post" enctype="multipart/form-data">
         <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string)$menu['id_menu']); ?>">
         
         <div class="row g-5">
@@ -48,17 +48,23 @@ ob_start();
             <div class="col-lg-5 col-md-12">
                 <div class="mb-4">
                     <label class="form-label text-secondary small mb-3">Tinjau Visual Menu</label>
-                    <div class="premium-photo-box" id="photoPreviewContainer">
-                        <div class="text-center p-4" id="photoPlaceholder">
+                    <div class="premium-photo-box" id="photoPreviewContainer" style="cursor: pointer; position: relative;">
+                        <div class="text-center p-4" id="photoPlaceholder" style="<?= !empty($menu['gambar']) ? 'display: none;' : ''; ?>">
                             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" class="mb-3 mx-auto d-block"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
-                            <span class="d-block text-secondary small mb-1">Visualisasi Hidangan</span>
+                            <span class="d-block text-secondary small mb-1">Klik untuk Unggah Foto</span>
                             <span class="d-block text-muted" style="font-size: 11px;">Rasio 4:5 direkomendasikan</span>
                         </div>
-                        <img src="<?= htmlspecialchars($menu['gambar'] ?? ''); ?>" alt="Preview Makanan" id="photoPreview" style="<?= empty($menu['gambar']) ? 'display: none;' : 'display: block;'; ?>">
+                        <img src="<?= htmlspecialchars(menu_image($menu['gambar'] ?? '')); ?>" alt="Preview Makanan" id="photoPreview" style="<?= empty($menu['gambar']) ? 'display: none;' : 'display: block;'; ?> width: 100%; height: 100%; object-fit: cover;">
                     </div>
+                    <input type="file" name="gambar_file" id="gambarFileInput" accept="image/*" style="display: none;">
                 </div>
                 <div>
-                    <label class="form-label text-secondary small mb-2">URL Foto Makanan</label>
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label class="form-label text-secondary small mb-0">Atau Tempel URL Foto</label>
+                        <button type="button" class="btn btn-link text-decoration-none text-warning small p-0" id="btnCancelFile" style="display: none; font-size: 11px;">
+                            Batal Unggah File
+                        </button>
+                    </div>
                     <input class="form-control premium-input-standard" type="text" name="gambar" id="gambarInput" value="<?= htmlspecialchars($menu['gambar'] ?? ''); ?>" placeholder="Masukkan atau tempel URL gambar..." autocomplete="off">
                 </div>
             </div>
@@ -154,8 +160,11 @@ ob_start();
 <script>
 document.addEventListener('DOMContentLoaded', () => {
     const gambarInput = document.getElementById('gambarInput');
+    const gambarFileInput = document.getElementById('gambarFileInput');
+    const photoPreviewContainer = document.getElementById('photoPreviewContainer');
     const photoPreview = document.getElementById('photoPreview');
     const photoPlaceholder = document.getElementById('photoPlaceholder');
+    const btnCancelFile = document.getElementById('btnCancelFile');
 
     const updatePreview = () => {
         const url = gambarInput.value.trim();
@@ -164,17 +173,63 @@ document.addEventListener('DOMContentLoaded', () => {
             photoPreview.style.display = 'block';
             photoPlaceholder.style.display = 'none';
         } else {
+            // If there was an original image but we cleared the input, revert or hide
             photoPreview.style.display = 'none';
             photoPlaceholder.style.display = 'block';
         }
     };
 
-    // Listen to changes
-    gambarInput.addEventListener('input', updatePreview);
-    gambarInput.addEventListener('change', updatePreview);
+    // Open file selector when clicking the preview container
+    photoPreviewContainer.addEventListener('click', () => {
+        gambarFileInput.click();
+    });
+
+    // Handle file selection
+    gambarFileInput.addEventListener('change', () => {
+        const file = gambarFileInput.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                photoPreview.src = e.target.result;
+                photoPreview.style.display = 'block';
+                photoPlaceholder.style.display = 'none';
+                gambarInput.value = ''; // clear URL input
+                btnCancelFile.style.display = 'inline-block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+
+    // Handle cancel file upload
+    btnCancelFile.addEventListener('click', (e) => {
+        e.stopPropagation(); // prevent triggering container click
+        gambarFileInput.value = '';
+        btnCancelFile.style.display = 'none';
+        // Revert to original input value if any
+        if (gambarInput.value.trim()) {
+            updatePreview();
+        } else {
+            // Revert to original menu image if it existed
+            const origImg = '<?= htmlspecialchars(menu_image($menu['gambar'] ?? '')); ?>';
+            const hasOrigImg = <?= !empty($menu['gambar']) ? 'true' : 'false'; ?>;
+            if (hasOrigImg) {
+                photoPreview.src = origImg;
+                photoPreview.style.display = 'block';
+                photoPlaceholder.style.display = 'none';
+            } else {
+                updatePreview();
+            }
+        }
+    });
+
+    // Listen to changes on URL input
+    gambarInput.addEventListener('input', () => {
+        gambarFileInput.value = '';
+        btnCancelFile.style.display = 'none';
+        updatePreview();
+    });
     
-    // Initial run
-    updatePreview();
+    // Initial run - if we already have an image in the DB, it is displayed by PHP
 });
 </script>
 <?php

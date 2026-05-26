@@ -18,6 +18,28 @@ $stmt = db()->query("
 ");
 $karyawans = $stmt->fetchAll();
 
+$search = trim($_GET['search'] ?? '');
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 5;
+
+$filteredKaryawans = [];
+foreach ($karyawans as $karyawan) {
+    if ($search === '') {
+        $filteredKaryawans[] = $karyawan;
+    } else {
+        $s = strtolower($search);
+        $uStr = strtolower((string)$karyawan['username']);
+        $lStr = strtolower((string)$karyawan['level']);
+        if (strpos($uStr, $s) !== false || strpos($lStr, $s) !== false) {
+            $filteredKaryawans[] = $karyawan;
+        }
+    }
+}
+
+$totalRows = count($filteredKaryawans);
+$totalPages = ceil($totalRows / $limit);
+$paginatedKaryawans = array_slice($filteredKaryawans, ($page - 1) * $limit, $limit);
+
 $countAdmin = (int) db()->query("SELECT COUNT(*) FROM user WHERE level = 'admin'")->fetchColumn();
 $countKasir = (int) db()->query("SELECT COUNT(*) FROM user WHERE level = 'kasir'")->fetchColumn();
 $total = $countAdmin + $countKasir;
@@ -32,7 +54,13 @@ ob_start();
                     <h3 class="font-display text-white m-0" style="font-size: 24px;">Daftar Karyawan</h3>
                     <p class="text-secondary small mb-0 mt-1">Manajemen akses dan tim operasional.</p>
                 </div>
-                <a class="btn btn-warning py-2 px-3" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('admin/karyawan_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>">Tambah Karyawan</a>
+                <div class="d-flex gap-2">
+                    <form method="GET" class="d-flex gap-2">
+                        <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari nama atau level..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
+                        <button type="submit" class="btn btn-outline-warning rounded-0">Cari</button>
+                    </form>
+                    <a class="btn btn-warning py-2 px-3 text-nowrap" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('admin/karyawan_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>">Tambah Karyawan</a>
+                </div>
             </div>
 
             <div class="table-responsive">
@@ -46,7 +74,7 @@ ob_start();
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($karyawans as $karyawan): ?>
+                        <?php foreach ($paginatedKaryawans as $karyawan): ?>
                         <tr>
                             <td class="fw-medium text-white"><?= htmlspecialchars($karyawan['username'], ENT_QUOTES, 'UTF-8'); ?></td>
                             <td class="text-uppercase small"><?= htmlspecialchars($karyawan['level'], ENT_QUOTES, 'UTF-8'); ?></td>
@@ -57,15 +85,14 @@ ob_start();
                                     <span class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-20">Nonaktif</span>
                                 <?php endif; ?>
                             </td>
-                            <td class="text-end">
+                             <td class="text-end">
                                 <div class="d-flex justify-content-end gap-3">
                                     <a href="<?= htmlspecialchars(base_url('admin/karyawan_edit.php?id=' . $karyawan['id_user']), ENT_QUOTES, 'UTF-8'); ?>" class="text-gold small">Edit</a>
-                                    <a href="<?= htmlspecialchars(base_url('actions/karyawan/delete.php?id=' . $karyawan['id_user']), ENT_QUOTES, 'UTF-8'); ?>" class="text-danger small" onclick="return confirm('Hapus akses karyawan ini?')">Hapus</a>
                                 </div>
-                            </td>
+                             </td>
                         </tr>
                         <?php endforeach; ?>
-                        <?php if (empty($karyawans)): ?>
+                        <?php if (empty($paginatedKaryawans)): ?>
                             <tr>
                                 <td colspan="4" class="text-center py-5 text-muted">Belum ada data karyawan.</td>
                             </tr>
@@ -73,6 +100,28 @@ ob_start();
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                        <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                                <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
         </article>
     </div>
 

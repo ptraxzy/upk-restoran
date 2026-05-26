@@ -1,0 +1,121 @@
+<h2>Pilih Tata Letak (Layout) Grafik</h2>
+<p class="subtitle">Pilih posisi penempatan grafik dual-axis (Pemasukan & Jumlah Pesanan) yang paling cocok untuk dashboard admin Lumière.</p>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<div class="options">
+  <!-- Option A -->
+  <div class="option" data-choice="top-full" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>Layout A: Di Atas Kartu Metrik (Full-Width Hero)</h3>
+      <p>Grafik diletakkan di paling atas, membentang penuh tepat setelah judul halaman dan sebelum 4 kartu metrik utama. Memberikan sorotan utama langsung pada tren bisnis mingguan.</p>
+      
+      <!-- Small Mockup Preview -->
+      <div style="margin-top: 15px; padding: 15px; background: #121212; border-radius: 8px; border: 1px solid #d4af37;">
+        <div style="font-size: 11px; color: #d4af37; margin-bottom: 8px; font-weight: bold;">PREVIEW LAYOUT A</div>
+        <div style="height: 120px; position: relative;">
+          <canvas id="chartA"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="option" data-choice="middle-split" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>Layout B: Di Tengah Bersebelahan (Grid Split - Rekomendasi)</h3>
+      <p>Grafik diletakkan di bawah kartu metrik, mengambil 2/3 lebar kolom sebelah kiri, berdampingan dengan panel "Aksi Cepat" (1/3 lebar) di kanan. Menjaga dashboard tetap ringkas dan seimbang secara visual.</p>
+      
+      <!-- Small Mockup Preview -->
+      <div style="margin-top: 15px; padding: 15px; background: #121212; border-radius: 8px; border: 1px solid #d4af37;">
+        <div style="font-size: 11px; color: #d4af37; margin-bottom: 8px; font-weight: bold;">PREVIEW LAYOUT B</div>
+        <div style="display: flex; gap: 10px;">
+          <div style="flex: 2; height: 100px; position: relative; border-right: 1px solid #2d2d2d; padding-right: 10px;">
+            <canvas id="chartB"></canvas>
+          </div>
+          <div style="flex: 1; font-size: 10px; color: #86868b; display: flex; flex-direction: column; justify-content: center; gap: 4px;">
+            <div style="background: #ffc107; color: black; padding: 4px; border-radius: 4px; font-weight: bold; text-align: center;">Tambah Menu</div>
+            <div style="border: 1px solid #ffc107; color: white; padding: 4px; border-radius: 4px; text-align: center;">Kelola Pesanan</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="option" data-choice="bottom-full" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>Layout C: Di Paling Bawah (Sebagai Laporan Detail)</h3>
+      <p>Grafik diletakkan di bagian paling bawah halaman dashboard (di bawah daftar "Pesanan Terbaru" dan "Aksi Cepat"), membentang penuh. Cocok untuk analisis mendalam tanpa mengganggu fokus aktivitas transaksi terkini.</p>
+      
+      <!-- Small Mockup Preview -->
+      <div style="margin-top: 15px; padding: 15px; background: #121212; border-radius: 8px; border: 1px solid #d4af37;">
+        <div style="font-size: 11px; color: #d4af37; margin-bottom: 8px; font-weight: bold;">PREVIEW LAYOUT C</div>
+        <div style="height: 120px; position: relative;">
+          <canvas id="chartC"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.addEventListener('load', function() {
+    const dummyDays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
+    const dummyRevenue = [1200000, 1900000, 1500000, 2500000, 2200000, 3800000, 4200000];
+    const dummyOrders = [12, 18, 15, 22, 20, 35, 40];
+
+    const chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#86868b', font: { size: 9 } } },
+        y: { type: 'linear', position: 'left', grid: { color: 'rgba(255, 255, 255, 0.05)' }, ticks: { color: '#d4af37', font: { size: 9 } } },
+        y1: { type: 'linear', position: 'right', grid: { drawOnChartArea: false }, ticks: { color: '#ffffff', font: { size: 9 } } }
+      }
+    };
+
+    // Render Chart A
+    new Chart(document.getElementById('chartA'), {
+      type: 'bar',
+      data: {
+        labels: dummyDays,
+        datasets: [
+          { label: 'Pesanan', data: dummyOrders, type: 'line', borderColor: '#ffffff', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y1' },
+          { label: 'Pemasukan', data: dummyRevenue, backgroundColor: '#d4af37', borderRadius: 4, yAxisID: 'y' }
+        ]
+      },
+      options: chartOptions
+    });
+
+    // Render Chart B
+    new Chart(document.getElementById('chartB'), {
+      type: 'bar',
+      data: {
+        labels: dummyDays,
+        datasets: [
+          { label: 'Pesanan', data: dummyOrders, type: 'line', borderColor: '#ffffff', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y1' },
+          { label: 'Pemasukan', data: dummyRevenue, backgroundColor: '#d4af37', borderRadius: 3, yAxisID: 'y' }
+        ]
+      },
+      options: chartOptions
+    });
+
+    // Render Chart C
+    new Chart(document.getElementById('chartC'), {
+      type: 'bar',
+      data: {
+        labels: dummyDays,
+        datasets: [
+          { label: 'Pesanan', data: dummyOrders, type: 'line', borderColor: '#ffffff', backgroundColor: 'transparent', borderWidth: 2, yAxisID: 'y1' },
+          { label: 'Pemasukan', data: dummyRevenue, backgroundColor: '#d4af37', borderRadius: 4, yAxisID: 'y' }
+        ]
+      },
+      options: chartOptions
+    });
+  });
+</script>

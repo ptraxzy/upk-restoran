@@ -23,7 +23,7 @@ if ($id_pesanan <= 0 || $rating < 1 || $rating > 5 || empty($komentar)) {
 try {
     $pdo = db();
 
-    // 1. Verifikasi apakah pesanan benar-benar ada, milik user ini, dan sudah selesai
+    // Validasi otoritas pengguna atas transaksi yang telah diselesaikan
     $stmtCheck = $pdo->prepare("SELECT id_pesanan FROM pesanan WHERE id_pesanan = ? AND id_user = ? AND status_pesanan = 'Selesai'");
     $stmtCheck->execute([$id_pesanan, $id_user]);
     if (!$stmtCheck->fetch()) {
@@ -31,7 +31,7 @@ try {
         redirect(base_url('pelanggan/pesanan_riwayat.php'));
     }
 
-    // 2. Simpan ulasan ke database (menggunakan INSERT IGNORE atau tangani duplicate key)
+    // Persistensi data ulasan pelanggan
     $stmtInsert = $pdo->prepare("
         INSERT INTO ulasan (id_pesanan, id_user, rating, komentar)
         VALUES (?, ?, ?, ?)

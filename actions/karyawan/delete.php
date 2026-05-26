@@ -15,13 +15,13 @@ if (!$id) {
 }
 
 try {
-    // Terapkan deaktifasi agar relasi database tidak terputus (Soft Deactivate)
-    $stmt = db()->prepare("UPDATE user SET status = 'Nonaktif' WHERE id_user = ? AND level IN ('admin', 'kasir')");
+    // Delete the employee
+    $stmt = db()->prepare("DELETE FROM user WHERE id_user = ? AND level IN ('admin', 'kasir')");
     $stmt->execute([$id]);
 
-    set_flash('success', 'Akses karyawan berhasil dinonaktifkan.');
+    set_flash('success', 'Karyawan berhasil dihapus secara permanen.');
 } catch (Exception $e) {
-    set_flash('error', 'Gagal menonaktifkan karyawan: ' . $e->getMessage());
+    set_flash('error', 'Gagal menghapus karyawan: ' . $e->getMessage());
 }
 
 redirect(base_url('admin/karyawan.php'));

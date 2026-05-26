@@ -60,7 +60,7 @@ ob_start();
                 <tr>
                     <td>
                         <?php if ($item['gambar']): ?>
-                            <img src="<?= htmlspecialchars($item['gambar'], ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="object-cover border border-secondary" style="width: 60px; height: 60px;">
+                            <img src="<?= htmlspecialchars(menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="object-cover border border-secondary" style="width: 60px; height: 60px;">
                         <?php else: ?>
                             <div class="bg-black text-secondary d-flex align-items-center justify-content-center border border-secondary" style="width: 60px; height: 60px; font-size: 10px;">No Image</div>
                         <?php endif; ?>

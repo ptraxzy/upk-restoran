@@ -68,7 +68,15 @@ ob_start();
                 </div>
 
                 <div class="row g-3">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
+                        <label class="form-label small text-secondary fw-semibold mb-1" style="font-size: 11px; letter-spacing: 0.04em;">MINIMAL PEMBELIAN</label>
+                        <input class="form-control bg-black text-white border-secondary rounded-0" name="minimal_pembelian" type="number" min="0" placeholder="Contoh: 50000" required value="0" style="font-size: 13px; padding: 10px; border-color: rgba(255, 255, 255, 0.08) !important;">
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small text-secondary fw-semibold mb-1" style="font-size: 11px; letter-spacing: 0.04em;">MINIMAL PORSI (JUMLAH ITEM)</label>
+                        <input class="form-control bg-black text-white border-secondary rounded-0" name="minimal_porsi" type="number" min="0" placeholder="Contoh: 3 (untuk 3 porsi)" required value="0" style="font-size: 13px; padding: 10px; border-color: rgba(255, 255, 255, 0.08) !important;">
+                    </div>
+                    <div class="col-md-4">
                         <label class="form-label small text-secondary fw-semibold mb-1" style="font-size: 11px; letter-spacing: 0.04em;">STATUS AWAL</label>
                         <select class="form-select bg-black text-white border-secondary rounded-0" name="status_voucher" required style="font-size: 13px; padding: 10px; border-color: rgba(255, 255, 255, 0.08) !important; cursor: pointer;">
                             <option value="Active" selected>Active</option>

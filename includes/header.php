@@ -5,7 +5,7 @@ declare(strict_types=1);
 $app = require __DIR__ . '/../config/app.php';
 ?>
 <!DOCTYPE html>
-<html lang="id">
+<html lang="id" data-bs-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">

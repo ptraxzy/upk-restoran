@@ -21,6 +21,28 @@ $stmt = $pdo->query('
 ');
 $orders = $stmt->fetchAll();
 
+$search = trim($_GET['search'] ?? '');
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 5;
+
+$filteredOrders = [];
+foreach ($orders as $order) {
+    if ($search === '') {
+        $filteredOrders[] = $order;
+    } else {
+        $s = strtolower($search);
+        $idStr = strtolower((string)$order['id_pesanan']);
+        $userStr = strtolower((string)($order['username'] ?? 'Guest'));
+        if (strpos($idStr, $s) !== false || strpos($userStr, $s) !== false) {
+            $filteredOrders[] = $order;
+        }
+    }
+}
+
+$totalRows = count($filteredOrders);
+$totalPages = ceil($totalRows / $limit);
+$paginatedOrders = array_slice($filteredOrders, ($page - 1) * $limit, $limit);
+
 ob_start();
 ?>
 <section class="row g-5 animate-fade-in-up">
@@ -31,6 +53,10 @@ ob_start();
                     <h3 class="font-display text-white m-0" style="font-size: 24px;">Semua Pesanan Restoran</h3>
                     <p class="text-secondary small mb-0 mt-1">Pantau dan kelola seluruh transaksi serta status pesanan aktif.</p>
                 </div>
+                <form method="GET" class="d-flex gap-2">
+                    <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari No. Order / Pelanggan..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" style="min-width: 250px;">
+                    <button type="submit" class="btn btn-warning rounded-0 px-4">Cari</button>
+                </form>
             </div>
 
             <div class="table-responsive">
@@ -49,7 +75,7 @@ ob_start();
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($orders as $order): ?>
+                        <?php foreach ($paginatedOrders as $order): ?>
                         <?php
                         $statusClass = 'badge ';
                         $status = $order['status_pesanan'];
@@ -94,7 +120,7 @@ ob_start();
                             </td>
                         </tr>
                         <?php endforeach; ?>
-                        <?php if (empty($orders)): ?>
+                        <?php if (empty($paginatedOrders)): ?>
                             <tr>
                                 <td colspan="9" class="text-center py-5 text-muted">Belum ada pesanan terdaftar.</td>
                             </tr>
@@ -102,6 +128,28 @@ ob_start();
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                        <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                                <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
         </article>
     </div>
 </section>

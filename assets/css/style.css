@@ -398,11 +398,39 @@ select option { background-color: #0a0a0a !important; color: #ffffff !important;
     transition: all 0.3s ease !important;
 }
 .premium-input-large::placeholder {
-    color: rgba(255, 255, 255, 0.2) !important;
+    color: rgba(255, 255, 255, 0.4) !important;
 }
 .premium-input-large:focus {
     border-bottom-color: var(--gold) !important;
     box-shadow: none !important;
+}
+
+/* Global placeholders styling */
+::placeholder,
+input::placeholder,
+textarea::placeholder,
+.form-control::placeholder,
+.premium-input-standard::placeholder,
+.premium-textarea::placeholder,
+.premium-input-large::placeholder {
+    color: rgba(255, 255, 255, 0.4) !important;
+    opacity: 1 !important;
+}
+
+/* Chrome/Safari Autofill Styles */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+textarea:-webkit-autofill:hover,
+textarea:-webkit-autofill:focus,
+select:-webkit-autofill,
+select:-webkit-autofill:hover,
+select:-webkit-autofill:focus {
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    -webkit-text-fill-color: #ffffff !important;
+    -webkit-box-shadow: 0 0 0px 1000px #1a1a1a inset !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
 
 .premium-textarea {

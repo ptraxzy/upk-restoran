@@ -139,6 +139,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         .label { display: block; font-size: 12px; color: var(--gold); margin-bottom: 7px; font-weight: 600; }
         .input { width: 100%; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); padding: 12px 14px; color: white; box-sizing: border-box; transition: all 0.25s var(--ease); font-size: 14px; font-family: var(--font-body); }
         .input:focus { outline: none; border-color: var(--gold); background: rgba(255, 255, 255, 0.06); }
+        .input::placeholder { color: rgba(255, 255, 255, 0.4) !important; }
 
         .btn { width: 100%; background: var(--gold); color: black; border: none; padding: 13px; font-weight: 600; cursor: pointer; margin-top: 10px; transition: all 0.25s var(--ease); font-size: 14px; }
         .btn:hover { background: #f3e5ab; box-shadow: 0 4px 16px rgba(201, 168, 76, 0.2); }

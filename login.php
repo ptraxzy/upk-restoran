@@ -165,6 +165,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             background: rgba(255, 255, 255, 0.06);
         }
 
+        .input-control::placeholder {
+            color: rgba(255, 255, 255, 0.4) !important;
+        }
+
         .forgot-link {
             display: block;
             text-align: right;
@@ -216,9 +220,70 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         .alert-success { background: rgba(40, 167, 69, 0.1); color: #51cf66; }
 
         .hidden { display: none; opacity: 0; }
+
+        /* Preloader Styles */
+        #preloader {
+            position: fixed;
+            inset: 0;
+            background: #0a0a0a;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.8s var(--ease), visibility 0.8s var(--ease);
+        }
+        
+        .preloader-content {
+            text-align: center;
+        }
+        
+        .preloader-logo {
+            font-family: var(--font-display);
+            font-size: 42px;
+            letter-spacing: 0.15em;
+            color: var(--gold);
+            opacity: 0;
+            transform: translateY(15px);
+            animation: preloaderFadeIn 1.1s 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        .preloader-line {
+            width: 0;
+            height: 1px;
+            background: var(--gold);
+            margin: 18px auto 0;
+            animation: preloaderLineGrow 1.3s 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+        
+        @keyframes preloaderFadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes preloaderLineGrow {
+            to {
+                width: 140px;
+            }
+        }
+        
+        .preloader-hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
+    <!-- Preloader / Intro Animation -->
+    <div id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-logo">Lumière</div>
+            <div class="preloader-line"></div>
+        </div>
+    </div>
+
     <div class="bg-layer"></div>
 
     <main class="login-box">
@@ -281,6 +346,27 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     </main>
 
     <script>
+        // Intro Animation control
+        document.addEventListener('DOMContentLoaded', function() {
+            const preloader = document.getElementById('preloader');
+            if (!sessionStorage.getItem('lumiere_intro_played')) {
+                // First time opening the web app in this session, show animation
+                window.addEventListener('load', function() {
+                    setTimeout(function() {
+                        if (preloader) {
+                            preloader.classList.add('preloader-hidden');
+                        }
+                        sessionStorage.setItem('lumiere_intro_played', 'true');
+                    }, 1800);
+                });
+            } else {
+                // Already played in this session, hide immediately to avoid annoying redirects/back navigation
+                if (preloader) {
+                    preloader.style.display = 'none';
+                }
+            }
+        });
+
         function toggleSection(section) {
             const loginSection = document.getElementById('login-section');
             const forgotSection = document.getElementById('forgot-section');

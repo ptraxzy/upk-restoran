@@ -109,3 +109,15 @@ function get_all_settings(): array
     }
 }
 
+function menu_image(?string $path): string
+{
+    if (!$path || trim($path) === '') {
+        return 'https://placehold.co/1200x800?text=Menu';
+    }
+    if (preg_match('/^https?:\/\//i', $path)) {
+        return $path;
+    }
+    return base_url($path);
+}
+
+

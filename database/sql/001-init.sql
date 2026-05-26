@@ -113,6 +113,8 @@ CREATE TABLE IF NOT EXISTS `voucher` (
   `nama_voucher` varchar(255) NOT NULL,
   `jenis_voucher` enum('Persentase','Nominal') NOT NULL,
   `nilai_voucher` decimal(15,2) NOT NULL,
+  `minimal_pembelian` decimal(15,2) NOT NULL DEFAULT '0.00',
+  `minimal_porsi` int NOT NULL DEFAULT 0,
   `tanggal_mulai` date NOT NULL,
   `tanggal_berakhir` date NOT NULL,
   `status_voucher` enum('Active','Scheduled','Expired') DEFAULT 'Active',
@@ -133,11 +135,11 @@ INSERT IGNORE INTO `kategori` (`id_kategori`, `nama_kategori`) VALUES
 (4, 'Minuman');
 
 INSERT IGNORE INTO `menu` (`id_menu`, `id_kategori`, `nama_menu`, `deskripsi`, `harga`, `gambar`, `status`, `porsi`) VALUES
-(1, 1, 'Wagyu Ribeye A5', 'A5 Japanese Wagyu, black garlic butter, smoked sea salt.', 420000, 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 18),
-(2, 1, 'Pan-Seared Duck', 'Dry-aged duck breast, cherry reduction, parsnip puree.', 280000, 'https://images.unsplash.com/photo-1625943555419-56a2cb596640?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 22),
-(3, 1, 'Black Truffle Risotto', 'Acquerello rice, wild mushrooms, shaved black truffle.', 195000, 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 12),
-(4, 2, 'Hokkaido Scallop', 'Yuzu plum hijau fermentasi, lobak es, busa kedelai putih, jeruk mirin.', 250000, 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80', 'Tersedia', 10),
-(5, 3, 'Dark Matter', 'Kakao eksklusif single-origin, praline wijen hitam, balsamic dust.', 82000, 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 15);
+(1, 1, 'Wagyu Ribeye A5', 'A5 Japanese Wagyu, black garlic butter, smoked sea salt.', 125000, 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 18),
+(2, 1, 'Pan-Seared Duck', 'Dry-aged duck breast, cherry reduction, parsnip puree.', 85000, 'https://images.unsplash.com/photo-1625943555419-56a2cb596640?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 22),
+(3, 1, 'Black Truffle Risotto', 'Acquerello rice, wild mushrooms, shaved black truffle.', 75000, 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 12),
+(4, 2, 'Hokkaido Scallop', 'Yuzu plum hijau fermentasi, lobak es, busa kedelai putih, jeruk mirin.', 95000, 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80', 'Tersedia', 10),
+(5, 3, 'Dark Matter', 'Kakao eksklusif single-origin, praline wijen hitam, balsamic dust.', 45000, 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 15);
 
 INSERT INTO `user` (`username`, `password`, `level`)
 SELECT 'admin', 'admin123', 'admin'

@@ -17,7 +17,7 @@ $cart = [];
 
 // Fetch active vouchers for the dropdown selection
 $stmtVoucherList = $pdo->query("
-    SELECT id_voucher, kode_voucher, nama_voucher, jenis_voucher, nilai_voucher 
+    SELECT id_voucher, kode_voucher, nama_voucher, jenis_voucher, nilai_voucher, minimal_pembelian, minimal_porsi 
     FROM voucher 
     WHERE status_voucher = 'Active' 
       AND tanggal_mulai <= CURRENT_DATE() 
@@ -43,10 +43,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
         $voucher = $stmtVoucher->fetch();
 
         if ($voucher) {
-            $_SESSION['active_voucher'] = $voucher['kode_voucher'];
-            $_SESSION['active_voucher_type'] = $voucher['jenis_voucher'];
-            $_SESSION['active_voucher_value'] = (float)$voucher['nilai_voucher'];
-            set_flash('success', 'Voucher "' . htmlspecialchars($voucher['kode_voucher']) . '" berhasil diterapkan!');
+            // Check minimal_pembelian
+            $minPurchase = (float)$voucher['minimal_pembelian'];
+            $minPortions = (int)$voucher['minimal_porsi'];
+
+            $stmtSubtotal = $pdo->prepare("
+                SELECT SUM(k.qty * m.harga) 
+                FROM keranjang k 
+                JOIN menu m ON k.id_menu = m.id_menu 
+                WHERE k.id_user = ?
+            ");
+            $stmtSubtotal->execute([$userId]);
+            $cartSubtotal = (float)$stmtSubtotal->fetchColumn();
+
+            $stmtPortions = $pdo->prepare("
+                SELECT SUM(k.qty) 
+                FROM keranjang k 
+                WHERE k.id_user = ?
+            ");
+            $stmtPortions->execute([$userId]);
+            $cartTotalPortions = (int)$stmtPortions->fetchColumn();
+
+            if ($cartSubtotal < $minPurchase || $cartTotalPortions < $minPortions) {
+                unset($_SESSION['active_voucher']);
+                unset($_SESSION['active_voucher_type']);
+                unset($_SESSION['active_voucher_value']);
+                unset($_SESSION['active_discount']);
+                
+                if ($cartSubtotal < $minPurchase && $cartTotalPortions < $minPortions) {
+                    $errMsg = 'Gagal menerapkan voucher: Belanja minimal ' . rupiah($minPurchase) . ' dan minimal ' . $minPortions . ' porsi diperlukan.';
+                } elseif ($cartSubtotal < $minPurchase) {
+                    $errMsg = 'Gagal menerapkan voucher: Belanja minimal ' . rupiah($minPurchase) . ' diperlukan.';
+                } else {
+                    $errMsg = 'Gagal menerapkan voucher: Minimal ' . $minPortions . ' porsi diperlukan.';
+                }
+                set_flash('error', $errMsg);
+            } else {
+                $_SESSION['active_voucher'] = $voucher['kode_voucher'];
+                $_SESSION['active_voucher_type'] = $voucher['jenis_voucher'];
+                $_SESSION['active_voucher_value'] = (float)$voucher['nilai_voucher'];
+                set_flash('success', 'Voucher "' . htmlspecialchars($voucher['kode_voucher']) . '" berhasil diterapkan!');
+            }
         } else {
             unset($_SESSION['active_voucher']);
             unset($_SESSION['active_voucher_type']);
@@ -82,6 +119,7 @@ $subtotal = 0;
 $discount = 0;
 $tax = 0;
 $total = 0;
+$totalPortions = 0;
 $orderItems = [];
 $currentNoMeja = $_SESSION['meja_aktif'] ?? '01';
 $metodePembayaran = 'QRIS';
@@ -91,7 +129,7 @@ if ($isPaymentPhase) {
     // Fetch data from database instead of session
     $id_pesanan = (int) $_GET['id_pesanan'];
 
-    // 1. Order main info
+    // Rekam data primer pesanan
     $stmtOrder = $pdo->prepare("SELECT * FROM pesanan WHERE id_pesanan = ? AND id_user = ?");
     $stmtOrder->execute([$id_pesanan, $_SESSION['id_user']]);
     $order = $stmtOrder->fetch();
@@ -110,7 +148,7 @@ if ($isPaymentPhase) {
     $pembayaran = $stmtBayarInfo->fetch();
     $metodePembayaran = $pembayaran ? $pembayaran['metode'] : 'QRIS';
 
-    // 2. Order items
+    // Rekam spesifikasi item pesanan
     $stmtItems = $pdo->prepare("
         SELECT dp.*, m.nama_menu
         FROM detail_pesanan dp
@@ -123,12 +161,14 @@ if ($isPaymentPhase) {
     // Calculate subtotal for display
     foreach ($orderItems as $item) {
         $subtotal += ((float)$item['harga_satuan'] * (int)$item['jumlah']);
+        $totalPortions += (int)$item['jumlah'];
     }
     $tax = $subtotal * 0.11; // Approx
 } else {
     // Phase: Review before checkout (Cart data fetched dari DB)
     foreach ($cart as $item) {
         $subtotal += ((float)$item['harga'] * (int)$item['qty']);
+        $totalPortions += (int)$item['qty'];
         $orderItems[] = [
             'nama_menu' => $item['nama_menu'],
             'jumlah' => $item['qty'],
@@ -137,14 +177,45 @@ if ($isPaymentPhase) {
     }
 
     if (isset($_SESSION['active_voucher'])) {
-        $vType = $_SESSION['active_voucher_type'] ?? 'Persentase';
-        $vVal = $_SESSION['active_voucher_value'] ?? 0.0;
-        if ($vType === 'Persentase') {
-            $discount = $subtotal * ($vVal / 100);
+        $stmtVCheck = $pdo->prepare("
+            SELECT * FROM voucher 
+            WHERE kode_voucher = ? 
+              AND status_voucher = 'Active' 
+              AND tanggal_mulai <= CURRENT_DATE() 
+              AND tanggal_berakhir >= CURRENT_DATE()
+              AND deleted_at IS NULL
+        ");
+        $stmtVCheck->execute([$_SESSION['active_voucher']]);
+        $activeV = $stmtVCheck->fetch();
+
+        if ($activeV && $subtotal >= (float)$activeV['minimal_pembelian'] && $totalPortions >= (int)$activeV['minimal_porsi']) {
+            $vType = $activeV['jenis_voucher'];
+            $vVal = (float)$activeV['nilai_voucher'];
+            if ($vType === 'Persentase') {
+                $discount = $subtotal * ($vVal / 100);
+            } else {
+                $discount = min($vVal, $subtotal);
+            }
+            $_SESSION['active_discount'] = $discount;
+            $_SESSION['active_voucher_type'] = $vType;
+            $_SESSION['active_voucher_value'] = $vVal;
         } else {
-            $discount = min($vVal, $subtotal);
+            unset($_SESSION['active_voucher']);
+            unset($_SESSION['active_voucher_type']);
+            unset($_SESSION['active_voucher_value']);
+            unset($_SESSION['active_discount']);
+            if ($activeV) {
+                if ($subtotal < (float)$activeV['minimal_pembelian'] && $totalPortions < (int)$activeV['minimal_porsi']) {
+                    set_flash('error', 'Voucher dilepas karena tidak memenuhi syarat minimal pembelian ' . rupiah((float)$activeV['minimal_pembelian']) . ' dan minimal ' . (int)$activeV['minimal_porsi'] . ' porsi.');
+                } elseif ($subtotal < (float)$activeV['minimal_pembelian']) {
+                    set_flash('error', 'Voucher dilepas karena total belanja tidak memenuhi syarat minimal pembelian ' . rupiah((float)$activeV['minimal_pembelian']) . '.');
+                } else {
+                    set_flash('error', 'Voucher dilepas karena total item tidak memenuhi syarat minimal ' . (int)$activeV['minimal_porsi'] . ' porsi.');
+                }
+            } else {
+                set_flash('error', 'Voucher dilepas karena sudah tidak aktif atau kedaluwarsa.');
+            }
         }
-        $_SESSION['active_discount'] = $discount;
     }
 
     $tax = ($subtotal - $discount) * 0.11;
@@ -363,6 +434,13 @@ ob_start();
                 
                 <?php foreach ($availableVouchers as $av): ?>
                     <?php 
+                        $minPurchase = (float)$av['minimal_pembelian'];
+                        $minPortions = (int)$av['minimal_porsi'];
+                        $isLocked = ($subtotal < $minPurchase) || ($totalPortions < $minPortions);
+                        if ($isLocked) {
+                            continue;
+                        }
+
                         $lblVal = $av['jenis_voucher'] === 'Persentase' ? $av['nilai_voucher'] . '%' : rupiah((float)$av['nilai_voucher']);
                         $isActive = (isset($_SESSION['active_voucher']) && $_SESSION['active_voucher'] === $av['kode_voucher']);
                         $formId = 'form-voucher-' . htmlspecialchars($av['kode_voucher']);
@@ -371,7 +449,7 @@ ob_start();
                         <form method="POST" id="<?= $formId ?>">
                             <input type="hidden" name="action" value="apply_voucher">
                             <input type="hidden" name="voucher_code" value="<?= htmlspecialchars($av['kode_voucher']); ?>">
-                            <div class="p-3 voucher-card cursor-pointer d-flex align-items-center justify-content-start <?= $isActive ? 'active-gold' : '' ?>"
+                            <div class="p-3 voucher-card d-flex align-items-center justify-content-start <?= $isActive ? 'active-gold' : '' ?> cursor-pointer"
                                  style="min-height: 95px; border-radius: 0; cursor: pointer;"
                                  onclick="document.getElementById('<?= $formId ?>').submit();">
                                 
@@ -381,9 +459,31 @@ ob_start();
                                 <?php endif; ?>
                                 
                                 <div class="w-100 text-start">
-                                    <h5 class="text-white mb-1" style="font-size: 13px; font-family: var(--font-sans);"><?= htmlspecialchars($av['nama_voucher']); ?></h5>
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <h5 class="text-white mb-1" style="font-size: 13px; font-family: var(--font-sans);"><?= htmlspecialchars($av['nama_voucher']); ?></h5>
+                                    </div>
                                     <p class="text-secondary small mb-2" style="font-size: 10px; color: var(--text-secondary);"><?= htmlspecialchars($av['kode_voucher']); ?></p>
                                     <span class="h6 text-gold mb-0 d-block" style="font-size: 14px; font-family: var(--font-serif); font-weight: 600; color: var(--gold) !important;">Potongan: <?= $lblVal; ?></span>
+                                    <?php 
+                                    $reqs = [];
+                                    if ($minPurchase > 0) {
+                                        $reqs[] = 'Min. Belanja ' . rupiah($minPurchase);
+                                    }
+                                    if ($minPortions > 0) {
+                                        $reqs[] = 'Min. Porsi ' . $minPortions . ' porsi';
+                                    }
+                                    if (!empty($reqs)):
+                                    ?>
+                                        <p class="small mb-0 mt-2 text-success" style="font-size: 10px; font-weight: 500;">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: -2px; margin-right: 3px;"><path d="M20 6L9 17l-5-5"/></svg>
+                                            Memenuhi: <?= implode(' & ', $reqs) ?>
+                                        </p>
+                                    <?php else: ?>
+                                        <p class="small mb-0 mt-2" style="font-size: 10px; color: rgba(255, 255, 255, 0.4);">
+                                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" style="vertical-align: -2px; margin-right: 3px; opacity: 0.6;"><path d="M20 6L9 17l-5-5"/></svg>
+                                            Memenuhi: Tanpa minimal transaksi
+                                        </p>
+                                    <?php endif; ?>
                                 </div>
                             </div>
                         </form>

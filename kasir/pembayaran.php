@@ -21,9 +21,30 @@ $stmtPending = $pdo->query("
     LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
     WHERE p.status_pesanan = 'Menunggu Pembayaran'
     ORDER BY p.tanggal_pesanan DESC
-    LIMIT 10
 ");
 $pendingOrders = $stmtPending->fetchAll();
+
+$search = trim($_GET['search'] ?? '');
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 5;
+
+$filteredOrders = [];
+foreach ($pendingOrders as $order) {
+    if ($search === '') {
+        $filteredOrders[] = $order;
+    } else {
+        $s = strtolower($search);
+        $uStr = strtolower((string)($order['username'] ?? 'Guest'));
+        $idStr = strtolower((string)$order['id_pesanan']);
+        if (strpos($uStr, $s) !== false || strpos($idStr, $s) !== false) {
+            $filteredOrders[] = $order;
+        }
+    }
+}
+
+$totalRows = count($filteredOrders);
+$totalPages = ceil($totalRows / $limit);
+$paginatedOrders = array_slice($filteredOrders, ($page - 1) * $limit, $limit);
 
 // Metrics
 $stmtCountToday = $pdo->query("SELECT COUNT(*) FROM pembayaran WHERE DATE(tanggal_pembayaran) = CURDATE()");
@@ -68,9 +89,15 @@ ob_start();
                     <h3 class="h3 mb-1 text-warning font-display">Pesanan Menunggu Pembayaran</h3>
                     <p class="text-secondary small mb-0">Daftar pesanan aktif yang belum diselesaikan pembayarannya.</p>
                 </div>
-                <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-outline-warning rounded-0 fw-medium px-4 py-2 text-white" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('kasir/pembayaran_riwayat.php'), ENT_QUOTES, 'UTF-8'); ?>">Riwayat Transaksi</a>
-                    <a class="btn btn-warning rounded-0 fw-medium px-4 py-2" style="font-size: 12px; font-weight: 600;" href="<?= htmlspecialchars(base_url('kasir/pembayaran_cetak.php'), ENT_QUOTES, 'UTF-8'); ?>">Cetak Struk</a>
+                <div class="d-flex flex-column flex-md-row gap-3 align-items-md-center">
+                    <form method="GET" class="d-flex gap-2">
+                        <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari pesanan..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
+                        <button type="submit" class="btn btn-outline-warning rounded-0">Cari</button>
+                    </form>
+                    <div class="d-flex flex-wrap gap-2">
+                        <a class="btn btn-outline-warning rounded-0 fw-medium px-4 py-2 text-white" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('kasir/pembayaran_riwayat.php'), ENT_QUOTES, 'UTF-8'); ?>">Riwayat Transaksi</a>
+                        <a class="btn btn-warning rounded-0 fw-medium px-4 py-2" style="font-size: 12px; font-weight: 600;" href="<?= htmlspecialchars(base_url('kasir/pembayaran_cetak.php'), ENT_QUOTES, 'UTF-8'); ?>">Cetak Struk</a>
+                    </div>
                 </div>
             </div>
 
@@ -89,7 +116,7 @@ ob_start();
                         </tr>
                     </thead>
                     <tbody>
-                        <?php foreach ($pendingOrders as $order): ?>
+                        <?php foreach ($paginatedOrders as $order): ?>
                         <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
                             <td class="text-gold fw-medium">#LP-<?= $order['id_pesanan']; ?></td>
                             <td class="text-white"><?= htmlspecialchars($order['username'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?></td>
@@ -108,12 +135,34 @@ ob_start();
                             </td>
                         </tr>
                         <?php endforeach; ?>
-                        <?php if (empty($pendingOrders)): ?>
-                            <tr><td colspan="8" class="text-center py-5 text-muted">Tidak ada pesanan yang menunggu pembayaran.</td></tr>
+                        <?php if (empty($paginatedOrders)): ?>
+                            <tr><td colspan="8" class="text-center py-5 text-muted">Tidak ada pesanan yang ditemukan.</td></tr>
                         <?php endif; ?>
                     </tbody>
                 </table>
             </div>
+
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                        <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                                <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
         </article>
     </div>
 </section>

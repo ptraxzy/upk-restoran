@@ -25,7 +25,7 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
             'nama_menu' => $item['nama_menu'],
             'deskripsi' => $item['deskripsi'] ?: 'Detail hidangan belum tersedia.',
             'harga_formatted' => rupiah((float) $item['harga']),
-            'gambar' => $item['gambar'] ?: 'https://placehold.co/1200x800?text=Menu',
+            'gambar' => menu_image($item['gambar']),
             'detail_url' => base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']),
             'action_url' => base_url('actions/tambah_keranjang.php')
         ];
@@ -435,9 +435,9 @@ body {
         <div class="luxury-hero-gradient"></div>
 
         <div class="hero-content">
-            <span class="eyebrow">Pencicipan Khas</span>
-            <h1 class="hero-title">Simfoni<br>Musim Gugur</h1>
-            <p class="hero-desc">Perjalanan terkurasi melalui rasa musiman, menonjolkan keseimbangan halus antara bumi dan laut.</p>
+            <span class="eyebrow animate-fade-in-up" style="animation-delay: 0.1s;">Pencicipan Khas</span>
+            <h1 class="hero-title animate-fade-in-up" style="animation-delay: 0.3s;">Simfoni<br>Musim Gugur</h1>
+            <p class="hero-desc animate-fade-in-up" style="animation-delay: 0.5s;">Perjalanan terkurasi melalui rasa musiman, menonjolkan keseimbangan halus antara bumi dan laut.</p>
         </div>
     </section>
 </div>
@@ -445,7 +445,7 @@ body {
 
 
 <div class="menu-discovery">
-    <nav class="category-tabs">
+    <nav class="category-tabs animate-fade-in-up" style="animation-delay: 0.6s;">
         <a href="<?= htmlspecialchars(base_url('pelanggan/dashboard.php'), ENT_QUOTES, 'UTF-8'); ?>" class="tab-btn <?= $selectedCategory === 0 ? 'active' : ''; ?>">SEMUA</a>
         <?php foreach ($categories as $category): ?>
             <a
@@ -466,11 +466,11 @@ body {
                 </div>
             </article>
         <?php else: ?>
-            <?php foreach ($items as $item): ?>
-            <article class="menu-card animate-fade-in-up">
+            <?php foreach ($items as $index => $item): ?>
+            <article class="menu-card animate-fade-in-up" style="animation-delay: <?= 0.7 + ($index * 0.1) ?>s;">
                 <div class="menu-card-img-wrapper">
                     <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">
-                        <img src="<?= htmlspecialchars((string) ($item['gambar'] ?: 'https://placehold.co/1200x800?text=Menu'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="menu-card-img">
+                        <img src="<?= htmlspecialchars((string) menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="menu-card-img">
                     </a>
                 </div>
                 <div class="menu-card-body">
@@ -546,7 +546,7 @@ body {
             }, 3500);
         }
 
-        // 1. AJAX Add To Cart Handler
+        // Intersepsi dan pemrosesan penambahan keranjang via AJAX
         document.addEventListener('submit', async (e) => {
             const form = e.target.closest('.btn-add-form');
             if (!form) return;
@@ -592,7 +592,7 @@ body {
             }
         });
 
-        // 2. AJAX Category Tab Filter Handler
+        // Intersepsi filter kategori secara asinkron (AJAX)
         tabBtns.forEach(btn => {
             btn.addEventListener('click', async (e) => {
                 e.preventDefault();
@@ -626,9 +626,10 @@ body {
                             `;
                         } else {
                             // Render new items
-                            data.items.forEach(item => {
+                            data.items.forEach((item, index) => {
                                 const article = document.createElement('article');
                                 article.className = 'menu-card animate-fade-in-up';
+                                article.style.animationDelay = (0.1 * index) + 's';
                                 article.innerHTML = `
                                     <div class="menu-card-img-wrapper">
                                         <a href="${item.detail_url}">

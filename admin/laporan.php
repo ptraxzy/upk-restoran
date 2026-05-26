@@ -94,13 +94,13 @@ $stmtRecent = $pdo->query("
     LEFT JOIN user pl ON p.id_user = pl.id_user
     LEFT JOIN user kc ON py.id_user = kc.id_user
     ORDER BY p.tanggal_pesanan DESC
-    LIMIT 8
+    LIMIT 5
 ");
 $recentTransactions = $stmtRecent->fetchAll();
 
 ob_start();
 ?>
-<!-- Metric Cards -->
+<?php // Rendering kartu metrik performa utama ?>
 <section class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-5 animate-fade-in-up">
     <div class="col">
         <article class="card h-100 p-4">
@@ -132,7 +132,7 @@ ob_start();
     </div>
 </section>
 
-<!-- Charts Row -->
+<?php // Layout visualisasi grafik tren pendapatan dan menu terlaris ?>
 <section class="row g-5 mb-5 animate-fade-in-up" style="animation-delay: 0.15s;">
     <div class="col-lg-8">
         <article class="section-panel h-100">
@@ -143,7 +143,27 @@ ob_start();
                 </div>
                 <button class="btn btn-outline-warning py-2 px-3" style="font-size: 12px;" onclick="window.print()">Cetak Laporan</button>
             </div>
-            <div style="position: relative; height: 280px;">
+            <style>
+                .rev-chart-wrapper {
+                    height: 280px;
+                    position: relative;
+                    width: 100%;
+                }
+                .best-chart-wrapper {
+                    height: 220px;
+                    position: relative;
+                    width: 100%;
+                }
+                @media (max-width: 575.98px) {
+                    .rev-chart-wrapper {
+                        height: 200px;
+                    }
+                    .best-chart-wrapper {
+                        height: 180px;
+                    }
+                }
+            </style>
+            <div class="rev-chart-wrapper">
                 <canvas id="revenueChart"></canvas>
             </div>
         </article>
@@ -151,7 +171,7 @@ ob_start();
     <div class="col-lg-4">
         <article class="section-panel h-100">
             <h3 class="font-display text-white mb-4" style="font-size: 24px;">Menu Terlaris</h3>
-            <div style="position: relative; height: 220px;">
+            <div class="best-chart-wrapper">
                 <canvas id="bestSellingChart"></canvas>
             </div>
             <div class="mt-4 d-flex flex-column gap-2">
@@ -175,7 +195,7 @@ ob_start();
     </div>
 </section>
 
-<!-- Best Selling Detail + Recent Transactions -->
+<?php // Detail performa item spesifik dan rekapan transaksi terkini ?>
 <section class="row g-5 animate-fade-in-up" style="animation-delay: 0.3s;">
     <div class="col-lg-5">
         <article class="section-panel">
@@ -188,7 +208,7 @@ ob_start();
                             <span class="text-gold fw-bold" style="font-size: 14px;"><?= $rank + 1; ?></span>
                         </div>
                         <?php if ($item['gambar']): ?>
-                            <img src="<?= htmlspecialchars($item['gambar']); ?>" alt="<?= htmlspecialchars($item['nama_menu']); ?>" style="width: 44px; height: 44px; object-fit: cover; border: 1px solid var(--border);">
+                            <img src="<?= htmlspecialchars(menu_image($item['gambar'])); ?>" alt="<?= htmlspecialchars($item['nama_menu']); ?>" style="width: 44px; height: 44px; object-fit: cover; border: 1px solid var(--border);">
                         <?php else: ?>
                             <div class="bg-black border border-soft d-flex align-items-center justify-content-center" style="width: 44px; height: 44px;">
                                 <span class="text-muted" style="font-size: 12px;">N/A</span>
@@ -263,27 +283,102 @@ ob_start();
     </div>
 </section>
 
-<!-- Chart.js -->
+<?php // Injeksi pustaka eksternal Chart.js untuk perenderan grafik ?>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // Gold color palette
     const gold = '#C9A84C';
     const goldLight = 'rgba(201, 168, 76, 0.15)';
-    const goldBorder = 'rgba(201, 168, 76, 0.4)';
+    const goldBorder = 'rgba(201, 168, 76, 0.2)';
     const textMuted = '#888';
+    const isMobile = window.innerWidth < 576;
 
     Chart.defaults.color = textMuted;
     Chart.defaults.borderColor = 'rgba(255,255,255,0.06)';
     Chart.defaults.font.family = "'DM Sans', sans-serif";
 
+    // ─── Custom Plugins for Ultra-Premium Look ───
+
+    // 1. Vertical line tracking cursor on hover (Line Chart)
+    const hoverLinePlugin = {
+        id: 'hoverLine',
+        afterDraw: function(chart) {
+            if (chart.tooltip?._active && chart.tooltip._active.length) {
+                const activePoint = chart.tooltip._active[0];
+                const ctx = chart.ctx;
+                const x = activePoint.element.x;
+                const topY = chart.chartArea.top;
+                const bottomY = chart.chartArea.bottom;
+                
+                ctx.save();
+                ctx.beginPath();
+                ctx.moveTo(x, topY);
+                ctx.lineTo(x, bottomY);
+                ctx.lineWidth = 1;
+                ctx.strokeStyle = 'rgba(201, 168, 76, 0.25)';
+                ctx.setLineDash([4, 4]);
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+    };
+
+    // 2. Dynamic metrics inside cutout center (Doughnut Chart)
+    const centerTextPlugin = {
+        id: 'centerText',
+        beforeDraw: function(chart) {
+            if (chart.config.type !== 'doughnut') return;
+            const { width, height, ctx } = chart;
+            ctx.save();
+            
+            const chartArea = chart.chartArea;
+            const centerX = chart.chartArea ? (chartArea.left + chartArea.right) / 2 : width / 2;
+            const centerY = chart.chartArea ? (chartArea.top + chartArea.bottom) / 2 : height / 2;
+            
+            // Fetch hovered segment or show total
+            const activeElements = chart.getActiveElements();
+            let labelText = "Total Terjual";
+            let valueText = "";
+            
+            if (activeElements && activeElements.length > 0) {
+                const index = activeElements[0].index;
+                const value = chart.data.datasets[0].data[index];
+                const rawLabel = chart.data.labels[index];
+                labelText = rawLabel.length > 14 ? rawLabel.substring(0, 11) + '...' : rawLabel;
+                valueText = value.toString() + ' pcs';
+            } else {
+                const total = chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                valueText = total.toString() + ' pcs';
+            }
+            
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // Draw Sub-label (gray text)
+            ctx.font = isMobile ? "600 8px 'DM Sans', sans-serif" : "600 9px 'DM Sans', sans-serif";
+            ctx.fillStyle = '#888888';
+            ctx.fillText(labelText.toUpperCase(), centerX, centerY - (isMobile ? 8 : 10));
+            
+            // Draw Main Metric value (white bold text)
+            ctx.font = isMobile ? "bold 16px 'DM Sans', sans-serif" : "bold 22px 'DM Sans', sans-serif";
+            ctx.fillStyle = '#ffffff';
+            ctx.fillText(valueText, centerX, centerY + (isMobile ? 10 : 12));
+            
+            ctx.restore();
+        }
+    };
+
+    // ─── Revenue Line Chart ───
     const revenueCtx = document.getElementById('revenueChart').getContext('2d');
     const gradient = revenueCtx.createLinearGradient(0, 0, 0, 280);
     gradient.addColorStop(0, 'rgba(201, 168, 76, 0.25)');
+    gradient.addColorStop(0.5, 'rgba(201, 168, 76, 0.08)');
     gradient.addColorStop(1, 'rgba(201, 168, 76, 0)');
 
     new Chart(revenueCtx, {     
         type: 'line',
+        plugins: [hoverLinePlugin],
         data: {
             labels: <?= json_encode($dailyLabels); ?>,
             datasets: [{
@@ -297,30 +392,45 @@ document.addEventListener('DOMContentLoaded', function() {
                 pointBackgroundColor: gold,
                 pointBorderColor: '#0a0a0a',
                 pointBorderWidth: 2,
-                pointRadius: 4,
-                pointHoverRadius: 7,
-                pointHoverBackgroundColor: '#fff',
-                pointHoverBorderColor: gold,
-                pointHoverBorderWidth: 3
+                pointRadius: 0, // Clean line without nodes by default
+                pointHoverRadius: 6, // Node pops up beautifully on hover
+                pointHoverBackgroundColor: gold,
+                pointHoverBorderColor: '#ffffff',
+                pointHoverBorderWidth: 2
             }]
         },
         options: {
+            animation: {
+                duration: 1200,
+                easing: 'easeOutQuart',
+                delay: (context) => {
+                    let delay = 0;
+                    if (context.type === 'data' && context.mode === 'default') {
+                        delay = context.dataIndex * 80;
+                    }
+                    return delay;
+                }
+            },
             responsive: true,
             maintainAspectRatio: false,
             interaction: { intersect: false, mode: 'index' },
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1a1a1a',
-                    borderColor: goldBorder,
+                    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+                    borderColor: 'rgba(201, 168, 76, 0.2)',
                     borderWidth: 1,
+                    borderRadius: 8,
                     titleColor: gold,
+                    titleFont: { family: "'DM Sans', sans-serif", weight: 'bold', size: 12 },
+                    bodyFont: { family: "'DM Sans', sans-serif", size: 13 },
                     bodyColor: '#fff',
-                    titleFont: { family: "'Libre Baskerville', serif", size: 14 },
                     padding: 12,
+                    usePointStyle: true,
+                    boxPadding: 6,
                     callbacks: {
                         label: function(ctx) {
-                            return 'Rp ' + ctx.parsed.y.toLocaleString('id-ID');
+                            return ' Pendapatan: Rp ' + ctx.parsed.y.toLocaleString('id-ID');
                         }
                     }
                 }
@@ -328,12 +438,24 @@ document.addEventListener('DOMContentLoaded', function() {
             scales: {
                 x: {
                     grid: { display: false },
-                    ticks: { font: { size: 10 }, maxRotation: 45 }
+                    ticks: { 
+                        font: { size: isMobile ? 8 : 10, weight: '500' }, 
+                        color: '#888',
+                        maxTicksLimit: isMobile ? 7 : 14
+                    }
                 },
                 y: {
-                    grid: { color: 'rgba(255,255,255,0.04)' },
+                    grid: {
+                        color: 'rgba(255,255,255,0.05)',
+                        tickLength: 0
+                    },
+                    border: {
+                        dash: [4, 4],
+                        display: false
+                    },
                     ticks: {
-                        font: { size: 10 },
+                        color: '#888',
+                        font: { size: isMobile ? 8 : 10, weight: '500' },
                         callback: function(v) {
                             if (v >= 1000000) return (v / 1000000).toFixed(1) + ' jt';
                             if (v >= 1000) return (v / 1000).toFixed(0) + ' rb';
@@ -349,33 +471,52 @@ document.addEventListener('DOMContentLoaded', function() {
     const bestCtx = document.getElementById('bestSellingChart').getContext('2d');
     new Chart(bestCtx, {
         type: 'doughnut',
+        plugins: [centerTextPlugin],
         data: {
             labels: <?= json_encode($bestLabels); ?>,
             datasets: [{
                 data: <?= json_encode($bestData); ?>,
                 backgroundColor: ['#C9A84C', '#E8D48B', '#8B7635', '#A89253', '#D4BE6A'],
-                borderColor: '#0a0a0a',
+                borderColor: '#0f0f0f',
                 borderWidth: 3,
                 hoverBorderColor: gold,
-                hoverOffset: 6
+                hoverOffset: 6,
+                borderRadius: 6, // Smooth rounded edges on doughnut segments
+                spacing: 4       // Subtle gaps between segments
             }]
         },
         options: {
+            animation: {
+                animateScale: true,
+                animateRotate: true,
+                duration: 1500,
+                easing: 'easeOutQuart',
+                delay: (context) => {
+                    let delay = 0;
+                    if (context.type === 'data' && context.mode === 'default') {
+                        delay = context.dataIndex * 120;
+                    }
+                    return delay;
+                }
+            },
             responsive: true,
             maintainAspectRatio: false,
-            cutout: '65%',
+            cutout: '78%', // Thinner circle for modern minimalist aesthetic
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#1a1a1a',
-                    borderColor: goldBorder,
+                    backgroundColor: 'rgba(10, 10, 10, 0.95)',
+                    borderColor: 'rgba(201, 168, 76, 0.2)',
                     borderWidth: 1,
+                    borderRadius: 8,
                     titleColor: gold,
+                    titleFont: { family: "'DM Sans', sans-serif", weight: 'bold', size: 12 },
+                    bodyFont: { family: "'DM Sans', sans-serif", size: 12 },
                     bodyColor: '#fff',
                     padding: 10,
                     callbacks: {
                         label: function(ctx) {
-                            return ctx.label + ': ' + ctx.parsed + ' porsi';
+                            return ' ' + ctx.label + ': ' + ctx.parsed + ' porsi';
                         }
                     }
                 }

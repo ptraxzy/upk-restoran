@@ -22,7 +22,7 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 $pdo = db();
 
-// 1. Cek User
+// Verifikasi eksistensi pengguna dalam sistem
 $stmt = $pdo->prepare("SELECT username FROM user WHERE email = ? LIMIT 1");
 $stmt->execute([$email]);
 $user = $stmt->fetch();
@@ -33,15 +33,15 @@ if (!$user) {
     exit;
 }
 
-// 2. Token & Expiry
+// Generate secure token dan batas waktu kadaluarsa
 $token = bin2hex(random_bytes(32));
 $expiresAt = date('Y-m-d H:i:s', strtotime('+1 hour'));
 
-// 3. Simpan Token
+// Persistensi token ke dalam database
 $pdo->prepare("INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)")
     ->execute([$email, $token, $expiresAt]);
 
-// 4. Kirim Email Asli
+// Inisiasi pengiriman email pemulihan
 $resetLink = base_url("reset_password.php?token=$token");
 $username = htmlspecialchars((string) $user['username'], ENT_QUOTES, 'UTF-8');
 $safeResetLink = htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8');

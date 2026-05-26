@@ -46,12 +46,37 @@ if ($activeVoucher) {
     $voucher = $stmtVoucher->fetch();
 
     if ($voucher) {
-        $vType = $voucher['jenis_voucher'];
-        $vVal = (float)$voucher['nilai_voucher'];
-        if ($vType === 'Persentase') {
-            $discount = $subtotal * ($vVal / 100);
+        $minPurchase = (float)$voucher['minimal_pembelian'];
+        $minPortions = (int)$voucher['minimal_porsi'];
+
+        $totalPortions = 0;
+        foreach ($cart as $item) {
+            $totalPortions += (int)$item['qty'];
+        }
+
+        if ($subtotal >= $minPurchase && $totalPortions >= $minPortions) {
+            $vType = $voucher['jenis_voucher'];
+            $vVal = (float)$voucher['nilai_voucher'];
+            if ($vType === 'Persentase') {
+                $discount = $subtotal * ($vVal / 100);
+            } else {
+                $discount = min($vVal, $subtotal);
+            }
         } else {
-            $discount = min($vVal, $subtotal);
+            unset($_SESSION['active_voucher']);
+            unset($_SESSION['active_voucher_type']);
+            unset($_SESSION['active_voucher_value']);
+            unset($_SESSION['active_discount']);
+            
+            if ($subtotal < $minPurchase && $totalPortions < $minPortions) {
+                $errMsg = 'Gagal memproses pesanan: Total belanja tidak memenuhi syarat minimal pembelian ' . rupiah($minPurchase) . ' dan minimal porsi ' . $minPortions . ' porsi.';
+            } elseif ($subtotal < $minPurchase) {
+                $errMsg = 'Gagal memproses pesanan: Total belanja tidak memenuhi syarat minimal pembelian ' . rupiah($minPurchase) . '.';
+            } else {
+                $errMsg = 'Gagal memproses pesanan: Total belanja tidak memenuhi syarat minimal porsi ' . $minPortions . ' porsi.';
+            }
+            set_flash('error', $errMsg);
+            redirect(base_url('pelanggan/keranjang_checkout.php'));
         }
     }
 }
@@ -62,7 +87,7 @@ $total = ($subtotal - $discount) + $tax;
 $pdo->beginTransaction();
 
 try {
-    // 1. Buat pesanan baru
+    // Inisiasi entitas pesanan utama
     $stmt = $pdo->prepare("
         INSERT INTO pesanan (id_user, no_meja, total_harga, status_pesanan)
         VALUES (?, ?, ?, 'Menunggu Pembayaran')
@@ -74,7 +99,7 @@ try {
     ]);
     $id_pesanan = (int) $pdo->lastInsertId();
 
-    // 2. Simpan detail pesanan dan kurangi stok porsi menu
+    // Proses detail pesanan dan sinkronisasi stok persediaan
     $stmtDetail = $pdo->prepare("
         INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah, harga_satuan)
         VALUES (?, ?, ?, ?)
@@ -107,7 +132,7 @@ try {
         $stmtUpdateStock->execute([$newPorsi, $newStatus, $item['id_menu']]);
     }
 
-    // 3. Simpan data pembayaran (status Menunggu)
+    // Daftarkan transaksi pembayaran awal
     $metode = $_POST['metode_pembayaran'] ?? 'QRIS';
     if (!in_array($metode, ['QRIS', 'Tunai'])) {
         $metode = 'QRIS';

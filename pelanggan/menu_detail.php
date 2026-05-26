@@ -484,7 +484,7 @@ if (str_contains($menuLower, 'scallop')) {
             </div>
         </div>
 
-        <img src="<?= htmlspecialchars($menu['gambar'] ?: 'https://placehold.co/1200x800?text=Menu'); ?>" alt="<?= htmlspecialchars($menu['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="premium-media-img">
+        <img src="<?= htmlspecialchars(menu_image($menu['gambar'] ?? '')); ?>" alt="<?= htmlspecialchars($menu['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="premium-media-img">
         <div class="media-gradient-overlay"></div>
     </div>
 
