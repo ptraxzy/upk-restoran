@@ -11,30 +11,30 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
     redirect(base_url('admin/karyawan.php'));
 }
 
-$id_user = $_POST['id_user'] ?? null;
+$id_karyawan = $_POST['id_karyawan'] ?? null;
 $username = $_POST['username'] ?? '';
+$nama_karyawan = $_POST['nama_karyawan'] ?? $username;
 $password = $_POST['password'] ?? '';
-$level = $_POST['level'] ?? 'kasir';
 $status = $_POST['status'] ?? 'Aktif';
 
-if (!$id_user || empty($username)) {
+if (!$id_karyawan || empty($username)) {
     set_flash('error', 'Username wajib diisi.');
-    redirect(base_url('admin/karyawan_edit.php?id=' . $id_user));
+    redirect(base_url('admin/karyawan_edit.php?id=' . $id_karyawan));
 }
 
 try {
     // Cek duplicate username (selain dirinya sendiri)
-    $stmtCheck = db()->prepare("SELECT 1 FROM user WHERE username = ? AND id_user != ? LIMIT 1");
-    $stmtCheck->execute([$username, $id_user]);
+    $stmtCheck = db()->prepare("SELECT 1 FROM karyawan WHERE username = ? AND id_karyawan != ? LIMIT 1");
+    $stmtCheck->execute([$username, $id_karyawan]);
 
     if ($stmtCheck->fetch()) {
         set_flash('error', 'Username sudah digunakan oleh karyawan lain.');
-        redirect(base_url('admin/karyawan_edit.php?id=' . $id_user));
+        redirect(base_url('admin/karyawan_edit.php?id=' . $id_karyawan));
     }
 
-    // Dapatkan data user lama
-    $oldUser = db()->prepare("SELECT password FROM user WHERE id_user = ?");
-    $oldUser->execute([$id_user]);
+    // Dapatkan data karyawan lama
+    $oldUser = db()->prepare("SELECT password FROM karyawan WHERE id_karyawan = ?");
+    $oldUser->execute([$id_karyawan]);
     $userRecord = $oldUser->fetch();
 
     if (!$userRecord) {
@@ -50,9 +50,9 @@ try {
         $passwordHash = $userRecord['password'];
     }
 
-    // Update user
-    $up = db()->prepare("UPDATE user SET username = ?, nama_user = ?, password = ?, level = ?, status = ? WHERE id_user = ?");
-    $up->execute([$username, $username, $passwordHash, $level, $status, $id_user]);
+    // Update karyawan
+    $up = db()->prepare("UPDATE karyawan SET username = ?, nama_karyawan = ?, password = ?, status = ? WHERE id_karyawan = ?");
+    $up->execute([$username, $nama_karyawan, $passwordHash, $status, $id_karyawan]);
 
     set_flash('success', 'Data karyawan berhasil diperbarui.');
 } catch (Exception $e) {

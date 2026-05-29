@@ -19,7 +19,7 @@ $stmt = $pdo->query("
            u.username
     FROM pembayaran py
     JOIN pesanan p ON py.id_pesanan = p.id_pesanan
-    LEFT JOIN user u ON p.id_user = u.id_user
+    LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan
     ORDER BY py.tanggal_pembayaran DESC
 ");
 $payments = $stmt->fetchAll();

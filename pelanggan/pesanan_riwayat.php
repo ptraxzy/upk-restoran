@@ -21,7 +21,7 @@ $stmt = $pdo->prepare('
     LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.id_pesanan
     LEFT JOIN menu m ON dp.id_menu = m.id_menu
     LEFT JOIN ulasan ul ON p.id_pesanan = ul.id_pesanan
-    WHERE p.id_user = ? AND p.status_pesanan IN ("Selesai", "Dibatalkan")
+    WHERE p.id_pelanggan = ? AND p.status_pesanan IN ("Selesai", "Dibatalkan")
     GROUP BY p.id_pesanan
     ORDER BY p.tanggal_pesanan DESC
 ');
@@ -44,7 +44,7 @@ $stmtFav = $pdo->prepare('
     FROM detail_pesanan dp
     JOIN pesanan p ON dp.id_pesanan = p.id_pesanan
     JOIN menu m ON dp.id_menu = m.id_menu
-    WHERE p.id_user = ? AND p.status_pesanan = "Selesai"
+    WHERE p.id_pelanggan = ? AND p.status_pesanan = "Selesai"
     GROUP BY dp.id_menu, m.nama_menu
     ORDER BY total_qty DESC
     LIMIT 1

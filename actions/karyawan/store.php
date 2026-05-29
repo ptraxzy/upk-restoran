@@ -12,21 +12,17 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') !== 'POST') {
 }
 
 $username = $_POST['username'] ?? '';
+$nama_karyawan = $_POST['nama_karyawan'] ?? $username;
 $password = $_POST['password'] ?? '';
-$level = $_POST['level'] ?? 'kasir';
 
 if (empty($username) || empty($password)) {
     set_flash('error', 'Username dan Password wajib diisi.');
     redirect(base_url('admin/karyawan_tambah.php'));
 }
 
-if (!in_array($level, ['admin', 'kasir'])) {
-    $level = 'kasir';
-}
-
 try {
-    // Cek apakah username sudah ada di user
-    $stmtCheck = db()->prepare("SELECT 1 FROM user WHERE username = ? LIMIT 1");
+    // Cek apakah username sudah ada di karyawan
+    $stmtCheck = db()->prepare("SELECT 1 FROM karyawan WHERE username = ? LIMIT 1");
     $stmtCheck->execute([$username]);
 
     if ($stmtCheck->fetch()) {
@@ -35,8 +31,8 @@ try {
     }
 
     $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-    $stmt = db()->prepare("INSERT INTO user (nama_user, username, password, level) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$username, $username, $hashedPassword, $level]);
+    $stmt = db()->prepare("INSERT INTO karyawan (nama_karyawan, username, password) VALUES (?, ?, ?)");
+    $stmt->execute([$nama_karyawan, $username, $hashedPassword]);
 
     set_flash('success', 'Karyawan berhasil ditambahkan.');
 } catch (Exception $e) {

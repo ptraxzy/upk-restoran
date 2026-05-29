@@ -46,7 +46,7 @@ if ($userId <= 0) {
     redirect(base_url('login.php'));
 }
 
-$exists = $pdo->prepare('SELECT id_keranjang, qty FROM keranjang WHERE id_user = ? AND id_menu = ?');
+$exists = $pdo->prepare('SELECT id_keranjang, qty FROM keranjang WHERE id_pelanggan = ? AND id_menu = ?');
 $exists->execute([$userId, $id_menu]);
 $cartItem = $exists->fetch();
 
@@ -54,7 +54,7 @@ if ($cartItem) {
     $update = $pdo->prepare('UPDATE keranjang SET qty = qty + ? WHERE id_keranjang = ?');
     $update->execute([$qty, $cartItem['id_keranjang']]);
 } else {
-    $insert = $pdo->prepare('INSERT INTO keranjang (id_user, id_menu, qty) VALUES (?, ?, ?)');
+    $insert = $pdo->prepare('INSERT INTO keranjang (id_pelanggan, id_menu, qty) VALUES (?, ?, ?)');
     $insert->execute([$userId, $id_menu, $qty]);
 }
 

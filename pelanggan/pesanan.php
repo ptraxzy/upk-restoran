@@ -19,7 +19,7 @@ $stmt = $pdo->prepare('
     FROM pesanan p
     LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.id_pesanan
     LEFT JOIN menu m ON dp.id_menu = m.id_menu
-    WHERE p.id_user = ?
+    WHERE p.id_pelanggan = ?
     GROUP BY p.id_pesanan
     ORDER BY p.tanggal_pesanan DESC
 ');

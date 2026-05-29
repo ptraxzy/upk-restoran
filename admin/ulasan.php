@@ -5,10 +5,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/auth.php';
 require_role('admin');
 
-$title = 'Ulasan Pelanggan';
-$assetBase = '../../assets';
-require __DIR__ . '/../includes/header.php';
-
 require_once __DIR__ . '/../includes/database.php';
 $pdo = db();
 
@@ -27,11 +23,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     redirect(base_url('admin/ulasan.php'));
 }
 
+$title = 'Ulasan Pelanggan';
+$assetBase = '../../assets';
+require __DIR__ . '/../includes/header.php';
+
 // Fetch all reviews with user and order details
 $stmt = $pdo->query("
     SELECT ul.*, u.username, p.no_meja, p.total_harga, p.tanggal_pesanan
     FROM ulasan ul
-    JOIN user u ON ul.id_user = u.id_user
+    JOIN pelanggan u ON ul.id_pelanggan = u.id_pelanggan
     JOIN pesanan p ON ul.id_pesanan = p.id_pesanan
     ORDER BY ul.tanggal_ulasan DESC
 ");

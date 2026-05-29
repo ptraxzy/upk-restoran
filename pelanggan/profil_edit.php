@@ -6,15 +6,11 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/database.php';
 require_role('pelanggan');
 
-$title = 'Edit Profil';
-$assetBase = '../../assets';
-require __DIR__ . '/../includes/header.php';
-
 $userId = $_SESSION['id_user'] ?? 0;
 $pdo = db();
 
-// Fetch current user info
-$stmt = $pdo->prepare('SELECT * FROM user WHERE id_user = ?');
+// Fetch current pelanggan info
+$stmt = $pdo->prepare('SELECT * FROM pelanggan WHERE id_pelanggan = ?');
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
@@ -29,7 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Check for unique username
         $exists = false;
-        $stmtCheck = $pdo->prepare('SELECT 1 FROM user WHERE username = ? AND id_user != ?');
+        $stmtCheck = $pdo->prepare('SELECT 1 FROM pelanggan WHERE username = ? AND id_pelanggan != ?');
         $stmtCheck->execute([$username, $userId]);
         $exists = (bool) $stmtCheck->fetch();
 
@@ -39,10 +35,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // Update
             if ($password !== '') {
                 $hashed = password_hash($password, PASSWORD_DEFAULT);
-                $stmtUpdate = $pdo->prepare('UPDATE user SET nama_user = ?, username = ?, email = ?, password = ? WHERE id_user = ?');
+                $stmtUpdate = $pdo->prepare('UPDATE pelanggan SET nama_pelanggan = ?, username = ?, email = ?, password = ? WHERE id_pelanggan = ?');
                 $stmtUpdate->execute([$nama_user, $username, $email, $hashed, $userId]);
             } else {
-                $stmtUpdate = $pdo->prepare('UPDATE user SET nama_user = ?, username = ?, email = ? WHERE id_user = ?');
+                $stmtUpdate = $pdo->prepare('UPDATE pelanggan SET nama_pelanggan = ?, username = ?, email = ? WHERE id_pelanggan = ?');
                 $stmtUpdate->execute([$nama_user, $username, $email, $userId]);
             }
             $_SESSION['user_name'] = $username;
@@ -50,7 +46,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             redirect(base_url('pelanggan/profil.php'));
         }
     }
+    
+    // Refresh user data
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch();
 }
+
+$title = 'Edit Profil';
+$assetBase = '../../assets';
+require __DIR__ . '/../includes/header.php';
 
 ob_start();
 ?>
@@ -66,7 +70,7 @@ ob_start();
                 <div class="row row-cols-1 row-cols-md-2 g-3">
                     <div>
                         <label class="form-label small text-secondary mb-2">Nama Lengkap</label>
-                        <input class="form-control bg-black text-white border-secondary rounded-0 py-2" style="font-size: 13px;" type="text" name="nama_user" value="<?= htmlspecialchars((string)($user['nama_user'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
+                        <input class="form-control bg-black text-white border-secondary rounded-0 py-2" style="font-size: 13px;" type="text" name="nama_user" value="<?= htmlspecialchars((string)($user['nama_pelanggan'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" required>
                     </div>
                     <div>
                         <label class="form-label small text-secondary mb-2">Username</label>

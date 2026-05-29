@@ -23,9 +23,12 @@ $pdo = db();
 $pdo->beginTransaction();
 
 try {
+    // id_karyawan dari session kasir yang sedang login
+    $id_karyawan = $_SESSION['id_user'] ?? null;
+
     // Perbarui status pesanan dan catat karyawan yang menangani transaksi
     $stmtP = $pdo->prepare("UPDATE pesanan SET status_pesanan = 'Diproses', id_karyawan = ? WHERE id_pesanan = ?");
-    $stmtP->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
+    $stmtP->execute([$id_karyawan, $id_pesanan]);
 
     // Konfirmasi status pembayaran dan rekam jejak kasir
     $stmtB = $pdo->prepare("
@@ -36,7 +39,7 @@ try {
             id_karyawan = ?
         WHERE id_pesanan = ?
     ");
-    $stmtB->execute([$metode, $_SESSION['id_user'] ?? null, $id_pesanan]);
+    $stmtB->execute([$metode, $id_karyawan, $id_pesanan]);
 
     $pdo->commit();
 

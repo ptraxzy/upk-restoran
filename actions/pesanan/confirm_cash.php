@@ -6,7 +6,7 @@ require_once __DIR__ . '/../../includes/auth.php';
 require_once __DIR__ . '/../../includes/database.php';
 
 // Allow both admin and kasir to confirm cash payments
-if (!isset($_SESSION['id_user']) || !in_array($_SESSION['level'] ?? $_SESSION['user_role'] ?? '', ['admin', 'kasir'])) {
+if (!isset($_SESSION['id_user']) || !in_array($_SESSION['user_role'] ?? $_SESSION['level'] ?? '', ['admin', 'kasir'])) {
     set_flash('error', 'Akses ditolak.');
     redirect(base_url());
 }
@@ -30,6 +30,13 @@ try {
         throw new Exception("Data pembayaran tidak ditemukan.");
     }
 
+    // Tentukan id_karyawan: jika role kasir, gunakan session id. Jika admin, set null.
+    $id_karyawan = null;
+    $role = $_SESSION['user_role'] ?? '';
+    if ($role === 'kasir') {
+        $id_karyawan = $_SESSION['id_user'] ?? null;
+    }
+
     $stmtBayar = $pdo->prepare("
         UPDATE pembayaran 
         SET status = 'Lunas', 
@@ -38,11 +45,11 @@ try {
             id_karyawan = ? 
         WHERE id_pesanan = ?
     ");
-    $stmtBayar->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
+    $stmtBayar->execute([$id_karyawan, $id_pesanan]);
 
     // Perbarui status pesanan
     $stmtPesanan = $pdo->prepare("UPDATE pesanan SET status_pesanan = 'Diproses', id_karyawan = ? WHERE id_pesanan = ?");
-    $stmtPesanan->execute([$_SESSION['id_user'] ?? null, $id_pesanan]);
+    $stmtPesanan->execute([$id_karyawan, $id_pesanan]);
 
     $pdo->commit();
 

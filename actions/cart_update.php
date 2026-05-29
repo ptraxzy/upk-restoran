@@ -11,7 +11,7 @@ $qty = isset($_GET['qty']) ? (int) $_GET['qty'] : 1;
 $userId = $_SESSION['id_user'] ?? 0;
 
 if ($id > 0 && $userId > 0 && $qty > 0) {
-    $stmt = db()->prepare('UPDATE keranjang SET qty = ? WHERE id_keranjang = ? AND id_user = ?');
+    $stmt = db()->prepare('UPDATE keranjang SET qty = ? WHERE id_keranjang = ? AND id_pelanggan = ?');
     $stmt->execute([$qty, $id, $userId]);
     set_flash('success', 'Jumlah pesanan berhasil diperbarui.');
 }

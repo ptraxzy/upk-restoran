@@ -179,8 +179,8 @@ ob_start();
                 <div class="settings-card d-flex flex-column justify-content-between">
                     <div>
                         <div class="settings-card-title">
-                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><polyline points="2 8.5 12 15 22 8.5"></polyline><line x1="12" y1="22" x2="12" y2="15"></line></svg>
-                            Filosofi Brand
+`                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="2"><polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon><polyline points="2 8.5 12 15 22 8.5"></polyline><line x1="12" y1="22" x2="12" y2="15"></line></svg>
+`                            Filosofi Brand
                         </div>
 
                         <div class="mb-3">

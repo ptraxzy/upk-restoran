@@ -65,7 +65,7 @@ if (empty($nama_menu) || empty($id_kategori) || empty($harga)) {
 }
 
 try {
-    $stmt = db()->prepare("INSERT INTO menu (id_kategori, nama_menu, deskripsi, harga, gambar, status, porsi, id_user) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt = db()->prepare("INSERT INTO menu (id_kategori, nama_menu, deskripsi, harga, gambar, status, porsi, id_admin) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([$id_kategori, $nama_menu, $deskripsi, $harga, $gambar, $status, $porsi, $_SESSION['id_user'] ?? null]);
 
     set_flash('success', 'Menu baru berhasil ditambahkan.');

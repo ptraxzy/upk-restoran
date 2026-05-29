@@ -18,7 +18,7 @@ $stmt = $pdo->prepare('
     SELECT p.*, pb.metode AS metode_pembayaran, pb.status AS status_pembayaran, pb.trx_id
     FROM pesanan p
     LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
-    WHERE p.id_user = ? AND p.status_pesanan NOT IN ("Selesai", "Dibatalkan")
+    WHERE p.id_pelanggan = ? AND p.status_pesanan NOT IN ("Selesai", "Dibatalkan")
     ORDER BY p.tanggal_pesanan DESC 
     LIMIT 1
 ');

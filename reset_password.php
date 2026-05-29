@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Perbarui kredensial kata sandi
         $hashed = password_hash($password, PASSWORD_DEFAULT);
-        $stmtUpdate = $pdo->prepare("UPDATE user SET password = ? WHERE email = ?");
+        $stmtUpdate = $pdo->prepare("UPDATE pelanggan SET password = ? WHERE email = ?");
         $stmtUpdate->execute([$hashed, $reset['email']]);
 
         // Invalidate token pasca penggunaan

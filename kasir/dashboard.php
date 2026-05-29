@@ -27,10 +27,10 @@ $stmtRecent = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.status_pesanan, p.tanggal_pesanan,
            u.username
     FROM pesanan p
-    LEFT JOIN user u ON p.id_user = u.id_user
-    WHERE p.status_pesanan IN ('Diproses','Sedang Disiapkan','Siap Saji','Menunggu Pembayaran')
-    ORDER BY p.tanggal_pesanan DESC
-    LIMIT 5
+     LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan
+     WHERE p.status_pesanan IN ('Diproses','Sedang Disiapkan','Siap Saji','Menunggu Pembayaran')
+     ORDER BY p.tanggal_pesanan DESC
+     LIMIT 5
 ");
 $recentOrders = $stmtRecent->fetchAll();
 

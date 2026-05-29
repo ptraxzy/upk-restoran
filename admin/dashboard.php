@@ -22,15 +22,15 @@ $pesananToday = (int)$stmtPesanan->fetchColumn();
 $stmtMenu = $pdo->query("SELECT COUNT(*) FROM menu WHERE status = 'Tersedia'");
 $menuAktif = (int)$stmtMenu->fetchColumn();
 
-$countAdmin = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE level = 'admin'")->fetchColumn();
-$countKasir = (int) $pdo->query("SELECT COUNT(*) FROM user WHERE level = 'kasir'")->fetchColumn();
+$countAdmin = (int) $pdo->query("SELECT COUNT(*) FROM admin")->fetchColumn();
+$countKasir = (int) $pdo->query("SELECT COUNT(*) FROM karyawan")->fetchColumn();
 $timAktif = $countAdmin + $countKasir;
 
 // Recent orders
 $stmtRecent = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.status_pesanan, p.total_harga, p.tanggal_pesanan, pl.username
     FROM pesanan p
-    LEFT JOIN user pl ON p.id_user = pl.id_user
+    LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
     ORDER BY p.tanggal_pesanan DESC
     LIMIT 5
 ");

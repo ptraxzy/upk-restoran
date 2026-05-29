@@ -17,7 +17,7 @@ $stmtPending = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.total_harga, p.status_pesanan, p.tanggal_pesanan,
            u.username, pb.metode AS metode_pembayaran, pb.status AS status_pembayaran
     FROM pesanan p
-    LEFT JOIN user u ON p.id_user = u.id_user
+    LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan
     LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
     WHERE p.status_pesanan = 'Menunggu Pembayaran'
     ORDER BY p.tanggal_pesanan DESC

@@ -12,10 +12,10 @@ require __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/database.php';
 
 $stmt = db()->query("
-    SELECT m.*, k.nama_kategori, a.username AS pembuat, a.level AS pembuat_role
+    SELECT m.*, k.nama_kategori, a.username AS pembuat, 'admin' AS pembuat_role
     FROM menu m
     LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
-    LEFT JOIN user a ON m.id_user = a.id_user
+    LEFT JOIN admin a ON m.id_admin = a.id_admin
     WHERE m.deleted_at IS NULL
     ORDER BY m.id_menu DESC
 ");

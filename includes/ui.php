@@ -36,7 +36,7 @@ function cart_count(): int
     require_once __DIR__ . '/database.php';
 
     try {
-        $stmt = db()->prepare('SELECT COUNT(*) AS total FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_user = ?');
+        $stmt = db()->prepare('SELECT COUNT(*) AS total FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_pelanggan = ?');
         $stmt->execute([$_SESSION['id_user']]);
         $row = $stmt->fetch();
 

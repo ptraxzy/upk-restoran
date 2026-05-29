@@ -29,7 +29,7 @@ $countExpired = (int)$pdo->query("SELECT COUNT(*) FROM voucher WHERE status_vouc
 $totalCount = (int)$pdo->query("SELECT COUNT(*) FROM voucher")->fetchColumn();
 
 // Build query
-$query = "SELECT v.*, u.username AS pembuat, u.level AS role FROM voucher v LEFT JOIN user u ON v.id_user = u.id_user WHERE 1=1";
+$query = "SELECT v.*, u.username AS pembuat, 'admin' AS role FROM voucher v LEFT JOIN admin u ON v.id_admin = u.id_admin WHERE 1=1";
 $params = [];
 
 if ($search !== '') {

@@ -15,8 +15,8 @@ if (!$id) {
 }
 
 try {
-    // Delete the employee
-    $stmt = db()->prepare("DELETE FROM user WHERE id_user = ? AND level IN ('admin', 'kasir')");
+    // Delete the employee from karyawan table
+    $stmt = db()->prepare("DELETE FROM karyawan WHERE id_karyawan = ?");
     $stmt->execute([$id]);
 
     set_flash('success', 'Karyawan berhasil dihapus secara permanen.');

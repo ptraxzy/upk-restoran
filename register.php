@@ -25,10 +25,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     } else {
         $pdo = db();
         
-        // Cek apakah username/email sudah dipakai di tabel user
+        // Cek apakah username/email sudah dipakai di tabel pelanggan
         $exists = false;
         
-        $chkUser = $pdo->prepare('SELECT 1 FROM user WHERE username = :username OR email = :email LIMIT 1');
+        $chkUser = $pdo->prepare('SELECT 1 FROM pelanggan WHERE username = :username OR email = :email LIMIT 1');
         $chkUser->execute(['username' => $username, 'email' => $email]);
         if ($chkUser->fetch()) {
             $exists = true;
@@ -38,7 +38,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
             $error = 'Nama pengguna atau email ini sudah ada yang pakai.';
         } else {
             $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
-            $insert = $pdo->prepare('INSERT INTO user (nama_user, username, email, password, level) VALUES (:nama, :username, :email, :password, "pelanggan")');
+            $insert = $pdo->prepare('INSERT INTO pelanggan (nama_pelanggan, username, email, password) VALUES (:nama, :username, :email, :password)');
             $success = $insert->execute([
                 'nama' => $nama,
                 'username' => $username,

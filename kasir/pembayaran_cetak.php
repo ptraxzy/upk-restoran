@@ -20,7 +20,7 @@ $pembayaran = null;
 
 if ($id_pesanan > 0) {
     // Fetch order
-    $stmt = $pdo->prepare("SELECT p.*, u.username FROM pesanan p LEFT JOIN user u ON p.id_user = u.id_user WHERE p.id_pesanan = ?");
+    $stmt = $pdo->prepare("SELECT p.*, u.username FROM pesanan p LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan WHERE p.id_pesanan = ?");
     $stmt->execute([$id_pesanan]);
     $pesanan = $stmt->fetch();
 
@@ -30,11 +30,12 @@ if ($id_pesanan > 0) {
         $stmtD->execute([$id_pesanan]);
         $details = $stmtD->fetchAll();
 
-        // Fetch payment
         $stmtP = $pdo->prepare("
-            SELECT py.*, u.username AS nama_kasir 
+            SELECT py.*, COALESCE(u.nama_karyawan, u.username, kp.nama_karyawan, kp.username) AS nama_kasir 
             FROM pembayaran py 
-            LEFT JOIN user u ON py.id_user = u.id_user 
+            LEFT JOIN karyawan u ON py.id_karyawan = u.id_karyawan 
+            LEFT JOIN pesanan p ON py.id_pesanan = p.id_pesanan
+            LEFT JOIN karyawan kp ON p.id_karyawan = kp.id_karyawan
             WHERE py.id_pesanan = ? 
             ORDER BY py.id_pembayaran DESC LIMIT 1
         ");

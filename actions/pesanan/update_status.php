@@ -23,8 +23,9 @@ if ($id_pesanan <= 0 || !in_array($status, $valid_statuses, true)) {
 $pdo = db();
 
 try {
-    $stmt = $pdo->prepare("UPDATE pesanan SET status_pesanan = ? WHERE id_pesanan = ?");
-    $stmt->execute([$status, $id_pesanan]);
+    $id_karyawan = $_SESSION['id_user'] ?? null;
+    $stmt = $pdo->prepare("UPDATE pesanan SET status_pesanan = ?, id_karyawan = ? WHERE id_pesanan = ?");
+    $stmt->execute([$status, $id_karyawan, $id_pesanan]);
     
     set_flash('success', "Status pesanan #$id_pesanan berhasil diubah menjadi $status.");
 } catch (Exception $e) {

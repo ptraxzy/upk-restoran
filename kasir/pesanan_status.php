@@ -38,7 +38,7 @@ $selectedId = (int)($_GET['id'] ?? 0);
 $selected = null;
 $selectedDetails = [];
 if ($selectedId > 0) {
-    $stmt = $pdo->prepare("SELECT p.*, u.username FROM pesanan p LEFT JOIN user u ON p.id_user = u.id_user WHERE p.id_pesanan = ?");
+    $stmt = $pdo->prepare("SELECT p.*, u.username FROM pesanan p LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan WHERE p.id_pesanan = ?");
     $stmt->execute([$selectedId]);
     $selected = $stmt->fetch();
 
@@ -53,7 +53,7 @@ if ($selectedId > 0) {
 $stmtActive = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.status_pesanan, u.username
     FROM pesanan p
-    LEFT JOIN user u ON p.id_user = u.id_user
+    LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan
     WHERE p.status_pesanan IN ('Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Menunggu Pembayaran')
     ORDER BY p.tanggal_pesanan ASC
 ");

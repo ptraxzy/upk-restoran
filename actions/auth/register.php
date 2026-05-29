@@ -14,7 +14,7 @@ if ($username === '' || $password === '') {
 }
 
 $exists = false;
-$chkUser = db()->prepare('SELECT 1 FROM user WHERE username = :username LIMIT 1');
+$chkUser = db()->prepare('SELECT 1 FROM pelanggan WHERE username = :username LIMIT 1');
 $chkUser->execute(['username' => $username]);
 if ($chkUser->fetch()) {
     $exists = true;
@@ -28,7 +28,7 @@ if ($exists) {
 $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
 
 $insert = db()->prepare(
-    'INSERT INTO user (nama_user, username, password, level) VALUES (:username, :username, :password, "pelanggan")'
+    'INSERT INTO pelanggan (nama_pelanggan, username, password) VALUES (:username, :username, :password)'
 );
 
 $insert->execute([

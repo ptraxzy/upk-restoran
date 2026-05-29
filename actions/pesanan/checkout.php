@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $pdo = db();
 $userId = $_SESSION['id_user'] ?? 0;
-$stmtCart = $pdo->prepare("SELECT k.qty, m.id_menu, m.nama_menu, m.harga FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_user = ? ORDER BY k.id_keranjang DESC");
+$stmtCart = $pdo->prepare("SELECT k.qty, m.id_menu, m.nama_menu, m.harga FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_pelanggan = ? ORDER BY k.id_keranjang DESC");
 $stmtCart->execute([$userId]);
 $cart = $stmtCart->fetchAll();
 
@@ -89,7 +89,7 @@ $pdo->beginTransaction();
 try {
     // Inisiasi entitas pesanan utama
     $stmt = $pdo->prepare("
-        INSERT INTO pesanan (id_user, no_meja, total_harga, status_pesanan)
+        INSERT INTO pesanan (id_pelanggan, no_meja, total_harga, status_pesanan)
         VALUES (?, ?, ?, 'Menunggu Pembayaran')
     ");
     $stmt->execute([
@@ -140,13 +140,13 @@ try {
 
     $trx_id = 'ORD-' . date('ymd') . str_pad((string)$id_pesanan, 4, '0', STR_PAD_LEFT);
     $stmtBayar = $pdo->prepare("
-        INSERT INTO pembayaran (id_pesanan, total_bayar, metode, status, trx_id, id_user)
+        INSERT INTO pembayaran (id_pesanan, total_bayar, metode, status, trx_id, id_pelanggan)
         VALUES (?, ?, ?, 'Menunggu', ?, ?)
     ");
     $stmtBayar->execute([$id_pesanan, $total, $metode, $trx_id, $_SESSION['id_user'] ?? null]);
 
     // Hapus item keranjang pengguna setelah pesanan dicatat
-    $stmtClear = $pdo->prepare('DELETE FROM keranjang WHERE id_user = ?');
+    $stmtClear = $pdo->prepare('DELETE FROM keranjang WHERE id_pelanggan = ?');
     $stmtClear->execute([$userId]);
 
     $pdo->commit();

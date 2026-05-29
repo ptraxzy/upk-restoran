@@ -15,7 +15,7 @@ $cart = [];
 $subtotal = 0;
 
 if ($userId > 0) {
-    $stmt = db()->prepare("SELECT k.id_keranjang, k.qty, m.id_menu, m.nama_menu, m.harga, m.gambar FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_user = ? ORDER BY k.id_keranjang DESC");
+    $stmt = db()->prepare("SELECT k.id_keranjang, k.qty, m.id_menu, m.nama_menu, m.harga, m.gambar FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_pelanggan = ? ORDER BY k.id_keranjang DESC");
     $stmt->execute([$userId]);
     $cart = $stmt->fetchAll();
 

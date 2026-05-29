@@ -11,16 +11,15 @@ require __DIR__ . '/../includes/header.php';
 
 require_once __DIR__ . '/../includes/database.php';
 $pdo = db();
-
 $stmt = $pdo->query("
-    SELECT py.id_pembayaran, py.total_bayar, py.metode, py.status, py.trx_id, py.tanggal_pembayaran, uc.level AS kasir_role,
+    SELECT py.id_pembayaran, py.total_bayar, py.metode, py.status, py.trx_id, py.tanggal_pembayaran, 'kasir' AS kasir_role,
            p.id_pesanan, p.no_meja,
            u.username AS nama_pelanggan,
-           uc.username AS nama_kasir
+           COALESCE(uc.nama_karyawan, uc.username) AS nama_kasir
     FROM pembayaran py
     JOIN pesanan p ON py.id_pesanan = p.id_pesanan
-    LEFT JOIN user u ON p.id_user = u.id_user
-    LEFT JOIN user uc ON py.id_user = uc.id_user
+    LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan
+    LEFT JOIN karyawan uc ON py.id_karyawan = uc.id_karyawan
     ORDER BY py.tanggal_pembayaran DESC
 ");
 $riwayat = $stmt->fetchAll();

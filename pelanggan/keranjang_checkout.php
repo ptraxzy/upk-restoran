@@ -51,7 +51,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
                 SELECT SUM(k.qty * m.harga) 
                 FROM keranjang k 
                 JOIN menu m ON k.id_menu = m.id_menu 
-                WHERE k.id_user = ?
+                WHERE k.id_pelanggan = ?
             ");
             $stmtSubtotal->execute([$userId]);
             $cartSubtotal = (float)$stmtSubtotal->fetchColumn();
@@ -59,7 +59,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
             $stmtPortions = $pdo->prepare("
                 SELECT SUM(k.qty) 
                 FROM keranjang k 
-                WHERE k.id_user = ?
+                WHERE k.id_pelanggan = ?
             ");
             $stmtPortions->execute([$userId]);
             $cartTotalPortions = (int)$stmtPortions->fetchColumn();
@@ -103,7 +103,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
 
 if (!$isPaymentPhase) {
     $stmtCart = $pdo->prepare(
-        "SELECT k.qty, m.id_menu, m.nama_menu, m.harga FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_user = ? ORDER BY k.id_keranjang DESC"
+        "SELECT k.qty, m.id_menu, m.nama_menu, m.harga FROM keranjang k JOIN menu m ON k.id_menu = m.id_menu WHERE k.id_pelanggan = ? ORDER BY k.id_keranjang DESC"
     );
     $stmtCart->execute([$userId]);
     $cart = $stmtCart->fetchAll();
@@ -130,13 +130,18 @@ if ($isPaymentPhase) {
     $id_pesanan = (int) $_GET['id_pesanan'];
 
     // Rekam data primer pesanan
-    $stmtOrder = $pdo->prepare("SELECT * FROM pesanan WHERE id_pesanan = ? AND id_user = ?");
+    $stmtOrder = $pdo->prepare("SELECT * FROM pesanan WHERE id_pesanan = ? AND id_pelanggan = ?");
     $stmtOrder->execute([$id_pesanan, $_SESSION['id_user']]);
     $order = $stmtOrder->fetch();
 
     if (!$order) {
         set_flash('error', 'Pesanan tidak ditemukan.');
         redirect(base_url('pelanggan/dashboard.php'));
+    }
+
+    if ($order['status_pesanan'] !== 'Menunggu Pembayaran') {
+        set_flash('success', 'Pesanan ini sudah dibayar atau sedang diproses.');
+        redirect(base_url('pelanggan/pesanan_status.php'));
     }
 
     $total = (float) $order['total_harga'];
@@ -656,6 +661,28 @@ function selectPayment(value, element) {
     element.classList.add('active-gold');
     element.style.setProperty('border-color', 'var(--gold)', 'important');
 }
+
+document.addEventListener('DOMContentLoaded', function() {
+    const checkoutForm = document.getElementById('checkout-payment-form');
+    if (checkoutForm) {
+        checkoutForm.addEventListener('submit', function(e) {
+            const submitBtn = this.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                if (submitBtn.dataset.submitted === 'true') {
+                    e.preventDefault();
+                    return false;
+                }
+                submitBtn.dataset.submitted = 'true';
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>Memproses...';
+                
+                // Disable the button on the next tick so the browser registers the submission naturally first
+                setTimeout(() => {
+                    submitBtn.disabled = true;
+                }, 0);
+            }
+        });
+    }
+});
 </script>
 
 <?php

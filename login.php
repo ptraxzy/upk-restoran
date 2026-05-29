@@ -13,37 +13,58 @@ if (is_string($currentRole) && $currentRole !== '') {
 $error = get_flash('error');
 $success = get_flash('success');
 
+$selectedRole = 'pelanggan';
+
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
+    $selectedRole = trim($_POST['role'] ?? 'pelanggan');
 
     if ($username === '' || $password === '') {
         $error = 'Nama pengguna dan kata sandi jangan dikosongkan ya.';
+    } elseif (!in_array($selectedRole, ['admin', 'kasir', 'pelanggan'], true)) {
+        $error = 'Peran tidak valid.';
     } else {
-        $statement = db()->prepare('SELECT id_user, username, password, level, nama_user FROM user WHERE username = :username LIMIT 1');
-        $statement->execute(['username' => $username]);
-        $user = $statement->fetch();
+        // Cari user sesuai role pilihan
+        $t = match($selectedRole) {
+            'admin' => ['table' => 'admin',     'id' => 'id_admin',     'name' => 'nama_admin',     'role' => 'admin'],
+            'kasir' => ['table' => 'karyawan',  'id' => 'id_karyawan',  'name' => 'nama_karyawan',  'role' => 'kasir'],
+            default => ['table' => 'pelanggan', 'id' => 'id_pelanggan', 'name' => 'nama_pelanggan', 'role' => 'pelanggan'],
+        };
+
+        $stmt = db()->prepare("SELECT {$t['id']}, username, password, {$t['name']}, status FROM {$t['table']} WHERE username = :username LIMIT 1");
+        $stmt->execute(['username' => $username]);
+        $foundUser = $stmt->fetch();
 
         $isValid = false;
-        if ($user) {
-            $storedPassword = (string) $user['password'];
-            if (password_verify($password, $storedPassword)) {
-                $isValid = true;
-            } elseif ($storedPassword === $password) {
-                $isValid = true;
-                $rehash = password_hash($password, PASSWORD_DEFAULT);
-                $update = db()->prepare('UPDATE user SET password = :password WHERE id_user = :id_user');
-                $update->execute(['password' => $rehash, 'id_user' => $user['id_user']]);
+        if ($foundUser) {
+            // Cek status aktif
+            if (($foundUser['status'] ?? 'Aktif') === 'Nonaktif') {
+                $error = 'Akun Anda telah dinonaktifkan. Hubungi administrator.';
+            } else {
+                $storedPassword = (string) $foundUser['password'];
+                if (password_verify($password, $storedPassword)) {
+                    $isValid = true;
+                } elseif ($storedPassword === $password) {
+                    $isValid = true;
+                    $rehash = password_hash($password, PASSWORD_DEFAULT);
+                    $update = db()->prepare("UPDATE {$t['table']} SET password = :password WHERE {$t['id']} = :id");
+                    $update->execute(['password' => $rehash, 'id' => $foundUser[$t['id']]]);
+                }
             }
         }
 
-        if ($user && $isValid) {
-            $_SESSION['id_user'] = (int) $user['id_user'];
-            $_SESSION['user_name'] = (string) ($user['nama_user'] ?: $user['username']);
-            $_SESSION['user_role'] = (string) $user['level'];
-            redirect(role_dashboard_path((string) $user['level']));
+        if ($foundUser && $isValid) {
+            $_SESSION['id_user'] = (int) $foundUser[$t['id']];
+            $_SESSION['user_name'] = (string) ($foundUser[$t['name']] ?: $foundUser['username']);
+            $_SESSION['user_role'] = $t['role'];
+            $_SESSION['username'] = (string) $foundUser['username'];
+            $_SESSION['level'] = $t['role'];
+            redirect(role_dashboard_path($t['role']));
         }
-        $error = 'Maaf, nama pengguna atau sandi Anda salah.';
+        if (!isset($error)) {
+            $error = 'Maaf, nama pengguna atau sandi Anda salah.';
+        }
     }
 }
 ?>
@@ -219,7 +240,42 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         .alert-danger { background: rgba(220, 53, 69, 0.1); color: #ff6b6b; }
         .alert-success { background: rgba(40, 167, 69, 0.1); color: #51cf66; }
 
-        .hidden { display: none; opacity: 0; }
+        .hidden { display: none !important; opacity: 0; }
+
+        .login-tabs {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            padding-bottom: 8px;
+            gap: 8px;
+            opacity: 0;
+            animation: fieldFade 0.5s 0.5s forwards;
+        }
+
+        .tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            color: #888;
+            padding: 8px 4px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.25s var(--ease);
+            border-bottom: 2px solid transparent;
+            font-family: var(--font-body);
+        }
+
+        .tab-btn:hover {
+            color: #fff;
+        }
+
+        .tab-btn.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+            font-weight: 600;
+        }
 
         /* Preloader Styles */
         #preloader {
@@ -303,24 +359,62 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         <!-- Bagian Login -->
         <div id="login-section">
-            <form method="post" action="login.php">
-                <div class="form-group">
-                    <label class="field-label">Nama Pengguna</label>
-                    <input type="text" name="username" class="input-control" placeholder="Nama akun Anda" required>
-                </div>
+            <div class="login-tabs">
+                <button type="button" id="tab-pelanggan" class="tab-btn" onclick="switchForm('pelanggan')">Pelanggan</button>
+                <button type="button" id="tab-kasir" class="tab-btn" onclick="switchForm('kasir')">Kasir</button>
+                <button type="button" id="tab-admin" class="tab-btn" onclick="switchForm('admin')">Admin</button>
+            </div>
 
-                <div class="form-group">
+            <!-- Form Pelanggan -->
+            <form method="post" action="login.php" id="form-pelanggan" class="hidden">
+                <input type="hidden" name="role" value="pelanggan">
+                <div class="form-group" style="animation-delay: 0.1s;">
+                    <label class="field-label">Nama Pengguna (Pelanggan)</label>
+                    <input type="text" name="username" class="input-control" placeholder="ID masuk pelanggan" required>
+                </div>
+                <div class="form-group" style="animation-delay: 0.2s;">
                     <label class="field-label">Kata Sandi</label>
                     <input type="password" name="password" class="input-control" placeholder="••••••••" required>
                     <a href="#" class="forgot-link" onclick="toggleSection('forgot')">Lupa kata sandi?</a>
                 </div>
-
-                <div class="btn-wrap">
-                    <button type="submit" class="btn-primary">Masuk Sekarang</button>
+                <div class="btn-wrap" style="animation-delay: 0.3s;">
+                    <button type="submit" class="btn-primary">Masuk Pelanggan</button>
                 </div>
             </form>
 
-            <footer class="footer-links">
+            <!-- Form Kasir (Karyawan) -->
+            <form method="post" action="login.php" id="form-kasir" class="hidden">
+                <input type="hidden" name="role" value="kasir">
+                <div class="form-group" style="animation-delay: 0.1s;">
+                    <label class="field-label">Nama Pengguna (Kasir)</label>
+                    <input type="text" name="username" class="input-control" placeholder="ID masuk kasir" required>
+                </div>
+                <div class="form-group" style="animation-delay: 0.2s;">
+                    <label class="field-label">Kata Sandi</label>
+                    <input type="password" name="password" class="input-control" placeholder="••••••••" required>
+                </div>
+                <div class="btn-wrap" style="animation-delay: 0.3s;">
+                    <button type="submit" class="btn-primary">Masuk Kasir</button>
+                </div>
+            </form>
+
+            <!-- Form Admin -->
+            <form method="post" action="login.php" id="form-admin" class="hidden">
+                <input type="hidden" name="role" value="admin">
+                <div class="form-group" style="animation-delay: 0.1s;">
+                    <label class="field-label">Nama Pengguna (Admin)</label>
+                    <input type="text" name="username" class="input-control" placeholder="ID masuk admin" required>
+                </div>
+                <div class="form-group" style="animation-delay: 0.2s;">
+                    <label class="field-label">Kata Sandi</label>
+                    <input type="password" name="password" class="input-control" placeholder="••••••••" required>
+                </div>
+                <div class="btn-wrap" style="animation-delay: 0.3s;">
+                    <button type="submit" class="btn-primary">Masuk Admin</button>
+                </div>
+            </form>
+
+            <footer class="footer-links" id="register-footer">
                 Baru di sini? <a href="register.php">Buat Akun</a>
             </footer>
         </div>
@@ -365,6 +459,39 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     preloader.style.display = 'none';
                 }
             }
+        });
+
+        function switchForm(role) {
+            document.getElementById('form-pelanggan').classList.add('hidden');
+            document.getElementById('form-kasir').classList.add('hidden');
+            document.getElementById('form-admin').classList.add('hidden');
+
+            document.getElementById('tab-pelanggan').classList.remove('active');
+            document.getElementById('tab-kasir').classList.remove('active');
+            document.getElementById('tab-admin').classList.remove('active');
+
+            const form = document.getElementById('form-' + role);
+            if (form) {
+                form.classList.remove('hidden');
+            }
+
+            const tab = document.getElementById('tab-' + role);
+            if (tab) {
+                tab.classList.add('active');
+            }
+
+            const registerFooter = document.getElementById('register-footer');
+            if (registerFooter) {
+                if (role === 'pelanggan') {
+                    registerFooter.classList.remove('hidden');
+                } else {
+                    registerFooter.classList.add('hidden');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            switchForm('<?= htmlspecialchars($selectedRole, ENT_QUOTES, 'UTF-8') ?>');
         });
 
         function toggleSection(section) {

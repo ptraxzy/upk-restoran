@@ -22,8 +22,8 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 
 $pdo = db();
 
-// Verifikasi eksistensi pengguna dalam sistem
-$stmt = $pdo->prepare("SELECT username FROM user WHERE email = ? LIMIT 1");
+// Verifikasi eksistensi pelanggan dalam sistem
+$stmt = $pdo->prepare("SELECT username FROM pelanggan WHERE email = ? LIMIT 1");
 $stmt->execute([$email]);
 $user = $stmt->fetch();
 

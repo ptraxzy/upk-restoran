@@ -1,18 +1,41 @@
 CREATE DATABASE IF NOT EXISTS db_restoran;
 USE db_restoran;
 
--- Tabel user dipakai dulu untuk login semua role.
-CREATE TABLE IF NOT EXISTS `user` (
-  `id_user` int NOT NULL AUTO_INCREMENT,
-  `nama_user` varchar(100) DEFAULT NULL,
+-- Tabel admin: khusus akun administrator
+CREATE TABLE IF NOT EXISTS `admin` (
+  `id_admin` int NOT NULL AUTO_INCREMENT,
+  `nama_admin` varchar(100) DEFAULT NULL,
   `username` varchar(50) NOT NULL,
   `email` varchar(100) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
-  `level` enum('admin','kasir','pelanggan') NOT NULL,
   `status` enum('Aktif','Nonaktif') NOT NULL DEFAULT 'Aktif',
-  PRIMARY KEY (`id_user`),
-  UNIQUE KEY `user_username_unique` (`username`),
-  UNIQUE KEY `user_email_unique` (`email`)
+  PRIMARY KEY (`id_admin`),
+  UNIQUE KEY `admin_username_unique` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabel karyawan: khusus akun kasir/karyawan operasional
+CREATE TABLE IF NOT EXISTS `karyawan` (
+  `id_karyawan` int NOT NULL AUTO_INCREMENT,
+  `nama_karyawan` varchar(100) DEFAULT NULL,
+  `username` varchar(50) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
+  `status` enum('Aktif','Nonaktif') NOT NULL DEFAULT 'Aktif',
+  PRIMARY KEY (`id_karyawan`),
+  UNIQUE KEY `karyawan_username_unique` (`username`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Tabel pelanggan: khusus akun member/pembeli
+CREATE TABLE IF NOT EXISTS `pelanggan` (
+  `id_pelanggan` int NOT NULL AUTO_INCREMENT,
+  `nama_pelanggan` varchar(100) DEFAULT NULL,
+  `username` varchar(50) NOT NULL,
+  `email` varchar(100) DEFAULT NULL,
+  `password` varchar(255) NOT NULL,
+  `status` enum('Aktif','Nonaktif') NOT NULL DEFAULT 'Aktif',
+  PRIMARY KEY (`id_pelanggan`),
+  UNIQUE KEY `pelanggan_username_unique` (`username`),
+  UNIQUE KEY `pelanggan_email_unique` (`email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `password_resets` (
@@ -30,9 +53,9 @@ CREATE TABLE IF NOT EXISTS `password_resets` (
 CREATE TABLE IF NOT EXISTS `kategori` (
   `id_kategori` int NOT NULL AUTO_INCREMENT,
   `nama_kategori` varchar(50) NOT NULL,
-  `id_user` int DEFAULT NULL,
+  `id_admin` int DEFAULT NULL,
   PRIMARY KEY (`id_kategori`),
-  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
+  FOREIGN KEY (`id_admin`) REFERENCES `admin` (`id_admin`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `menu` (
@@ -44,40 +67,39 @@ CREATE TABLE IF NOT EXISTS `menu` (
   `gambar` varchar(255),
   `status` enum('Tersedia', 'Habis') DEFAULT 'Tersedia',
   `porsi` int DEFAULT 10,
-  `id_user` int DEFAULT NULL,
+  `id_admin` int DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL,
   PRIMARY KEY (`id_menu`),
   FOREIGN KEY (`id_kategori`) REFERENCES `kategori` (`id_kategori`) ON DELETE CASCADE,
-  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL,
-  FOREIGN KEY (`deleted_by`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
+  FOREIGN KEY (`id_admin`) REFERENCES `admin` (`id_admin`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `keranjang` (
   `id_keranjang` int NOT NULL AUTO_INCREMENT,
-  `id_user` int NOT NULL,
+  `id_pelanggan` int NOT NULL,
   `id_menu` int NOT NULL,
   `qty` int NOT NULL DEFAULT 1,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
   `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_keranjang`),
-  UNIQUE KEY `keranjang_user_menu_unique` (`id_user`, `id_menu`),
+  UNIQUE KEY `keranjang_pelanggan_menu_unique` (`id_pelanggan`, `id_menu`),
   KEY `keranjang_menu_index` (`id_menu`),
-  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE CASCADE,
+  FOREIGN KEY (`id_pelanggan`) REFERENCES `pelanggan` (`id_pelanggan`) ON DELETE CASCADE,
   FOREIGN KEY (`id_menu`) REFERENCES `menu` (`id_menu`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE IF NOT EXISTS `pesanan` (
   `id_pesanan` int NOT NULL AUTO_INCREMENT,
-  `id_user` int DEFAULT NULL,
+  `id_pelanggan` int DEFAULT NULL,
   `id_karyawan` int DEFAULT NULL,
   `no_meja` varchar(10) NOT NULL,
   `tanggal_pesanan` datetime DEFAULT CURRENT_TIMESTAMP,
   `total_harga` decimal(12,2) NOT NULL,
   `status_pesanan` enum('Menunggu Pembayaran', 'Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai', 'Dibatalkan') DEFAULT 'Menunggu Pembayaran',
   PRIMARY KEY (`id_pesanan`),
-  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL,
-  FOREIGN KEY (`id_karyawan`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
+  FOREIGN KEY (`id_pelanggan`) REFERENCES `pelanggan` (`id_pelanggan`) ON DELETE SET NULL,
+  FOREIGN KEY (`id_karyawan`) REFERENCES `karyawan` (`id_karyawan`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `detail_pesanan` (
@@ -99,12 +121,12 @@ CREATE TABLE IF NOT EXISTS `pembayaran` (
   `metode` enum('QRIS', 'Tunai', 'Kartu Kredit') NOT NULL,
   `status` enum('Menunggu', 'Lunas', 'Gagal') DEFAULT 'Menunggu',
   `trx_id` varchar(100),
-  `id_user` int DEFAULT NULL,
+  `id_pelanggan` int DEFAULT NULL,
   `id_karyawan` int DEFAULT NULL,
   PRIMARY KEY (`id_pembayaran`),
   FOREIGN KEY (`id_pesanan`) REFERENCES `pesanan` (`id_pesanan`) ON DELETE CASCADE,
-  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL,
-  FOREIGN KEY (`id_karyawan`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
+  FOREIGN KEY (`id_pelanggan`) REFERENCES `pelanggan` (`id_pelanggan`) ON DELETE SET NULL,
+  FOREIGN KEY (`id_karyawan`) REFERENCES `karyawan` (`id_karyawan`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 CREATE TABLE IF NOT EXISTS `voucher` (
@@ -118,13 +140,12 @@ CREATE TABLE IF NOT EXISTS `voucher` (
   `tanggal_mulai` date NOT NULL,
   `tanggal_berakhir` date NOT NULL,
   `status_voucher` enum('Active','Scheduled','Expired') DEFAULT 'Active',
-  `id_user` int DEFAULT NULL,
+  `id_admin` int DEFAULT NULL,
   `deleted_at` datetime DEFAULT NULL,
   `deleted_by` int DEFAULT NULL,
   PRIMARY KEY (`id_voucher`),
   UNIQUE KEY `voucher_kode_unique` (`kode_voucher`),
-  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE SET NULL,
-  FOREIGN KEY (`deleted_by`) REFERENCES `user` (`id_user`) ON DELETE SET NULL
+  FOREIGN KEY (`id_admin`) REFERENCES `admin` (`id_admin`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Seed data menu
@@ -141,69 +162,61 @@ INSERT IGNORE INTO `menu` (`id_menu`, `id_kategori`, `nama_menu`, `deskripsi`, `
 (4, 2, 'Hokkaido Scallop', 'Yuzu plum hijau fermentasi, lobak es, busa kedelai putih, jeruk mirin.', 95000, 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80', 'Tersedia', 10),
 (5, 3, 'Dark Matter', 'Kakao eksklusif single-origin, praline wijen hitam, balsamic dust.', 45000, 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 15);
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'admin', 'admin123', 'admin'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'admin'
-);
+-- Seed data admin
+INSERT INTO `admin` (`nama_admin`, `username`, `password`)
+SELECT 'Administrator', 'admin', 'admin123'
+WHERE NOT EXISTS (SELECT 1 FROM `admin` WHERE `username` = 'admin');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'kasir', 'kasir123', 'kasir'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'kasir'
-);
+INSERT INTO `admin` (`nama_admin`, `username`, `password`)
+SELECT 'Admin Ops', 'admin.ops', 'admin456'
+WHERE NOT EXISTS (SELECT 1 FROM `admin` WHERE `username` = 'admin.ops');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'admin.ops', 'admin456', 'admin'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'admin.ops'
-);
+INSERT INTO `admin` (`nama_admin`, `username`, `password`)
+SELECT 'Admin Floor', 'admin.floor', 'admin789'
+WHERE NOT EXISTS (SELECT 1 FROM `admin` WHERE `username` = 'admin.floor');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'admin.floor', 'admin789', 'admin'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'admin.floor'
-);
+-- Seed data karyawan
+INSERT INTO `karyawan` (`nama_karyawan`, `username`, `password`)
+SELECT 'Kasir Utama', 'kasir', 'kasir123'
+WHERE NOT EXISTS (SELECT 1 FROM `karyawan` WHERE `username` = 'kasir');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'kasir.senja', 'kasir456', 'kasir'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'kasir.senja'
-);
+INSERT INTO `karyawan` (`nama_karyawan`, `username`, `password`)
+SELECT 'Senja', 'kasir.senja', 'kasir456'
+WHERE NOT EXISTS (SELECT 1 FROM `karyawan` WHERE `username` = 'kasir.senja');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'kasir.raka', 'kasir789', 'kasir'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'kasir.raka'
-);
+INSERT INTO `karyawan` (`nama_karyawan`, `username`, `password`)
+SELECT 'Raka', 'kasir.raka', 'kasir789'
+WHERE NOT EXISTS (SELECT 1 FROM `karyawan` WHERE `username` = 'kasir.raka');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'testmember', 'secret123', 'pelanggan'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'testmember'
-);
+-- Seed data pelanggan
+INSERT INTO `pelanggan` (`nama_pelanggan`, `username`, `password`)
+SELECT 'Test Member', 'testmember', 'secret123'
+WHERE NOT EXISTS (SELECT 1 FROM `pelanggan` WHERE `username` = 'testmember');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'member.ayla', 'member456', 'pelanggan'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'member.ayla'
-);
+INSERT INTO `pelanggan` (`nama_pelanggan`, `username`, `password`)
+SELECT 'Ayla', 'member.ayla', 'member456'
+WHERE NOT EXISTS (SELECT 1 FROM `pelanggan` WHERE `username` = 'member.ayla');
 
-INSERT INTO `user` (`username`, `password`, `level`)
-SELECT 'member.nara', 'member789', 'pelanggan'
-WHERE NOT EXISTS (
-  SELECT 1 FROM `user` WHERE `username` = 'member.nara'
-);
+INSERT INTO `pelanggan` (`nama_pelanggan`, `username`, `password`)
+SELECT 'Nara', 'member.nara', 'member789'
+WHERE NOT EXISTS (SELECT 1 FROM `pelanggan` WHERE `username` = 'member.nara');
 
 CREATE TABLE IF NOT EXISTS `ulasan` (
   `id_ulasan` INT NOT NULL AUTO_INCREMENT,
   `id_pesanan` INT NOT NULL,
-  `id_user` INT NOT NULL,
+  `id_pelanggan` INT NOT NULL,
   `rating` INT NOT NULL CHECK (`rating` BETWEEN 1 AND 5),
   `komentar` TEXT,
   `tanggal_ulasan` DATETIME DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id_ulasan`),
   UNIQUE KEY `ulasan_pesanan_unique` (`id_pesanan`),
   FOREIGN KEY (`id_pesanan`) REFERENCES `pesanan` (`id_pesanan`) ON DELETE CASCADE,
-  FOREIGN KEY (`id_user`) REFERENCES `user` (`id_user`) ON DELETE CASCADE
+  FOREIGN KEY (`id_pelanggan`) REFERENCES `pelanggan` (`id_pelanggan`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Tabel pengaturan (key-value store)
+CREATE TABLE IF NOT EXISTS `pengaturan` (
+  `kunci` varchar(100) NOT NULL,
+  `nilai` text,
+  PRIMARY KEY (`kunci`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

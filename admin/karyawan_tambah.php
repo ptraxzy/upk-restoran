@@ -29,6 +29,10 @@ ob_start();
             </div>
             <div class="col-md-8 d-flex flex-column gap-4">
                 <div>
+                    <label class="form-label text-secondary small mb-2">Nama Karyawan</label>
+                    <input class="form-control premium-input-standard" type="text" name="nama_karyawan" placeholder="contoh: Senja Ayu" required autocomplete="off">
+                </div>
+                <div>
                     <label class="form-label text-secondary small mb-2">Nama Pengguna (Username)</label>
                     <input class="form-control premium-input-standard" type="text" name="username" placeholder="contoh: kasir.elisa" required autocomplete="off">
                 </div>
@@ -39,32 +43,19 @@ ob_start();
             </div>
         </div>
 
-        <!-- Section 2: Hak Akses & Peran -->
+        <!-- Section 2: Informasi Role -->
         <div class="row g-4 mb-5">
             <div class="col-md-4">
-                <h4 class="text-white mb-2" style="font-size: 16px; font-family: var(--font-display); letter-spacing: 1px;">Peran & Otoritas</h4>
-                <p class="text-muted small" style="line-height: 1.5;">Tentukan level otoritas sistem untuk karyawan ini berdasarkan tanggung jawabnya.</p>
+                <h4 class="text-white mb-2" style="font-size: 16px; font-family: var(--font-display); letter-spacing: 1px;">Peran</h4>
+                <p class="text-muted small" style="line-height: 1.5;">Karyawan yang ditambahkan akan otomatis mendapat akses kasir.</p>
             </div>
             <div class="col-md-8">
-                <label class="form-label text-secondary small mb-3">Pilih Tingkat Akses</label>
-                <div class="premium-role-container">
-                    <label class="premium-role-label">
-                        <input type="radio" name="level" value="kasir" class="premium-role-input" checked>
-                        <div class="premium-role-card">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-3 mx-auto d-block"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 4v16M2 12h20"/></svg>
-                            <span class="text-white d-block small fw-medium mb-1">Kasir</span>
-                            <span class="text-muted d-block" style="font-size: 11px; line-height: 1.3;">Akses kasir utama, transaksi pesanan, & pembayaran.</span>
-                        </div>
-                    </label>
-                    
-                    <label class="premium-role-label">
-                        <input type="radio" name="level" value="admin" class="premium-role-input">
-                        <div class="premium-role-card">
-                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mb-3 mx-auto d-block"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-                            <span class="text-white d-block small fw-medium mb-1">Administrator</span>
-                            <span class="text-muted d-block" style="font-size: 11px; line-height: 1.3;">Akses penuh ke semua panel manajemen, laporan keuangan, & konfigurasi.</span>
-                        </div>
-                    </label>
+                <div class="p-3 border border-soft bg-black d-flex align-items-center gap-3">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="1.5" class="flex-shrink-0"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M12 4v16M2 12h20"/></svg>
+                    <div>
+                        <span class="text-white d-block small fw-medium">Kasir / Karyawan</span>
+                        <span class="text-muted d-block" style="font-size: 11px; line-height: 1.3;">Akses kasir utama, transaksi pesanan, & pembayaran.</span>
+                    </div>
                 </div>
             </div>
         </div>

@@ -15,12 +15,12 @@ $pdo = db();
 // Fetch soft-deleted menu items with creator and destroyer info
 $stmt = $pdo->query("
     SELECT m.*, k.nama_kategori, 
-           a.username AS pembuat, a.level AS pembuat_role,
-           d.username AS penghapus, d.level AS penghapus_role
+           a.username AS pembuat, 'admin' AS pembuat_role,
+           d.username AS penghapus, 'admin' AS penghapus_role
     FROM menu m
     LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
-    LEFT JOIN user a ON m.id_user = a.id_user
-    LEFT JOIN user d ON m.deleted_by = d.id_user
+    LEFT JOIN admin a ON m.id_admin = a.id_admin
+    LEFT JOIN admin d ON m.deleted_by = d.id_admin
     WHERE m.deleted_at IS NOT NULL
     ORDER BY m.deleted_at DESC
 ");

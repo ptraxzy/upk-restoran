@@ -13,7 +13,7 @@ require __DIR__ . '/../includes/header.php';
 $userId = $_SESSION['id_user'] ?? 0;
 $pdo = db();
 
-$stmt = $pdo->prepare('SELECT * FROM user WHERE id_user = ?');
+$stmt = $pdo->prepare('SELECT * FROM pelanggan WHERE id_pelanggan = ?');
 $stmt->execute([$userId]);
 $user = $stmt->fetch();
 
@@ -34,7 +34,7 @@ ob_start();
             <div class="compact-list mt-4">
                 <div class="compact-list-item d-flex justify-content-between border-bottom border-soft py-3" style="font-size: 13px;">
                     <span class="text-secondary">Nama Lengkap</span>
-                    <span class="text-white fw-medium"><?= htmlspecialchars((string)($user['nama_user'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></span>
+                    <span class="text-white fw-medium"><?= htmlspecialchars((string)($user['nama_pelanggan'] ?? '-'), ENT_QUOTES, 'UTF-8'); ?></span>
                 </div>
                 <div class="compact-list-item d-flex justify-content-between border-bottom border-soft py-3" style="font-size: 13px;">
                     <span class="text-secondary">Username</span>

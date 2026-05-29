@@ -13,10 +13,13 @@ require __DIR__ . '/../includes/header.php';
 $pdo = db();
 
 $stmt = $pdo->query('
-    SELECT p.*, u.username, pb.metode AS metode_pembayaran, pb.status AS status_pembayaran
+    SELECT p.*, pl.username, pb.metode AS metode_pembayaran, pb.status AS status_pembayaran,
+           COALESCE(k.nama_karyawan, k.username, kp.nama_karyawan, kp.username) AS nama_kasir
     FROM pesanan p
-    LEFT JOIN user u ON p.id_user = u.id_user
+    LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
     LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
+    LEFT JOIN karyawan k ON p.id_karyawan = k.id_karyawan
+    LEFT JOIN karyawan kp ON pb.id_karyawan = kp.id_karyawan
     ORDER BY p.tanggal_pesanan DESC
 ');
 $orders = $stmt->fetchAll();
@@ -71,6 +74,7 @@ ob_start();
                             <th>Metode</th>
                             <th>Status Bayar</th>
                             <th>Status Pesanan</th>
+                            <th>Kasir</th>
                             <th class="text-end">Aksi</th>
                         </tr>
                     </thead>
@@ -109,6 +113,21 @@ ob_start();
                             <td class="text-secondary" style="font-size: 12px;"><?= htmlspecialchars((string)($order['metode_pembayaran'] ?? 'QRIS')); ?></td>
                             <td><span class="<?= $payStatusClass; ?>"><?= $payStatus === 'Lunas' ? 'Lunas' : 'Belum Bayar'; ?></span></td>
                             <td><span class="<?= $statusClass; ?>"><?= htmlspecialchars($status, ENT_QUOTES, 'UTF-8'); ?></span></td>
+                            <td class="text-secondary" style="font-size: 12px;">
+                                <?php
+                                $kasirText = '-';
+                                if (!empty($order['nama_kasir'])) {
+                                    $kasirText = $order['nama_kasir'];
+                                } elseif (($order['status_pembayaran'] ?? '') === 'Lunas') {
+                                    if (($order['metode_pembayaran'] ?? '') === 'Tunai') {
+                                        $kasirText = 'Admin';
+                                    } elseif (($order['metode_pembayaran'] ?? '') === 'QRIS') {
+                                        $kasirText = 'Sistem (QRIS)';
+                                    }
+                                }
+                                echo htmlspecialchars((string)$kasirText, ENT_QUOTES, 'UTF-8');
+                                ?>
+                            </td>
                             <td class="text-end">
                                 <?php if ($payStatus !== 'Lunas' && ($order['metode_pembayaran'] ?? 'QRIS') === 'Tunai'): ?>
                                     <a href="<?= base_url('actions/pesanan/confirm_cash.php?id_pesanan=' . $order['id_pesanan']); ?>" class="btn btn-sm btn-warning rounded-0 fw-semibold" style="font-size: 10px; padding: 4px 8px;">Konfirmasi Cash</a>
@@ -122,7 +141,7 @@ ob_start();
                         <?php endforeach; ?>
                         <?php if (empty($paginatedOrders)): ?>
                             <tr>
-                                <td colspan="9" class="text-center py-5 text-muted">Belum ada pesanan terdaftar.</td>
+                                <td colspan="10" class="text-center py-5 text-muted">Belum ada pesanan terdaftar.</td>
                             </tr>
                         <?php endif; ?>
                     </tbody>

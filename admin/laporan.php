@@ -88,11 +88,12 @@ $stmtRecent = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.total_harga, p.status_pesanan, p.tanggal_pesanan,
            py.total_bayar, py.status as payment_status, py.metode,
            pl.username AS pelanggan,
-           kc.username AS kasir, kc.level AS kasir_role
+           COALESCE(k_pesanan.nama_karyawan, k_pesanan.username, kc.nama_karyawan, kc.username) AS kasir, 'kasir' AS kasir_role
     FROM pesanan p
     LEFT JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
-    LEFT JOIN user pl ON p.id_user = pl.id_user
-    LEFT JOIN user kc ON py.id_user = kc.id_user
+    LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
+    LEFT JOIN karyawan kc ON py.id_karyawan = kc.id_karyawan
+    LEFT JOIN karyawan k_pesanan ON p.id_karyawan = k_pesanan.id_karyawan
     ORDER BY p.tanggal_pesanan DESC
     LIMIT 5
 ");
@@ -260,11 +261,27 @@ ob_start();
                             <td class="fw-medium text-gold">#LP-<?= $trx['id_pesanan']; ?></td>
                             <td class="text-white">
                                 <?= htmlspecialchars((string)($trx['pelanggan'] ?? 'Guest'), ENT_QUOTES, 'UTF-8'); ?>
-                                <?php if ($trx['kasir']): ?>
+                                <?php
+                                $kasirText = null;
+                                $roleText = 'kasir';
+                                if (!empty($trx['kasir'])) {
+                                    $kasirText = $trx['kasir'];
+                                    $roleText = $trx['kasir_role'];
+                                } elseif (($trx['payment_status'] ?? '') === 'Lunas') {
+                                    if (($trx['metode'] ?? '') === 'Tunai') {
+                                        $kasirText = 'Admin';
+                                        $roleText = 'admin';
+                                    } elseif (($trx['metode'] ?? '') === 'QRIS') {
+                                        $kasirText = 'Sistem (QRIS)';
+                                        $roleText = 'system';
+                                    }
+                                }
+                                if ($kasirText):
+                                ?>
                                     <span class="text-secondary small d-block" style="font-size: 10px; margin-top: 2px;">
-                                        Oleh: <?= htmlspecialchars($trx['kasir']); ?> <span class="text-gold" style="font-size: 9px; text-transform: uppercase;">(<?= htmlspecialchars($trx['kasir_role']); ?>)</span>
+                                        Oleh: <?= htmlspecialchars($kasirText); ?> <span class="text-gold" style="font-size: 9px; text-transform: uppercase;">(<?= htmlspecialchars($roleText); ?>)</span>
                                     </span>
-                                    <?php endif; ?>
+                                <?php endif; ?>
                             </td>
                             <td class="text-secondary"><?= htmlspecialchars((string)$trx['no_meja']); ?></td>
                             <td class="text-secondary" style="font-size: 11px;"><?= date('d M Y, H:i', strtotime($trx['tanggal_pesanan'])); ?></td>

@@ -12,9 +12,8 @@ require __DIR__ . '/../includes/header.php';
 require_once __DIR__ . '/../includes/database.php';
 
 $stmt = db()->query("
-    SELECT id_user, username, level, status FROM user
-    WHERE level IN ('admin', 'kasir')
-    ORDER BY level, username
+    SELECT id_karyawan, nama_karyawan, username, status FROM karyawan
+    ORDER BY username
 ");
 $karyawans = $stmt->fetchAll();
 
@@ -29,7 +28,7 @@ foreach ($karyawans as $karyawan) {
     } else {
         $s = strtolower($search);
         $uStr = strtolower((string)$karyawan['username']);
-        $lStr = strtolower((string)$karyawan['level']);
+        $lStr = 'kasir';
         if (strpos($uStr, $s) !== false || strpos($lStr, $s) !== false) {
             $filteredKaryawans[] = $karyawan;
         }
@@ -40,8 +39,8 @@ $totalRows = count($filteredKaryawans);
 $totalPages = ceil($totalRows / $limit);
 $paginatedKaryawans = array_slice($filteredKaryawans, ($page - 1) * $limit, $limit);
 
-$countAdmin = (int) db()->query("SELECT COUNT(*) FROM user WHERE level = 'admin'")->fetchColumn();
-$countKasir = (int) db()->query("SELECT COUNT(*) FROM user WHERE level = 'kasir'")->fetchColumn();
+$countAdmin = (int) db()->query("SELECT COUNT(*) FROM admin")->fetchColumn();
+$countKasir = (int) db()->query("SELECT COUNT(*) FROM karyawan")->fetchColumn();
 $total = $countAdmin + $countKasir;
 
 ob_start();
@@ -77,7 +76,7 @@ ob_start();
                         <?php foreach ($paginatedKaryawans as $karyawan): ?>
                         <tr>
                             <td class="fw-medium text-white"><?= htmlspecialchars($karyawan['username'], ENT_QUOTES, 'UTF-8'); ?></td>
-                            <td class="text-uppercase small"><?= htmlspecialchars($karyawan['level'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="text-uppercase small">Kasir</td>
                             <td>
                                 <?php if (($karyawan['status'] ?? 'Aktif') === 'Aktif'): ?>
                                     <span class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-20">Aktif</span>
@@ -87,7 +86,7 @@ ob_start();
                             </td>
                              <td class="text-end">
                                 <div class="d-flex justify-content-end gap-3">
-                                    <a href="<?= htmlspecialchars(base_url('admin/karyawan_edit.php?id=' . $karyawan['id_user']), ENT_QUOTES, 'UTF-8'); ?>" class="text-gold small">Edit</a>
+                                    <a href="<?= htmlspecialchars(base_url('admin/karyawan_edit.php?id=' . $karyawan['id_karyawan']), ENT_QUOTES, 'UTF-8'); ?>" class="text-gold small">Edit</a>
                                 </div>
                              </td>
                         </tr>

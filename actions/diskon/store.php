@@ -33,7 +33,7 @@ if ($minimal_pembelian <= 0 && $minimal_porsi <= 0) {
 
 try {
     $stmt = db()->prepare("
-        INSERT INTO voucher (kode_voucher, nama_voucher, jenis_voucher, nilai_voucher, minimal_pembelian, minimal_porsi, tanggal_mulai, tanggal_berakhir, status_voucher, id_user)
+        INSERT INTO voucher (kode_voucher, nama_voucher, jenis_voucher, nilai_voucher, minimal_pembelian, minimal_porsi, tanggal_mulai, tanggal_berakhir, status_voucher, id_admin)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ");
     $stmt->execute([

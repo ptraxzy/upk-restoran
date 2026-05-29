@@ -10,7 +10,7 @@ $id = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 $userId = $_SESSION['id_user'] ?? 0;
 
 if ($id > 0 && $userId > 0) {
-    $stmt = db()->prepare('DELETE FROM keranjang WHERE id_keranjang = ? AND id_user = ?');
+    $stmt = db()->prepare('DELETE FROM keranjang WHERE id_keranjang = ? AND id_pelanggan = ?');
     $stmt->execute([$id, $userId]);
     set_flash('success', 'Item dihapus dari keranjang.');
 }

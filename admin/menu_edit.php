@@ -5,10 +5,6 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/auth.php';
 require_role('admin');
 
-$title = 'Ubah Menu';
-$assetBase = '../../assets';
-require __DIR__ . '/../includes/header.php';
-
 require_once __DIR__ . '/../includes/database.php';
 
 $id = $_GET['id'] ?? null;
@@ -18,7 +14,7 @@ if ($id) {
     $stmt = db()->prepare("
         SELECT m.*, a.username AS pembuat 
         FROM menu m 
-        LEFT JOIN user a ON m.id_user = a.id_user 
+        LEFT JOIN admin a ON m.id_admin = a.id_admin 
         WHERE m.id_menu = ?
     ");
     $stmt->execute([$id]);
@@ -29,6 +25,10 @@ if (!$menu) {
     set_flash('error', 'Menu tidak ditemukan.');
     redirect(base_url('admin/menu.php'));
 }
+
+$title = 'Ubah Menu';
+$assetBase = '../../assets';
+require __DIR__ . '/../includes/header.php';
 
 ob_start();
 ?>

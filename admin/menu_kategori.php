@@ -6,10 +6,6 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/database.php';
 require_role('admin');
 
-$title = 'Kategori Menu';
-$assetBase = '../../assets';
-require __DIR__ . '/../includes/header.php';
-
 $pdo = db();
 
 // Handle post request to add category
@@ -17,7 +13,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST' && isset($_POST['nama_kateg
     $namaKategori = trim($_POST['nama_kategori']);
     if ($namaKategori !== '') {
         try {
-            $stmt = $pdo->prepare('INSERT INTO kategori (nama_kategori, id_user) VALUES (?, ?)');
+            $stmt = $pdo->prepare('INSERT INTO kategori (nama_kategori, id_admin) VALUES (?, ?)');
             $stmt->execute([$namaKategori, $_SESSION['id_user'] ?? null]);
             set_flash('success', 'Kategori baru berhasil ditambahkan ke Lumière.');
         } catch (Throwable $e) {
@@ -52,13 +48,17 @@ if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['id'])
     redirect(base_url('admin/menu_kategori.php'));
 }
 
+$title = 'Kategori Menu';
+$assetBase = '../../assets';
+require __DIR__ . '/../includes/header.php';
+
 // Fetch all categories and count menus for each
 $stmt = $pdo->query('
-    SELECT k.id_kategori, k.nama_kategori, u.level AS role, u.username AS pembuat, COUNT(m.id_menu) AS jumlah_menu
+    SELECT k.id_kategori, k.nama_kategori, \'admin\' AS role, u.username AS pembuat, COUNT(m.id_menu) AS jumlah_menu
     FROM kategori k
     LEFT JOIN menu m ON k.id_kategori = m.id_kategori
-    LEFT JOIN user u ON k.id_user = u.id_user
-    GROUP BY k.id_kategori, k.nama_kategori, u.level, u.username
+    LEFT JOIN admin u ON k.id_admin = u.id_admin
+    GROUP BY k.id_kategori, k.nama_kategori, u.username
     ORDER BY k.id_kategori ASC
 ');
 $categories = $stmt->fetchAll();
