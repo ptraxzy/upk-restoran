@@ -218,9 +218,17 @@ function render_public_shell(array $config, string $content): void
                 <a href="<?= base_url('pelanggan/dashboard.php') ?>" class="public-brand text-decoration-none">
                     <?= htmlspecialchars($brand); ?>
                 </a>
-                <button class="navbar-toggler border-0 shadow-none" type="button" data-bs-toggle="collapse" data-bs-target="#publicNav">
-                    <span class="navbar-toggler-icon"></span>
+                
+                <!-- Hamburger Button (Toggles slide-in sidebar) -->
+                <button class="navbar-toggler border-0 shadow-none custom-hamburger js-menu-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation">
+                    <div class="hamburger-box">
+                        <span class="hamburger-line line-1"></span>
+                        <span class="hamburger-line line-2"></span>
+                        <span class="hamburger-line line-3"></span>
+                    </div>
                 </button>
+                
+                <!-- Desktop Navigation Menu -->
                 <div class="collapse navbar-collapse" id="publicNav">
                     <ul class="navbar-nav ms-auto gap-lg-4 align-items-lg-center mt-4 mt-lg-0">
                         <?php foreach (public_nav_items() as $item): ?>
@@ -229,7 +237,7 @@ function render_public_shell(array $config, string $content): void
                                 <a class="public-nav-link text-decoration-none <?= $active ? 'active' : ''; ?> position-relative" href="<?= htmlspecialchars($item['href']); ?>">
                                     <?= htmlspecialchars($item['label']); ?>
                                     <?php if ($item['label'] === 'Keranjang'): ?>
-                                        <span class="cart-count js-cart-count" style="<?= cart_count() > 0 ? '' : 'display: none;' ?>"><?= cart_count(); ?></span>
+                                        <span class="cart-count js-cart-count" style="<?= cart_count() > 0 ? '' : 'display: none;' ?>">(<?= cart_count(); ?>)</span>
                                     <?php endif; ?>
                                 </a>
                             </li>
@@ -241,6 +249,29 @@ function render_public_shell(array $config, string $content): void
                 </div>
             </div>
         </nav>
+
+        <!-- Slide-In Mobile Sidebar & Overlay -->
+        <div class="public-sidebar-overlay" id="jsPublicOverlay"></div>
+        <div class="public-sidebar" id="jsPublicSidebar">
+            <div class="sidebar-header d-flex justify-content-between align-items-center">
+                <span class="public-brand"><?= htmlspecialchars($brand); ?></span>
+                <button class="btn-close-sidebar js-menu-toggle">&times;</button>
+            </div>
+            
+            <nav class="sidebar-menu-links">
+                <?php foreach (public_nav_items() as $item): ?>
+                    <?php $active = is_active_path($item['href']); ?>
+                    <a class="sidebar-menu-link <?= $active ? 'active' : ''; ?>" href="<?= htmlspecialchars($item['href']); ?>">
+                        <?= htmlspecialchars($item['label']); ?>
+                        <?php if ($item['label'] === 'Keranjang'): ?>
+                            <span class="badge bg-warning text-dark ms-2 js-cart-count" style="<?= cart_count() > 0 ? '' : 'display: none;' ?>"><?= cart_count(); ?></span>
+                        <?php endif; ?>
+                    </a>
+                <?php endforeach; ?>
+                <div class="border-top border-soft my-3"></div>
+                <a class="btn btn-outline-warning w-100 py-2" style="font-size: 13px; font-weight: 600;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">Logout</a>
+            </nav>
+        </div>
 
         <?php if (!$hideHero): ?>
         <section class="container mt-4">
@@ -269,8 +300,41 @@ function render_public_shell(array $config, string $content): void
         </section>
         
         <footer class="mt-auto py-5 border-top border-soft text-center bg-black">
-            <p class="text-secondary m-0" style="font-size: 12px;">© <?= date('Y') ?> <?= htmlspecialchars($brand); ?>. All Rights Reserved.</p>
+            <p class="text-secondary mb-2" style="font-size: 12px;">© <?= date('Y') ?> <?= htmlspecialchars($brand); ?>. All Rights Reserved.</p>
+            <div class="d-flex justify-content-center gap-3">
+                <a href="<?= base_url('privacy.php') ?>" class="text-secondary hover-gold small text-decoration-none" style="font-size: 11px;">Kebijakan Privasi</a>
+                <span class="text-muted" style="font-size: 11px;">&bull;</span>
+                <a href="<?= base_url('terms.php') ?>" class="text-secondary hover-gold small text-decoration-none" style="font-size: 11px;">Syarat & Ketentuan</a>
+            </div>
         </footer>
     </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const toggles = document.querySelectorAll('.js-menu-toggle');
+            const sidebar = document.getElementById('jsPublicSidebar');
+            const overlay = document.getElementById('jsPublicOverlay');
+            const hamburger = document.querySelector('.custom-hamburger');
+
+            toggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const isOpen = sidebar.classList.toggle('show');
+                    overlay.classList.toggle('show');
+                    
+                    if (hamburger) {
+                        hamburger.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+                    }
+                });
+            });
+
+            overlay?.addEventListener('click', () => {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+                if (hamburger) {
+                    hamburger.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+    </script>
     <?php
 }
