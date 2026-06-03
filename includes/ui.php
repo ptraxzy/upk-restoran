@@ -211,14 +211,17 @@ function render_public_shell(array $config, string $content): void
     $brand = ($config['brand'] ?? "L'Art Culinaire") === "L'Art Culinaire" ? get_setting('nama_restoran', "Lumière") : $config['brand'];
     $actions = $config['actions'] ?? [];
     $hideHero = $config['hide_hero'] ?? false;
+    $isLoggedIn = isset($_SESSION['id_user']) && ($_SESSION['user_role'] ?? '') === 'pelanggan';
+    $brandUrl = $isLoggedIn ? base_url('pelanggan/dashboard.php') : base_url('login.php');
     ?>
     <main class="shell">
         <nav class="navbar navbar-expand-lg navbar-dark border-bottom border-soft py-3 sticky-top bg-black">
             <div class="container">
-                <a href="<?= base_url('pelanggan/dashboard.php') ?>" class="public-brand text-decoration-none">
+                <a href="<?= $brandUrl ?>" class="public-brand text-decoration-none">
                     <?= htmlspecialchars($brand); ?>
                 </a>
                 
+                <?php if ($isLoggedIn): ?>
                 <!-- Hamburger Button (Toggles slide-in sidebar) -->
                 <button class="navbar-toggler border-0 shadow-none custom-hamburger js-menu-toggle" type="button" aria-expanded="false" aria-label="Toggle navigation">
                     <div class="hamburger-box">
@@ -247,9 +250,11 @@ function render_public_shell(array $config, string $content): void
                         </li>
                     </ul>
                 </div>
+                <?php endif; ?>
             </div>
         </nav>
 
+        <?php if ($isLoggedIn): ?>
         <!-- Slide-In Mobile Sidebar & Overlay -->
         <div class="public-sidebar-overlay" id="jsPublicOverlay"></div>
         <div class="public-sidebar" id="jsPublicSidebar">
@@ -272,6 +277,7 @@ function render_public_shell(array $config, string $content): void
                 <a class="btn btn-outline-warning w-100 py-2" style="font-size: 13px; font-weight: 600;" href="<?= htmlspecialchars(base_url('logout.php')); ?>">Logout</a>
             </nav>
         </div>
+        <?php endif; ?>
 
         <?php if (!$hideHero): ?>
         <section class="container mt-4">
