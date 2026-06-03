@@ -247,10 +247,12 @@ $featuredMenu = $stmt->fetchAll();
         <div class="container d-flex justify-content-between align-items-center">
             <a href="#" class="brand-logo">Lumière</a>
             <div>
-                <?php if ($isLoggedIn && ($userRole === 'kasir' || $userRole === 'admin')): ?>
-                    <a href="<?= $staffUrl ?>" class="btn-outline-gold">Dashboard Karyawan</a>
-                <?php else: ?>
-                    <a href="<?= base_url('login.php') ?>" class="btn-outline-gold">Portal Staf</a>
+                <?php if ($isLoggedIn): ?>
+                    <?php if ($userRole === 'kasir' || $userRole === 'admin'): ?>
+                        <a href="<?= $staffUrl ?>" class="btn-outline-gold">Dashboard Karyawan</a>
+                    <?php else: ?>
+                        <a href="<?= $orderUrl ?>" class="btn-outline-gold">Dashboard Saya</a>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </div>
