@@ -300,12 +300,7 @@ function render_public_shell(array $config, string $content): void
         </section>
         
         <footer class="mt-auto py-5 border-top border-soft text-center bg-black">
-            <p class="text-secondary mb-2" style="font-size: 12px;">© <?= date('Y') ?> <?= htmlspecialchars($brand); ?>. All Rights Reserved.</p>
-            <div class="d-flex justify-content-center gap-3">
-                <a href="<?= base_url('privacy.php') ?>" class="text-secondary hover-gold small text-decoration-none" style="font-size: 11px;">Kebijakan Privasi</a>
-                <span class="text-muted" style="font-size: 11px;">&bull;</span>
-                <a href="<?= base_url('terms.php') ?>" class="text-secondary hover-gold small text-decoration-none" style="font-size: 11px;">Syarat & Ketentuan</a>
-            </div>
+            <p class="text-secondary m-0" style="font-size: 12px;">© <?= date('Y') ?> <?= htmlspecialchars($brand); ?>. All Rights Reserved.</p>
         </footer>
     </main>
 

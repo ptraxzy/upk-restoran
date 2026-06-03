@@ -181,6 +181,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                 <input type="password" name="password" class="input" placeholder="Minimal 6 karakter" required>
             </div>
 
+            <div class="text-secondary" style="font-size: 11px; margin-bottom: 20px; line-height: 1.5; color: #777; text-align: left; opacity: 0; animation: fieldFade 0.6s 1.1s forwards;">
+                Dengan mendaftar, Anda menyetujui <a href="privacy.php" target="_blank" style="color: var(--gold); text-decoration: none;">Kebijakan Privasi</a> dan <a href="terms.php" target="_blank" style="color: var(--gold); text-decoration: none;">Syarat & Ketentuan</a> kami.
+            </div>
+
             <button type="submit" class="btn" style="opacity: 0; animation: fieldFade 0.6s 1.2s forwards;">Daftar Sekarang</button>
         </form>
 
