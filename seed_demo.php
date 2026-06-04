@@ -14,26 +14,48 @@ try {
     $pdo->exec('TRUNCATE TABLE pembayaran');
     $pdo->exec('TRUNCATE TABLE detail_pesanan');
     $pdo->exec('TRUNCATE TABLE pesanan');
+    $pdo->exec('TRUNCATE TABLE karyawan');
+    $pdo->exec('TRUNCATE TABLE voucher');
     $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
 
     // Ambil ID Pelanggan default
     $stmtUser = $pdo->query("SELECT id_pelanggan FROM pelanggan WHERE username = 'testmember' LIMIT 1");
     $idPelanggan = $stmtUser->fetchColumn();
     if (!$idPelanggan) {
-        // Buat jika tidak ada
         $passHash = password_hash('secret123', PASSWORD_DEFAULT);
         $pdo->exec("INSERT INTO pelanggan (nama_pelanggan, username, email, password) VALUES ('Test Member', 'testmember', 'member@lumiere.com', '$passHash')");
         $idPelanggan = $pdo->lastInsertId();
     }
 
-    // Ambil ID Karyawan default
-    $stmtStaff = $pdo->query("SELECT id_karyawan FROM karyawan WHERE username = 'kasir' LIMIT 1");
-    $idKaryawan = $stmtStaff->fetchColumn();
-    if (!$idKaryawan) {
-        // Buat jika tidak ada
-        $passHash = password_hash('kasir123', PASSWORD_DEFAULT);
-        $pdo->exec("INSERT INTO karyawan (nama_karyawan, username, email, password) VALUES ('Kasir Utama', 'kasir', 'kasir@lumiere.com', '$passHash')");
-        $idKaryawan = $pdo->lastInsertId();
+    // Masukkan data Karyawan (Kasir)
+    $passKasirHash = password_hash('kasir123', PASSWORD_DEFAULT);
+    $karyawans = [
+        ['Kasir Utama', 'kasir', 'kasir@lumiere.com', $passKasirHash, 'Aktif'],
+        ['Ahmad Subarjo', 'ahmad_kasir', 'ahmad@lumiere.com', $passKasirHash, 'Aktif'],
+        ['Siti Rahma', 'siti_kasir', 'siti@lumiere.com', $passKasirHash, 'Aktif'],
+        ['Budi Santoso', 'budi_kasir', 'budi@lumiere.com', $passKasirHash, 'Aktif']
+    ];
+
+    $karyawanIds = [];
+    foreach ($karyawans as $k) {
+        $stmtK = $pdo->prepare("INSERT INTO karyawan (nama_karyawan, username, email, password, status) VALUES (?, ?, ?, ?, ?)");
+        $stmtK->execute([$k[0], $k[1], $k[2], $k[3], $k[4]]);
+        $karyawanIds[] = $pdo->lastInsertId();
+    }
+    // Set ID Karyawan utama untuk relasi transaksi
+    $idKaryawan = $karyawanIds[0];
+
+    // Masukkan data Voucher diskon
+    $vouchers = [
+        ['LUMIERE50K', 'Diskon Grand Opening Rp50.000', 'Nominal', 50000, 200000, 2, '2026-05-15', '2026-06-30', 'Active'],
+        ['WAGYU10', 'Promo Akhir Pekan 10%', 'Persentase', 10, 100000, 1, '2026-05-20', '2026-06-15', 'Active'],
+        ['WELCOME20', 'Voucher Member Baru 20%', 'Persentase', 20, 50000, 1, '2026-05-01', '2026-07-31', 'Active'],
+        ['LUMIEREPAHE', 'Potongan Paket Hemat Rp15.000', 'Nominal', 15000, 75000, 2, '2026-05-22', '2026-06-25', 'Active']
+    ];
+
+    foreach ($vouchers as $v) {
+        $stmtV = $pdo->prepare("INSERT INTO voucher (kode_voucher, nama_voucher, jenis_voucher, nilai_voucher, minimal_pembelian, minimal_porsi, tanggal_mulai, tanggal_berakhir, status_voucher) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmtV->execute([$v[0], $v[1], $v[2], $v[3], $v[4], $v[5], $v[6], $v[7], $v[8]]);
     }
 
     // List menu bawaan beserta harganya
@@ -63,32 +85,26 @@ try {
     ];
 
     $noMejaList = ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10'];
-    $orderIndex = 1;
 
     // Generate data untuk 14 hari terakhir sampai hari ini
     for ($i = 13; $i >= 0; $i--) {
         $dateStr = date('Y-m-d', strtotime("-$i days"));
         
-        // Targetkan jumlah pesanan harian (makin dekat ke hari ini, makin ramai/tinggi penjualannya)
         $numOrders = rand(3, 7);
         if ($i === 0) {
-            $numOrders = 8; // Buat hari ini lebih sibuk untuk demo real-time
+            $numOrders = 8; 
         }
 
         for ($j = 0; $j < $numOrders; $j++) {
-            // Generate jam acak
             $hour = rand(11, 21);
             $minute = rand(0, 59);
             $second = rand(0, 59);
             $datetimeStr = "$dateStr $hour:$minute:$second";
 
-            // Pilih nomor meja secara acak
             $noMeja = $noMejaList[array_rand($noMejaList)];
 
-            // Tentukan status pesanan
             $statusPesanan = 'Selesai';
             if ($i === 0) {
-                // Hari ini ada beberapa order aktif untuk simulasi status
                 if ($j === 0) {
                     $statusPesanan = 'Diproses';
                 } elseif ($j === 1) {
@@ -98,7 +114,6 @@ try {
                 }
             }
 
-            // Pilih 1 sampai 3 menu acak untuk pesanan ini
             $selectedMenuIds = array_rand($menus, rand(1, 3));
             if (!is_array($selectedMenuIds)) {
                 $selectedMenuIds = [$selectedMenuIds];
@@ -120,11 +135,13 @@ try {
                 ];
             }
 
-            // Masukkan ke tabel pesanan
+            // Pilih kasir secara acak untuk melayani pesanan ini
+            $currentKaryawanId = $karyawanIds[array_rand($karyawanIds)];
+
             $stmtOrder = $pdo->prepare("INSERT INTO pesanan (id_pelanggan, id_karyawan, no_meja, tanggal_pesanan, total_harga, status_pesanan) VALUES (?, ?, ?, ?, ?, ?)");
             $stmtOrder->execute([
                 $idPelanggan,
-                $idKaryawan,
+                $currentKaryawanId,
                 $noMeja,
                 $datetimeStr,
                 $totalHarga,
@@ -132,7 +149,6 @@ try {
             ]);
             $newOrderId = $pdo->lastInsertId();
 
-            // Masukkan detail pesanan
             foreach ($itemsToInsert as $item) {
                 $stmtDetail = $pdo->prepare("INSERT INTO detail_pesanan (id_pesanan, id_menu, jumlah, harga_satuan) VALUES (?, ?, ?, ?)");
                 $stmtDetail->execute([
@@ -143,8 +159,6 @@ try {
                 ]);
             }
 
-            // Tentukan status pembayaran
-            // Jika pesanan selain yang masih diproses/disiapkan hari ini, status lunas
             if ($statusPesanan === 'Selesai' || $statusPesanan === 'Siap Saji') {
                 $statusBayar = 'Lunas';
                 $metode = rand(1, 2) === 1 ? 'QRIS' : 'Tunai';
@@ -158,10 +172,9 @@ try {
                     $statusBayar,
                     'TRX-' . strtoupper(substr(md5((string)$newOrderId), 0, 10)),
                     $idPelanggan,
-                    $idKaryawan
+                    $currentKaryawanId
                 ]);
 
-                // Tambahkan rating ulasan secara acak (sekitar 40% kemungkinan)
                 if (rand(1, 10) <= 4) {
                     $rating = rand(4, 5);
                     $commentList = $comments[$rating];
@@ -182,8 +195,8 @@ try {
 
     echo json_encode([
         'status' => 'success',
-        'message' => 'Simulasi data presentasi berhasil dibuat untuk 14 hari terakhir!',
-        'detail' => 'Silakan hapus file seed_demo.php dari root folder demi alasan keamanan setelah presentasi selesai.'
+        'message' => 'Simulasi data presentasi berhasil dibuat (Transaksi 14 hari, 4 Kasir/Karyawan baru, dan 4 Voucher aktif)!',
+        'detail' => 'Silakan jalankan kembali URL seed_demo.php Anda di browser untuk memperbarui database.'
     ], JSON_PRETTY_PRINT);
 
 } catch (Throwable $e) {
