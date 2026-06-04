@@ -1,0 +1,14 @@
+.git/
+.github/
+.agents/
+.vscode/
+.superpowers/
+Dockerfile
+docker-compose.yml
+.env
+.env.example
+README.md
+ROADMAP_UI.md
+SUMMARY.md
+database/sql/
+docs/
