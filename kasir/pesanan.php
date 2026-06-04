@@ -14,10 +14,13 @@ require __DIR__ . '/../includes/header.php';
 $pdo = db();
 $stmt = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.status_pesanan, p.tanggal_pesanan,
-           TIMESTAMPDIFF(MINUTE, p.tanggal_pesanan, NOW()) as menit_menunggu
+           TIMESTAMPDIFF(MINUTE, p.tanggal_pesanan, NOW()) as menit_menunggu,
+           pl.username, pb.status AS status_pembayaran
     FROM pesanan p
+    LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
+    LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
     WHERE p.status_pesanan IN ('Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Menunggu Pembayaran', 'Selesai')
-    ORDER BY p.tanggal_pesanan ASC
+    ORDER BY p.tanggal_pesanan DESC
 ");
 $pesananList = $stmt->fetchAll();
 
@@ -68,6 +71,88 @@ if ($filter === 'semua') {
 
 ob_start();
 ?>
+<style>
+/* Custom Dropdown Styling */
+.custom-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.custom-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background-color: #0c0c0c;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-dropdown-trigger:hover, .custom-dropdown-trigger:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+.custom-dropdown-trigger .chevron {
+    transition: transform 0.2s;
+    opacity: 0.7;
+}
+
+.custom-dropdown.open .custom-dropdown-trigger .chevron {
+    transform: rotate(180deg);
+}
+
+.custom-dropdown-menu {
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.8);
+    z-index: 1050;
+    margin-bottom: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.custom-dropdown.open .custom-dropdown-menu {
+    display: block;
+}
+
+.custom-dropdown-item {
+    padding: 8px 12px;
+    font-size: 12px;
+    font-family: var(--font-body);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.custom-dropdown-item:hover:not(.disabled) {
+    background-color: rgba(201, 168, 76, 0.1);
+    color: var(--gold);
+}
+
+.custom-dropdown-item.selected {
+    background-color: rgba(201, 168, 76, 0.15);
+    color: var(--gold);
+    font-weight: 500;
+}
+
+.custom-dropdown-item.disabled {
+    color: #555555;
+    cursor: not-allowed;
+    background-color: transparent;
+}
+</style>
 <section style="background: transparent; border: none; padding: 0;">
     <div class="d-flex flex-column gap-3 flex-md-row justify-content-md-between align-items-md-start mb-5">
         <div style="max-width: 600px;">
@@ -139,7 +224,7 @@ ob_start();
                         <div class="d-flex align-items-center gap-2">
                             <span class="font-display text-white" style="font-size: 32px; line-height: 1; font-weight: bold;"><?= htmlspecialchars($p['no_meja'], ENT_QUOTES, 'UTF-8') ?></span>
                             <div>
-                                <p class="text-secondary small m-0" style="font-size: 10px; letter-spacing: 0.06em; font-weight: 600;">MEJA</p>
+                                <p class="text-secondary small m-0" style="font-size: 10px; letter-spacing: 0.06em; font-weight: 600;">#LP-<?= $p['id_pesanan'] ?> &bull; MEJA &bull; <?= htmlspecialchars((string)($p['username'] ?? 'Guest'), ENT_QUOTES, 'UTF-8') ?></p>
                                 <p class="text-muted small m-0" style="font-size: 9px; margin-top: 2px; white-space: nowrap;"><?= date('d M Y, H:i', strtotime($p['tanggal_pesanan'])) ?></p>
                             </div>
                         </div>
@@ -158,8 +243,8 @@ ob_start();
                         <?php if (isset($pesananDetails[$p['id_pesanan']])): ?>
                             <?php foreach ($pesananDetails[$p['id_pesanan']] as $detail): ?>
                             <div class="d-flex gap-2 align-items-baseline mb-2">
-                                <span class="text-gold fw-medium" style="font-size: 11px; font-family: var(--font-sans);"><?= $detail['jumlah'] ?>x</span>
-                                <span class="text-white" style="font-size: 12px; font-family: var(--font-sans); opacity: 0.95;"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <span class="text-gold fw-medium" style="font-size: 11px; font-family: var(--font-body);"><?= $detail['jumlah'] ?>x</span>
+                                <span class="text-white" style="font-size: 12px; font-family: var(--font-body); opacity: 0.95;"><?= htmlspecialchars($detail['nama_menu'], ENT_QUOTES, 'UTF-8') ?></span>
                             </div>
                             <?php endforeach; ?>
                         <?php else: ?>
@@ -169,7 +254,7 @@ ob_start();
 
                     <!-- Allergen Alert Box (Markdown-style) -->
                     <?php if ($hasAsparagus): ?>
-                        <blockquote style="border-left: 3px solid #ff6b6b; background: rgba(220, 53, 69, 0.05); padding: 12px; margin: 12px 0 16px 0; font-size: 11px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); font-family: var(--font-sans); font-style: normal;">
+                        <blockquote style="border-left: 3px solid #ff6b6b; background: rgba(220, 53, 69, 0.05); padding: 12px; margin: 12px 0 16px 0; font-size: 11px; line-height: 1.5; color: rgba(255, 255, 255, 0.85); font-family: var(--font-body); font-style: normal;">
                             <strong style="color: #ff6b6b; letter-spacing: 0.04em; font-size: 9px; display: block; margin-bottom: 4px; text-transform: uppercase;">PERINGATAN ALERGI</strong>
                             Dilarang keras menggunakan produk susu untuk persiapan Asparagus. Gunakan minyak zaitun.
                         </blockquote>
@@ -225,14 +310,32 @@ ob_start();
                                 <label class="small text-secondary" style="font-size: 10px; letter-spacing: 0.04em;">Perbarui Status</label>
                                 <button type="button" class="btn p-0 text-secondary border-0 small" style="font-size: 10px;" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)">Batal</button>
                             </div>
-                            <select name="status" class="form-select bg-black text-white border-secondary rounded-0" onchange="this.form.submit()" style="font-size: 12px; font-family: var(--font-sans); cursor: pointer; padding: 8px 12px; line-height: 1.2;">
-                                <option value="Menunggu Pembayaran" <?= $p['status_pesanan'] === 'Menunggu Pembayaran' ? 'selected' : '' ?>>Menunggu Pembayaran</option>
-                                <option value="Diproses" <?= $p['status_pesanan'] === 'Diproses' ? 'selected' : '' ?>>Diproses</option>
-                                <option value="Sedang Disiapkan" <?= $p['status_pesanan'] === 'Sedang Disiapkan' ? 'selected' : '' ?>>Sedang Disiapkan</option>
-                                <option value="Siap Saji" <?= $p['status_pesanan'] === 'Siap Saji' ? 'selected' : '' ?>>Siap Saji</option>
-                                <option value="Selesai" <?= $p['status_pesanan'] === 'Selesai' ? 'selected' : '' ?>>Selesai</option>
-                                <option value="Dibatalkan" <?= $p['status_pesanan'] === 'Dibatalkan' ? 'selected' : '' ?>>Dibatalkan</option>
-                            </select>
+                            <div class="custom-dropdown" id="dropdown-container-<?= $p['id_pesanan'] ?>">
+                                <input type="hidden" name="status" id="input-status-<?= $p['id_pesanan'] ?>" value="<?= htmlspecialchars($p['status_pesanan'], ENT_QUOTES, 'UTF-8') ?>">
+                                <button type="button" class="custom-dropdown-trigger" onclick="toggleDropdownMenu(<?= $p['id_pesanan'] ?>, event)">
+                                    <span id="trigger-label-<?= $p['id_pesanan'] ?>"><?= htmlspecialchars($p['status_pesanan'], ENT_QUOTES, 'UTF-8') ?></span>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                                <div class="custom-dropdown-menu" id="dropdown-menu-<?= $p['id_pesanan'] ?>">
+                                    <?php
+                                    $isLunas = ($p['status_pembayaran'] === 'Lunas');
+                                    $options = [
+                                        ['value' => 'Menunggu Pembayaran', 'label' => 'Menunggu Pembayaran', 'disabled' => false],
+                                        ['value' => 'Diproses', 'label' => 'Diproses' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                        ['value' => 'Sedang Disiapkan', 'label' => 'Sedang Disiapkan' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                        ['value' => 'Siap Saji', 'label' => 'Siap Saji' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                        ['value' => 'Selesai', 'label' => 'Selesai' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                        ['value' => 'Dibatalkan', 'label' => 'Dibatalkan', 'disabled' => false],
+                                    ];
+                                    foreach ($options as $opt):
+                                    ?>
+                                        <div class="custom-dropdown-item <?= $opt['disabled'] ? 'disabled' : '' ?> <?= $p['status_pesanan'] === $opt['value'] ? 'selected' : '' ?>" 
+                                             onclick="selectDropdownOption(<?= $p['id_pesanan'] ?>, '<?= htmlspecialchars($opt['value'], ENT_QUOTES, 'UTF-8') ?>', <?= $opt['disabled'] ? 'true' : 'false' ?>)">
+                                            <?= htmlspecialchars($opt['label'], ENT_QUOTES, 'UTF-8') ?>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
+                            </div>
                         </form>
                     </div>
                 </article>
@@ -252,9 +355,49 @@ function toggleStatusSelector(id) {
         } else {
             actionsDiv.classList.add('d-none');
             formEl.classList.remove('d-none');
+            // Reset custom dropdown state when opening/closing
+            const dropdown = document.getElementById('dropdown-container-' + id);
+            if (dropdown) dropdown.classList.remove('open');
         }
     }
 }
+
+function toggleDropdownMenu(id, event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('dropdown-container-' + id);
+    if (!dropdown) return;
+    const isOpen = dropdown.classList.contains('open');
+    
+    // Close all other dropdowns
+    document.querySelectorAll('.custom-dropdown').forEach(el => {
+        el.classList.remove('open');
+    });
+    
+    if (!isOpen) {
+        dropdown.classList.add('open');
+    }
+}
+
+function selectDropdownOption(id, value, disabled) {
+    if (disabled) return;
+    const input = document.getElementById('input-status-' + id);
+    if (input) {
+        input.value = value;
+        const form = document.getElementById('form-' + id);
+        if (form) {
+            form.submit();
+        }
+    }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.custom-dropdown')) {
+        document.querySelectorAll('.custom-dropdown').forEach(el => {
+            el.classList.remove('open');
+        });
+    }
+});
 </script>
 <?php
 $content = ob_get_clean();

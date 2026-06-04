@@ -63,7 +63,7 @@ ob_start();
         <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
             <div class="border-bottom border-soft pb-4 mb-4">
                 <h3 class="h3 mb-1 text-warning font-display" style="font-size: 24px;">Perbarui Data Diri</h3>
-                <p class="text-secondary small mb-0">Ubah detail personal, alamat email, dan kredensial keamanan akun Anda.</p>
+                <p class="text-secondary small mb-0">Ubah nama lengkap, username, email, dan password Anda.</p>
             </div>
 
             <form class="d-flex flex-column gap-4" action="" method="post">
@@ -99,17 +99,17 @@ ob_start();
 
     <aside class="col-lg-4 animate-fade-in-up" style="animation-delay: 0.2s;">
         <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
-            <h3 class="h3 mb-4 text-warning font-display" style="font-size: 24px;">Informasi Keamanan</h3>
-            <p class="text-secondary small" style="line-height: 1.6;">Demi alasan perlindungan privasi data, harap gunakan kata sandi yang kuat dan unik (mengandung kombinasi huruf, angka, dan karakter spesial) ketika memperbarui kredensial Anda.</p>
+            <h3 class="h3 mb-4 text-warning font-display" style="font-size: 24px;">Keamanan Akun</h3>
+            <p class="text-secondary small" style="line-height: 1.6;">Gunakan password yang kuat dengan kombinasi huruf, angka, dan simbol untuk melindungi keamanan akun Anda.</p>
         </article>
     </aside>
 </section>
 <?php
 $content = ob_get_clean();
 render_public_shell([
-    'brand' => "L'Art Culinaire",
-    'eyebrow' => 'Edit Profile',
+    'brand' => 'Lumière',
+    'eyebrow' => 'Edit Profil',
     'title' => 'Pengaturan Akun',
-    'description' => 'Sesuaikan profil personal dan pertahankan kredensial keamanan akun kuliner Anda.',
+    'description' => 'Ubah detail data diri dan password Anda.',
 ], $content);
 require __DIR__ . '/../includes/footer.php';

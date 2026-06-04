@@ -22,13 +22,47 @@ if ($id_pesanan <= 0 || !in_array($status, $valid_statuses, true)) {
 
 $pdo = db();
 
+// Ambil status pembayaran pesanan saat ini
+$stmtCheckPay = $pdo->prepare("SELECT status FROM pembayaran WHERE id_pesanan = ?");
+$stmtCheckPay->execute([$id_pesanan]);
+$payStatus = $stmtCheckPay->fetchColumn();
+
+if ($payStatus !== 'Lunas' && in_array($status, ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai'], true)) {
+    set_flash('error', 'Gagal: Pesanan belum dibayar. Silakan selesaikan pembayaran terlebih dahulu di kasir!');
+    redirect(base_url('kasir/pesanan.php'));
+}
+
+$pdo->beginTransaction();
 try {
     $id_karyawan = $_SESSION['id_user'] ?? null;
+    
+    // Update status pesanan
     $stmt = $pdo->prepare("UPDATE pesanan SET status_pesanan = ?, id_karyawan = ? WHERE id_pesanan = ?");
     $stmt->execute([$status, $id_karyawan, $id_pesanan]);
     
+    // Sinkronisasi status pembayaran secara otomatis
+    if (in_array($status, ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai'], true)) {
+        $stmtBayar = $pdo->prepare("
+            UPDATE pembayaran 
+            SET status = 'Lunas', 
+                tanggal_pembayaran = COALESCE(tanggal_pembayaran, NOW()),
+                id_karyawan = COALESCE(id_karyawan, ?) 
+            WHERE id_pesanan = ? AND status != 'Lunas'
+        ");
+        $stmtBayar->execute([$id_karyawan, $id_pesanan]);
+    } elseif ($status === 'Dibatalkan') {
+        $stmtBayar = $pdo->prepare("
+            UPDATE pembayaran 
+            SET status = 'Batal' 
+            WHERE id_pesanan = ?
+        ");
+        $stmtBayar->execute([$id_pesanan]);
+    }
+    
+    $pdo->commit();
     set_flash('success', "Status pesanan #$id_pesanan berhasil diubah menjadi $status.");
 } catch (Exception $e) {
+    $pdo->rollBack();
     set_flash('error', 'Gagal mengubah status: ' . $e->getMessage());
 }
 

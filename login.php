@@ -18,23 +18,28 @@ $selectedRole = 'pelanggan';
 if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
     $username = trim($_POST['username'] ?? '');
     $password = $_POST['password'] ?? '';
-    $selectedRole = trim($_POST['role'] ?? 'pelanggan');
-
     if ($username === '' || $password === '') {
         $error = 'Nama pengguna dan kata sandi jangan dikosongkan ya.';
-    } elseif (!in_array($selectedRole, ['admin', 'kasir', 'pelanggan'], true)) {
-        $error = 'Peran tidak valid.';
     } else {
-        // Cari user sesuai role pilihan
-        $t = match($selectedRole) {
-            'admin' => ['table' => 'admin',     'id' => 'id_admin',     'name' => 'nama_admin',     'role' => 'admin'],
-            'kasir' => ['table' => 'karyawan',  'id' => 'id_karyawan',  'name' => 'nama_karyawan',  'role' => 'kasir'],
-            default => ['table' => 'pelanggan', 'id' => 'id_pelanggan', 'name' => 'nama_pelanggan', 'role' => 'pelanggan'],
-        };
+        $tables = [
+            ['table' => 'admin',     'id' => 'id_admin',     'name' => 'nama_admin',     'role' => 'admin'],
+            ['table' => 'karyawan',  'id' => 'id_karyawan',  'name' => 'nama_karyawan',  'role' => 'kasir'],
+            ['table' => 'pelanggan', 'id' => 'id_pelanggan', 'name' => 'nama_pelanggan', 'role' => 'pelanggan'],
+        ];
 
-        $stmt = db()->prepare("SELECT {$t['id']}, username, password, {$t['name']}, status FROM {$t['table']} WHERE username = :username LIMIT 1");
-        $stmt->execute(['username' => $username]);
-        $foundUser = $stmt->fetch();
+        $foundUser = null;
+        $t = null;
+
+        foreach ($tables as $tableDef) {
+            $stmt = db()->prepare("SELECT {$tableDef['id']}, username, password, {$tableDef['name']}, status FROM {$tableDef['table']} WHERE username = :username LIMIT 1");
+            $stmt->execute(['username' => $username]);
+            $user = $stmt->fetch();
+            if ($user) {
+                $foundUser = $user;
+                $t = $tableDef;
+                break;
+            }
+        }
 
         $isValid = false;
         if ($foundUser) {
@@ -55,6 +60,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         }
 
         if ($foundUser && $isValid) {
+            session_regenerate_id(true);
             $_SESSION['id_user'] = (int) $foundUser[$t['id']];
             $_SESSION['user_name'] = (string) ($foundUser[$t['name']] ?: $foundUser['username']);
             $_SESSION['user_role'] = $t['role'];
@@ -242,35 +248,6 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         .hidden { display: none !important; opacity: 0; }
 
-        .login-tabs {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 24px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-            padding-bottom: 8px;
-            gap: 8px;
-            opacity: 0;
-            animation: fieldFade 0.5s 0.5s forwards;
-        }
-
-        .tab-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: #888;
-            padding: 8px 4px;
-            font-size: 13px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.25s var(--ease);
-            border-bottom: 2px solid transparent;
-            font-family: var(--font-body);
-        }
-
-        .tab-btn:hover {
-            color: #fff;
-        }
-
         .tab-btn.active {
             color: var(--gold);
             border-bottom-color: var(--gold);
@@ -359,18 +336,10 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
 
         <!-- Bagian Login -->
         <div id="login-section">
-            <div class="login-tabs">
-                <button type="button" id="tab-pelanggan" class="tab-btn" onclick="switchForm('pelanggan')">Pelanggan</button>
-                <button type="button" id="tab-kasir" class="tab-btn" onclick="switchForm('kasir')">Kasir</button>
-                <button type="button" id="tab-admin" class="tab-btn" onclick="switchForm('admin')">Admin</button>
-            </div>
-
-            <!-- Form Pelanggan -->
-            <form method="post" action="login.php" id="form-pelanggan" class="hidden">
-                <input type="hidden" name="role" value="pelanggan">
+            <form method="post" action="login.php" id="form-login">
                 <div class="form-group" style="animation-delay: 0.1s;">
-                    <label class="field-label">Nama Pengguna (Pelanggan)</label>
-                    <input type="text" name="username" class="input-control" placeholder="ID masuk pelanggan" required>
+                    <label class=   "field-label">Nama Pengguna</label>
+                    <input type="text" name="username" class="input-control" placeholder="ID masuk" required>
                 </div>
                 <div class="form-group" style="animation-delay: 0.2s;">
                     <label class="field-label">Kata Sandi</label>
@@ -378,39 +347,7 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
                     <a href="#" class="forgot-link" onclick="toggleSection('forgot')">Lupa kata sandi?</a>
                 </div>
                 <div class="btn-wrap" style="animation-delay: 0.3s;">
-                    <button type="submit" class="btn-primary">Masuk Pelanggan</button>
-                </div>
-            </form>
-
-            <!-- Form Kasir (Karyawan) -->
-            <form method="post" action="login.php" id="form-kasir" class="hidden">
-                <input type="hidden" name="role" value="kasir">
-                <div class="form-group" style="animation-delay: 0.1s;">
-                    <label class="field-label">Nama Pengguna (Kasir)</label>
-                    <input type="text" name="username" class="input-control" placeholder="ID masuk kasir" required>
-                </div>
-                <div class="form-group" style="animation-delay: 0.2s;">
-                    <label class="field-label">Kata Sandi</label>
-                    <input type="password" name="password" class="input-control" placeholder="••••••••" required>
-                </div>
-                <div class="btn-wrap" style="animation-delay: 0.3s;">
-                    <button type="submit" class="btn-primary">Masuk Kasir</button>
-                </div>
-            </form>
-
-            <!-- Form Admin -->
-            <form method="post" action="login.php" id="form-admin" class="hidden">
-                <input type="hidden" name="role" value="admin">
-                <div class="form-group" style="animation-delay: 0.1s;">
-                    <label class="field-label">Nama Pengguna (Admin)</label>
-                    <input type="text" name="username" class="input-control" placeholder="ID masuk admin" required>
-                </div>
-                <div class="form-group" style="animation-delay: 0.2s;">
-                    <label class="field-label">Kata Sandi</label>
-                    <input type="password" name="password" class="input-control" placeholder="••••••••" required>
-                </div>
-                <div class="btn-wrap" style="animation-delay: 0.3s;">
-                    <button type="submit" class="btn-primary">Masuk Admin</button>
+                    <button type="submit" class="btn-primary">Masuk</button>
                 </div>
             </form>
 
@@ -443,56 +380,16 @@ if (($_SERVER['REQUEST_METHOD'] ?? 'GET') === 'POST') {
         // Intro Animation control
         document.addEventListener('DOMContentLoaded', function() {
             const preloader = document.getElementById('preloader');
-            if (!sessionStorage.getItem('lumiere_intro_played')) {
-                // First time opening the web app in this session, show animation
-                window.addEventListener('load', function() {
-                    setTimeout(function() {
-                        if (preloader) {
-                            preloader.classList.add('preloader-hidden');
-                        }
-                        sessionStorage.setItem('lumiere_intro_played', 'true');
-                    }, 1800);
-                });
-            } else {
-                // Already played in this session, hide immediately to avoid annoying redirects/back navigation
-                if (preloader) {
-                    preloader.style.display = 'none';
-                }
-            }
+            window.addEventListener('load', function() {
+                setTimeout(function() {
+                    if (preloader) {
+                        preloader.classList.add('preloader-hidden');
+                    }
+                }, 1800);
+            });
         });
 
-        function switchForm(role) {
-            document.getElementById('form-pelanggan').classList.add('hidden');
-            document.getElementById('form-kasir').classList.add('hidden');
-            document.getElementById('form-admin').classList.add('hidden');
-
-            document.getElementById('tab-pelanggan').classList.remove('active');
-            document.getElementById('tab-kasir').classList.remove('active');
-            document.getElementById('tab-admin').classList.remove('active');
-
-            const form = document.getElementById('form-' + role);
-            if (form) {
-                form.classList.remove('hidden');
-            }
-
-            const tab = document.getElementById('tab-' + role);
-            if (tab) {
-                tab.classList.add('active');
-            }
-
-            const registerFooter = document.getElementById('register-footer');
-            if (registerFooter) {
-                if (role === 'pelanggan') {
-                    registerFooter.classList.remove('hidden');
-                } else {
-                    registerFooter.classList.add('hidden');
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            switchForm('<?= htmlspecialchars($selectedRole, ENT_QUOTES, 'UTF-8') ?>');
-        });
+        // (Tabs removed)
 
         function toggleSection(section) {
             const loginSection = document.getElementById('login-section');

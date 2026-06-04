@@ -15,10 +15,11 @@ $pdo = db();
 
 // Fetch all customer orders with menu names aggregated
 $stmt = $pdo->prepare('
-    SELECT p.*, GROUP_CONCAT(CONCAT(m.nama_menu, " x", dp.jumlah) SEPARATOR ", ") AS items_summary
+    SELECT p.*, GROUP_CONCAT(CONCAT(m.nama_menu, " x", dp.jumlah) SEPARATOR ", ") AS items_summary, MAX(py.total_bayar) AS total_bayar
     FROM pesanan p
     LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.id_pesanan
     LEFT JOIN menu m ON dp.id_menu = m.id_menu
+    LEFT JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
     WHERE p.id_pelanggan = ?
     GROUP BY p.id_pesanan
     ORDER BY p.tanggal_pesanan DESC
@@ -41,7 +42,7 @@ foreach ($orders as $order) {
     if (in_array($order['status_pesanan'], ['Selesai', 'Dibatalkan'])) {
         $historyOrders[] = $order;
         if ($order['status_pesanan'] === 'Selesai') {
-            $totalSpent += (float)$order['total_harga'];
+            $totalSpent += (float)($order['total_bayar'] ?? $order['total_harga']);
             $totalOrdersCount++;
         }
     } else {
@@ -78,7 +79,6 @@ ob_start();
                     <p class="text-secondary small mb-0">Pantau pesanan aktif Anda dan lihat riwayat kuliner Anda di Lumière.</p>
                 </div>
                 <div class="d-flex flex-wrap gap-2">
-                    <a class="btn btn-outline-warning rounded-0 fw-medium px-3 py-2 text-white" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('pelanggan/pesanan_status.php'), ENT_QUOTES, 'UTF-8'); ?>">Lacak Status</a>
                     <a class="btn btn-outline-warning rounded-0 fw-medium px-3 py-2 text-white" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('pelanggan/pesanan_riwayat.php'), ENT_QUOTES, 'UTF-8'); ?>">Lihat Riwayat</a>
                 </div>
             </div>
@@ -98,7 +98,10 @@ ob_start();
                             <p class="fw-medium text-light mb-1">#LP-<?= $order['id_pesanan']; ?> • <?= htmlspecialchars((string)($order['items_summary'] ?: 'Menu Hidangan'), ENT_QUOTES, 'UTF-8'); ?></p>
                             <p class="small text-secondary mb-0">Order aktif • Meja <?= htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?> • <?= date('d M Y, H:i', strtotime($order['tanggal_pesanan'])); ?></p>
                         </div>
-                        <span class="badge bg-warning text-dark"><?= htmlspecialchars($order['status_pesanan'], ENT_QUOTES, 'UTF-8'); ?></span>
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="badge bg-warning text-dark"><?= htmlspecialchars($order['status_pesanan'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            <a href="<?= htmlspecialchars(base_url('pelanggan/pesanan_status.php?id=' . $order['id_pesanan']), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-sm btn-outline-warning py-1 px-2 text-white" style="font-size: 11px;">Lacak</a>
+                        </div>
                     </div>
                 <?php endforeach; ?>
                 <?php if (empty($paginatedActiveOrders)): ?>
@@ -157,7 +160,7 @@ ob_start();
                 </article>
                 <article class="p-3 border border-soft bg-black d-flex flex-column h-100 w-100 mb-2">
                     <p class="text-secondary small mb-2">Total Kunjungan</p>
-                    <p class="h2 text-gold font-display mb-0" style="font-size: 32px;"><?= str_pad((string)$totalOrdersCount, 2, '0', STR_PAD_LEFT); ?></p>
+                    <p class="h2 text-gold font-display mb-0" style="font-size: 32px;"><?= $totalOrdersCount; ?></p>
                 </article>
                 <article class="p-3 border border-soft bg-black d-flex flex-column h-100 w-100">
                     <p class="text-secondary small mb-2">Total Belanja</p>
@@ -167,6 +170,35 @@ ob_start();
         </article>
     </aside>
 </section>
+
+<?php if (!empty($paginatedActiveOrders)): ?>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const activeOrders = {
+            <?php foreach ($paginatedActiveOrders as $o): ?>
+                "<?= $o['id_pesanan']; ?>": "<?= htmlspecialchars($o['status_pesanan'], ENT_QUOTES, 'UTF-8'); ?>",
+            <?php endforeach; ?>
+        };
+        
+        // Poll active order statuses every 4 seconds to sync status badges automatically
+        setInterval(() => {
+            const checks = Object.keys(activeOrders).map(id => {
+                return fetch('ajax_pesanan_status.php?id=' + id)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            if (data.data.status_pesanan !== activeOrders[id]) {
+                                window.location.reload();
+                            }
+                        }
+                    })
+                    .catch(err => console.error('Error polling status for #' + id, err));
+            });
+        }, 4000);
+    });
+</script>
+<?php endif; ?>
+
 <?php
 $content = ob_get_clean();
 render_public_shell([

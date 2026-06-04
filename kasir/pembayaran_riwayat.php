@@ -59,107 +59,118 @@ $topMethod = $stmtMethod->fetch();
 
 ob_start();
 ?>
-<section class="row row-cols-1 row-cols-lg-2 g-4">
-    <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
-        <div class="d-flex flex-column gap-3 flex-md-row align-items-md-end justify-content-md-between mb-4">
-            <div>
-                <h3 class="h3 mb-1 text-warning">Riwayat Transaksi</h3>
-                <p class="text-muted small mb-0">Daftar seluruh transaksi pembayaran yang telah tercatat.</p>
+<section class="row g-4">
+    <div class="col-lg-8">
+        <article class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0 h-100">
+            <div class="d-flex flex-column gap-3 mb-4">
+                <div>
+                    <a class="text-gold text-decoration-none small d-inline-flex align-items-center gap-2 mb-3 hover-gold" href="<?= htmlspecialchars(base_url('kasir/pembayaran.php'), ENT_QUOTES, 'UTF-8'); ?>" style="font-size: 12px; letter-spacing: 0.04em;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+                        KEMBALI KE PEMBAYARAN
+                    </a>
+                </div>
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center border-bottom border-soft pb-4 gap-3">
+                    <div>
+                        <h3 class="h3 mb-1 text-warning font-display">Riwayat Transaksi</h3>
+                        <p class="text-secondary small mb-0">Daftar seluruh transaksi pembayaran yang telah tercatat.</p>
+                    </div>
+                    <form method="GET" class="d-flex gap-2 m-0">
+                        <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" style="max-width: 180px;">
+                        <button type="submit" class="btn btn-outline-warning rounded-0">Cari</button>
+                    </form>
+                </div>
             </div>
-            <div class="d-flex flex-wrap gap-2 align-items-center">
-                <form method="GET" class="d-flex gap-2">
-                    <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari transaksi..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>">
-                    <button type="submit" class="btn btn-outline-warning rounded-0">Cari</button>
-                </form>
-                <a class="btn btn-outline-warning rounded-0 fw-medium px-4 py-2 text-white text-nowrap" href="<?= htmlspecialchars(base_url('kasir/pembayaran.php'), ENT_QUOTES, 'UTF-8'); ?>">Kembali</a>
-            </div>
-        </div>
 
-        <table class="table table-dark table-hover table-bordered border-secondary mb-0">
-            <thead>
-                <tr>
-                    <th>No. Struk</th>
-                    <th>Tanggal</th>
-                    <th>Pelanggan</th>
-                    <th>Total</th>
-                    <th>Metode</th>
-                    <th>Diproses Oleh</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php foreach ($paginatedRiwayat as $trx): ?>
-                <tr>
-                    <td class="text-gold"><?= htmlspecialchars($trx['trx_id'] ?? '#LP-' . $trx['id_pesanan'], ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td><?= date('d M Y, H:i', strtotime($trx['tanggal_pembayaran'])); ?></td>
-                    <td><?= htmlspecialchars($trx['nama_pelanggan'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td class="text-white"><?= rupiah((float)$trx['total_bayar']); ?></td>
-                    <td><?= htmlspecialchars($trx['metode'], ENT_QUOTES, 'UTF-8'); ?></td>
-                    <td>
-                        <?= htmlspecialchars($trx['nama_kasir'] ?? 'Pelanggan (Self)', ENT_QUOTES, 'UTF-8'); ?>
-                        <?php if (isset($trx['kasir_role']) && $trx['kasir_role'] !== 'pelanggan'): ?>
-                            <span class="text-warning small d-block" style="font-size: 9px; text-transform: uppercase;">(<?= htmlspecialchars($trx['kasir_role'], ENT_QUOTES, 'UTF-8'); ?>)</span>
+            <div class="table-responsive">
+                <table class="table table-dark table-hover table-bordered border-secondary mb-0">
+                    <thead>
+                        <tr>
+                            <th>No. Struk</th>
+                            <th>Tanggal</th>
+                            <th>Pelanggan</th>
+                            <th>Total</th>
+                            <th>Metode</th>
+                            <th>Diproses Oleh</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php foreach ($paginatedRiwayat as $trx): ?>
+                        <tr>
+                            <td class="text-gold"><?= htmlspecialchars($trx['trx_id'] ?? '#LP-' . $trx['id_pesanan'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="text-nowrap"><?= date('d M Y, H:i', strtotime($trx['tanggal_pembayaran'])); ?></td>
+                            <td><?= htmlspecialchars($trx['nama_pelanggan'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td class="text-white text-nowrap"><?= rupiah((float)$trx['total_bayar']); ?></td>
+                            <td><?= htmlspecialchars($trx['metode'], ENT_QUOTES, 'UTF-8'); ?></td>
+                            <td>
+                                <?= htmlspecialchars($trx['nama_kasir'] ?? 'Pelanggan (Self)', ENT_QUOTES, 'UTF-8'); ?>
+                                <?php if (isset($trx['kasir_role']) && $trx['kasir_role'] !== 'pelanggan'): ?>
+                                    <span class="text-warning small d-block" style="font-size: 9px; text-transform: uppercase;">(<?= htmlspecialchars($trx['kasir_role'], ENT_QUOTES, 'UTF-8'); ?>)</span>
+                                <?php endif; ?>
+                            </td>
+                            <td>
+                                <?php
+                                $badgeClass = match($trx['status']) {
+                                    'Lunas' => 'bg-success',
+                                    'Menunggu' => 'bg-warning text-dark',
+                                    'Gagal' => 'bg-danger',
+                                    default => 'bg-secondary',
+                                };
+                                ?>
+                                <span class="badge <?= $badgeClass; ?>"><?= htmlspecialchars($trx['status'], ENT_QUOTES, 'UTF-8'); ?></span>
+                            </td>
+                        </tr>
+                        <?php endforeach; ?>
+                        <?php if (empty($paginatedRiwayat)): ?>
+                            <tr><td colspan="7" class="text-center py-4 text-muted">Belum ada riwayat transaksi yang ditemukan.</td></tr>
                         <?php endif; ?>
-                    </td>
-                    <td>
-                        <?php
-                        $badgeClass = match($trx['status']) {
-                            'Lunas' => 'bg-success',
-                            'Menunggu' => 'bg-warning text-dark',
-                            'Gagal' => 'bg-danger',
-                            default => 'bg-secondary',
-                        };
-                        ?>
-                        <span class="badge <?= $badgeClass; ?>"><?= htmlspecialchars($trx['status'], ENT_QUOTES, 'UTF-8'); ?></span>
-                    </td>
-                </tr>
-                <?php endforeach; ?>
-                <?php if (empty($paginatedRiwayat)): ?>
-                    <tr><td colspan="7" class="text-center py-4 text-muted">Belum ada riwayat transaksi yang ditemukan.</td></tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+                    </tbody>
+                </table>
+            </div>
 
-        <?php if ($totalPages > 1): ?>
-            <nav aria-label="Page navigation" class="mt-4">
-                <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
-                    <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
-                        <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
-                        </a>
-                    </li>
-                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
-                        <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
-                            <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+            <?php if ($totalPages > 1): ?>
+                <nav aria-label="Page navigation" class="mt-4">
+                    <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                        <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
                         </li>
-                    <?php endfor; ?>
-                    <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
-                        <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
-                        </a>
-                    </li>
-                </ul>
-            </nav>
-        <?php endif; ?>
-    </article>
+                        <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                            <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                                <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
+                            <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
+        </article>
+    </div>
 
-    <aside class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0">
-        <h3 class="h3 mb-1 text-warning">Ringkasan Kas</h3>
-        <div class="row row-cols-1 row-cols-md-3 g-3 mb-4 mt-4">
-            <article class="card bg-dark text-white border-secondary p-3 rounded-0 h-100">
-                <p class="text-muted small mb-2">Total Transaksi Hari Ini</p>
-                <p class="h2 text-warning mb-0"><?= $countToday; ?></p>
-            </article>
-            <article class="card bg-dark text-white border-secondary p-3 rounded-0 h-100">
-                <p class="text-muted small mb-2">Pendapatan Hari Ini</p>
-                <p class="h2 text-warning mb-0"><?= rupiah($revToday); ?></p>
-            </article>
-            <article class="card bg-dark text-white border-secondary p-3 rounded-0 h-100">
-                <p class="text-muted small mb-2">Metode Terbanyak</p>
-                <p class="h2 text-warning mb-0"><?= htmlspecialchars($topMethod['metode'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></p>
-            </article>
-        </div>
-    </aside>
+    <div class="col-lg-4">
+        <aside class="card bg-dark text-white border-secondary p-4 mb-4 rounded-0 h-100">
+            <h3 class="h3 mb-1 text-warning">Ringkasan Kas</h3>
+            <div class="d-flex flex-column gap-3 mb-4 mt-4">
+                <article class="card bg-dark text-white border-secondary p-3 rounded-0">
+                    <p class="text-muted small mb-2">Total Transaksi Hari Ini</p>
+                    <p class="h2 text-warning mb-0"><?= $countToday; ?></p>
+                </article>
+                <article class="card bg-dark text-white border-secondary p-3 rounded-0">
+                    <p class="text-muted small mb-2">Pendapatan Hari Ini</p>
+                    <p class="h2 text-warning mb-0"><?= rupiah($revToday); ?></p>
+                </article>
+                <article class="card bg-dark text-white border-secondary p-3 rounded-0">
+                    <p class="text-muted small mb-2">Metode Terbanyak</p>
+                    <p class="h2 text-warning mb-0"><?= htmlspecialchars($topMethod['metode'] ?? '-', ENT_QUOTES, 'UTF-8'); ?></p>
+                </article>
+            </div>
+        </aside>
+    </div>
 </section>
 <?php
 $content = ob_get_clean();

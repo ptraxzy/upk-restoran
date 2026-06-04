@@ -77,6 +77,7 @@ ob_start();
                     <div class="d-flex flex-column gap-2 mb-4 text-secondary" style="font-size: 11px;">
                         <div class="d-flex justify-content-between"><span>TANGGAL:</span><span class="text-white"><?= date('d M Y, H:i', strtotime($pesanan['tanggal_pesanan'])); ?></span></div>
                         <div class="d-flex justify-content-between"><span>KASIR:</span><span class="text-white"><?= htmlspecialchars($pembayaran['nama_kasir'] ?? $_SESSION['user_name'] ?? 'Kasir', ENT_QUOTES, 'UTF-8'); ?></span></div>
+                        <div class="d-flex justify-content-between"><span>PELANGGAN:</span><span class="text-white"><?= htmlspecialchars($pesanan['username'] ?? 'Guest', ENT_QUOTES, 'UTF-8'); ?></span></div>
                         <div class="d-flex justify-content-between"><span>NO. MEJA:</span><span class="text-white"><?= htmlspecialchars($pesanan['no_meja'], ENT_QUOTES, 'UTF-8'); ?></span></div>
                         <div class="d-flex justify-content-between"><span>NO. PESANAN:</span><span class="text-white">#LP-<?= $pesanan['id_pesanan']; ?></span></div>
                         <?php if ($pembayaran && $pembayaran['trx_id']): ?>

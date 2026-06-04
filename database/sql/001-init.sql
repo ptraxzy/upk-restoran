@@ -1,6 +1,3 @@
-CREATE DATABASE IF NOT EXISTS db_restoran;
-USE db_restoran;
-
 -- Tabel admin: khusus akun administrator
 CREATE TABLE IF NOT EXISTS `admin` (
   `id_admin` int NOT NULL AUTO_INCREMENT,
@@ -167,39 +164,15 @@ INSERT INTO `admin` (`nama_admin`, `username`, `password`)
 SELECT 'Administrator', 'admin', 'admin123'
 WHERE NOT EXISTS (SELECT 1 FROM `admin` WHERE `username` = 'admin');
 
-INSERT INTO `admin` (`nama_admin`, `username`, `password`)
-SELECT 'Admin Ops', 'admin.ops', 'admin456'
-WHERE NOT EXISTS (SELECT 1 FROM `admin` WHERE `username` = 'admin.ops');
-
-INSERT INTO `admin` (`nama_admin`, `username`, `password`)
-SELECT 'Admin Floor', 'admin.floor', 'admin789'
-WHERE NOT EXISTS (SELECT 1 FROM `admin` WHERE `username` = 'admin.floor');
-
 -- Seed data karyawan
 INSERT INTO `karyawan` (`nama_karyawan`, `username`, `password`)
 SELECT 'Kasir Utama', 'kasir', 'kasir123'
 WHERE NOT EXISTS (SELECT 1 FROM `karyawan` WHERE `username` = 'kasir');
 
-INSERT INTO `karyawan` (`nama_karyawan`, `username`, `password`)
-SELECT 'Senja', 'kasir.senja', 'kasir456'
-WHERE NOT EXISTS (SELECT 1 FROM `karyawan` WHERE `username` = 'kasir.senja');
-
-INSERT INTO `karyawan` (`nama_karyawan`, `username`, `password`)
-SELECT 'Raka', 'kasir.raka', 'kasir789'
-WHERE NOT EXISTS (SELECT 1 FROM `karyawan` WHERE `username` = 'kasir.raka');
-
 -- Seed data pelanggan
 INSERT INTO `pelanggan` (`nama_pelanggan`, `username`, `password`)
 SELECT 'Test Member', 'testmember', 'secret123'
 WHERE NOT EXISTS (SELECT 1 FROM `pelanggan` WHERE `username` = 'testmember');
-
-INSERT INTO `pelanggan` (`nama_pelanggan`, `username`, `password`)
-SELECT 'Ayla', 'member.ayla', 'member456'
-WHERE NOT EXISTS (SELECT 1 FROM `pelanggan` WHERE `username` = 'member.ayla');
-
-INSERT INTO `pelanggan` (`nama_pelanggan`, `username`, `password`)
-SELECT 'Nara', 'member.nara', 'member789'
-WHERE NOT EXISTS (SELECT 1 FROM `pelanggan` WHERE `username` = 'member.nara');
 
 CREATE TABLE IF NOT EXISTS `ulasan` (
   `id_ulasan` INT NOT NULL AUTO_INCREMENT,

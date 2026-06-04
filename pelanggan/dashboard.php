@@ -5,34 +5,93 @@ require_once __DIR__ . '/../includes/database.php';
 require_role('pelanggan');
 
 $selectedCategory = isset($_GET['category']) ? (int) $_GET['category'] : 0;
+$page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
+$limit = 6;
+$offset = ($page - 1) * $limit;
 
 // Fetch active menus
 if ($selectedCategory > 0) {
-    $stmt = db()->prepare("SELECT * FROM menu WHERE status = 'Tersedia' AND deleted_at IS NULL AND id_kategori = ? ORDER BY id_menu ASC LIMIT 5");
+    $stmtTotal = db()->prepare("SELECT COUNT(*) FROM menu WHERE status = 'Tersedia' AND deleted_at IS NULL AND id_kategori = ?");
+    $stmtTotal->execute([$selectedCategory]);
+    $totalItems = (int)$stmtTotal->fetchColumn();
+
+    $stmt = db()->prepare("SELECT * FROM menu WHERE status = 'Tersedia' AND deleted_at IS NULL AND id_kategori = ? ORDER BY id_menu ASC LIMIT $limit OFFSET $offset");
     $stmt->execute([$selectedCategory]);
 } else {
-    $stmt = db()->query("SELECT * FROM menu WHERE status = 'Tersedia' AND deleted_at IS NULL ORDER BY id_menu ASC LIMIT 5");
+    $stmtTotal = db()->query("SELECT COUNT(*) FROM menu WHERE status = 'Tersedia' AND deleted_at IS NULL");
+    $totalItems = (int)$stmtTotal->fetchColumn();
+
+    $stmt = db()->query("SELECT * FROM menu WHERE status = 'Tersedia' AND deleted_at IS NULL ORDER BY id_menu ASC LIMIT $limit OFFSET $offset");
 }
 $items = $stmt->fetchAll();
+$totalPages = ceil($totalItems / $limit);
 
 // Handle AJAX menu request
 if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
     header('Content-Type: application/json');
-    $formattedItems = [];
-    foreach ($items as $item) {
-        $formattedItems[] = [
-            'id_menu' => $item['id_menu'],
-            'nama_menu' => $item['nama_menu'],
-            'deskripsi' => $item['deskripsi'] ?: 'Detail hidangan belum tersedia.',
-            'harga_formatted' => rupiah((float) $item['harga']),
-            'gambar' => menu_image($item['gambar']),
-            'detail_url' => base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']),
-            'action_url' => base_url('actions/tambah_keranjang.php')
-        ];
-    }
+    ob_start();
+    ?>
+    <div class="menu-grid">
+        <?php if (empty($items)): ?>
+            <article class="menu-card" style="grid-column: 1 / -1; min-height: 200px; justify-content: center; align-items: center;">
+                <div class="menu-card-body text-center">
+                    <h2 class="menu-card-title">Belum Ada Menu</h2>
+                    <p class="menu-card-desc mb-0">Belum ada hidangan tersedia untuk kategori ini.</p>
+                </div>
+            </article>
+        <?php else: ?>
+            <?php foreach ($items as $index => $item): ?>
+            <article class="menu-card animate-fade-in-up" style="animation-delay: <?= 0.1 + ($index * 0.05) ?>s;">
+                <div class="menu-card-img-wrapper">
+                    <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">
+                        <img src="<?= htmlspecialchars((string) menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="menu-card-img">
+                    </a>
+                </div>
+                <div class="menu-card-body">
+                    <h2 class="menu-card-title">
+                        <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">
+                            <?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>
+                        </a>
+                    </h2>
+                    <p class="menu-card-desc"><?= htmlspecialchars((string) ($item['deskripsi'] ?: 'Detail hidangan belum tersedia.'), ENT_QUOTES, 'UTF-8'); ?></p>
+                    <div class="menu-card-footer">
+                        <span class="menu-card-price"><?= rupiah((float) $item['harga']); ?></span>
+                        <div class="d-flex align-items-center gap-3">
+                            <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-to-cart" style="color: var(--text-secondary); text-decoration: none;">
+                                Detail
+                            </a>
+                            <form method="post" action="<?= htmlspecialchars(base_url('actions/tambah_keranjang.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-form">
+                                <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string) $item['id_menu'], ENT_QUOTES, 'UTF-8'); ?>">
+                                <input type="hidden" name="qty" value="1">
+                                <button type="submit" class="btn-add-to-cart">
+                                    Tambah +
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </article>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </div>
+
+    <?php if ($totalPages > 1): ?>
+        <nav aria-label="Page navigation" class="mt-5 pt-3 animate-fade-in-up" style="animation-delay: 0.2s;">
+            <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                    <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                        <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-transparent text-secondary border-secondary'; ?>"
+                           href="?category=<?= $selectedCategory; ?>&page=<?= $i; ?>" data-page="<?= $i; ?>"><?= $i; ?></a>
+                    </li>
+                <?php endfor; ?>
+            </ul>
+        </nav>
+    <?php endif; ?>
+    <?php
+    $html = ob_get_clean();
     echo json_encode([
         'success' => true,
-        'items' => $formattedItems,
+        'html' => $html,
         'selectedCategory' => $selectedCategory
     ]);
     exit;
@@ -427,6 +486,15 @@ body {
     transition: opacity 0.3s ease;
 }
 
+#menu-catalog-container {
+    transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+#menu-catalog-container.loading-catalog {
+    opacity: 0.25;
+    transform: translateY(8px);
+    pointer-events: none;
+}
 </style>
 
 <div class="full-bleed">
@@ -435,9 +503,9 @@ body {
         <div class="luxury-hero-gradient"></div>
 
         <div class="hero-content">
-            <span class="eyebrow animate-fade-in-up" style="animation-delay: 0.1s;">Pencicipan Khas</span>
-            <h1 class="hero-title animate-fade-in-up" style="animation-delay: 0.3s;">Simfoni<br>Musim Gugur</h1>
-            <p class="hero-desc animate-fade-in-up" style="animation-delay: 0.5s;">Perjalanan terkurasi melalui rasa musiman, menonjolkan keseimbangan halus antara bumi dan laut.</p>
+            <span class="eyebrow animate-fade-in-up" style="animation-delay: 0.1s;">Menu Kami</span>
+            <h1 class="hero-title animate-fade-in-up" style="animation-delay: 0.3s;">Mau makan apa<br>hari ini?</h1>
+            <p class="hero-desc animate-fade-in-up" style="animation-delay: 0.5s;">Mulai dari camilan pembuka, makanan utama yang lezat, sampai minuman segar, semua disiapkan langsung dari dapur kami khusus untukmu.</p>
         </div>
     </section>
 </div>
@@ -446,10 +514,11 @@ body {
 
 <div class="menu-discovery">
     <nav class="category-tabs animate-fade-in-up" style="animation-delay: 0.6s;">
-        <a href="<?= htmlspecialchars(base_url('pelanggan/dashboard.php'), ENT_QUOTES, 'UTF-8'); ?>" class="tab-btn <?= $selectedCategory === 0 ? 'active' : ''; ?>">SEMUA</a>
+        <a href="<?= htmlspecialchars(base_url('pelanggan/dashboard.php'), ENT_QUOTES, 'UTF-8'); ?>" data-category-id="0" class="tab-btn <?= $selectedCategory === 0 ? 'active' : ''; ?>">SEMUA</a>
         <?php foreach ($categories as $category): ?>
             <a
                 href="<?= htmlspecialchars(base_url('pelanggan/dashboard.php?category=' . $category['id_kategori']), ENT_QUOTES, 'UTF-8'); ?>"
+                data-category-id="<?= (int) $category['id_kategori']; ?>"
                 class="tab-btn <?= $selectedCategory === (int) $category['id_kategori'] ? 'active' : ''; ?>"
             >
                 <?= htmlspecialchars(strtoupper((string) $category['nama_kategori']), ENT_QUOTES, 'UTF-8'); ?>
@@ -457,47 +526,62 @@ body {
         <?php endforeach; ?>
     </nav>
 
-    <div class="menu-grid">
-        <?php if (empty($items)): ?>
-            <article class="menu-card" style="grid-column: 1 / -1; min-height: 200px; justify-content: center; align-items: center;">
-                <div class="menu-card-body text-center">
-                    <h2 class="menu-card-title">Belum Ada Menu</h2>
-                    <p class="menu-card-desc mb-0">Belum ada hidangan tersedia untuk kategori ini.</p>
-                </div>
-            </article>
-        <?php else: ?>
-            <?php foreach ($items as $index => $item): ?>
-            <article class="menu-card animate-fade-in-up" style="animation-delay: <?= 0.7 + ($index * 0.1) ?>s;">
-                <div class="menu-card-img-wrapper">
-                    <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">
-                        <img src="<?= htmlspecialchars((string) menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="menu-card-img">
-                    </a>
-                </div>
-                <div class="menu-card-body">
-                    <h2 class="menu-card-title">
+    <div id="menu-catalog-container">
+        <div class="menu-grid">
+            <?php if (empty($items)): ?>
+                <article class="menu-card" style="grid-column: 1 / -1; min-height: 200px; justify-content: center; align-items: center;">
+                    <div class="menu-card-body text-center">
+                        <h2 class="menu-card-title">Belum Ada Menu</h2>
+                        <p class="menu-card-desc mb-0">Belum ada hidangan tersedia untuk kategori ini.</p>
+                    </div>
+                </article>
+            <?php else: ?>
+                <?php foreach ($items as $index => $item): ?>
+                <article class="menu-card animate-fade-in-up" style="animation-delay: <?= 0.7 + ($index * 0.1) ?>s;">
+                    <div class="menu-card-img-wrapper">
                         <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">
-                            <?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>
+                            <img src="<?= htmlspecialchars((string) menu_image($item['gambar']), ENT_QUOTES, 'UTF-8'); ?>" alt="<?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>" class="menu-card-img">
                         </a>
-                    </h2>
-                    <p class="menu-card-desc"><?= htmlspecialchars((string) ($item['deskripsi'] ?: 'Detail hidangan belum tersedia.'), ENT_QUOTES, 'UTF-8'); ?></p>
-                    <div class="menu-card-footer">
-                        <span class="menu-card-price"><?= rupiah((float) $item['harga']); ?></span>
-                        <div class="d-flex align-items-center gap-3">
-                            <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-to-cart" style="color: var(--text-secondary); text-decoration: none;">
-                                Detail
+                    </div>
+                    <div class="menu-card-body">
+                        <h2 class="menu-card-title">
+                            <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>">
+                                <?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?>
                             </a>
-                            <form method="post" action="<?= htmlspecialchars(base_url('actions/tambah_keranjang.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-form">
-                                <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string) $item['id_menu'], ENT_QUOTES, 'UTF-8'); ?>">
-                                <input type="hidden" name="qty" value="1">
-                                <button type="submit" class="btn-add-to-cart">
-                                    Tambah +
-                                </button>
-                            </form>
+                        </h2>
+                        <p class="menu-card-desc"><?= htmlspecialchars((string) ($item['deskripsi'] ?: 'Detail hidangan belum tersedia.'), ENT_QUOTES, 'UTF-8'); ?></p>
+                        <div class="menu-card-footer">
+                            <span class="menu-card-price"><?= rupiah((float) $item['harga']); ?></span>
+                            <div class="d-flex align-items-center gap-3">
+                                <a href="<?= htmlspecialchars(base_url('pelanggan/menu_detail.php?id=' . $item['id_menu']), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-to-cart" style="color: var(--text-secondary); text-decoration: none;">
+                                    Detail
+                                </a>
+                                <form method="post" action="<?= htmlspecialchars(base_url('actions/tambah_keranjang.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn-add-form">
+                                    <input type="hidden" name="id_menu" value="<?= htmlspecialchars((string) $item['id_menu'], ENT_QUOTES, 'UTF-8'); ?>">
+                                    <input type="hidden" name="qty" value="1">
+                                    <button type="submit" class="btn-add-to-cart">
+                                        Tambah +
+                                    </button>
+                                </form>
+                            </div>
                         </div>
                     </div>
-                </div>
-            </article>
-            <?php endforeach; ?>
+                </article>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+
+        <?php if ($totalPages > 1): ?>
+            <nav aria-label="Page navigation" class="mt-5 pt-3 animate-fade-in-up" style="animation-delay: 0.8s;">
+                <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
+                    <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+                        <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
+                            <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-transparent text-secondary border-secondary'; ?>"
+                               href="?category=<?= $selectedCategory; ?>&page=<?= $i; ?>" data-page="<?= $i; ?>"><?= $i; ?></a>
+                        </li>
+                    <?php endfor; ?>
+                </ul>
+            </nav>
         <?php endif; ?>
     </div>
 
@@ -506,9 +590,9 @@ body {
 
     <script>
     document.addEventListener('DOMContentLoaded', () => {
-        const menuGrid = document.querySelector('.menu-grid');
         const tabBtns = document.querySelectorAll('.tab-btn');
         const toastContainer = document.getElementById('toastContainer');
+        const catalogContainer = document.getElementById('menu-catalog-container');
 
         // Toast Helper function
         function showToast(message) {
@@ -546,7 +630,86 @@ body {
             }, 3500);
         }
 
-        // Intersepsi dan pemrosesan penambahan keranjang via AJAX
+        // Function to load catalog data via AJAX
+        async function loadCatalog(categoryId, page = 1) {
+            catalogContainer.classList.add('loading-catalog');
+            
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('category', categoryId);
+                url.searchParams.set('page', page);
+                url.searchParams.set('ajax', '1');
+
+                const response = await fetch(url.toString(), {
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+
+                if (!response.ok) throw new Error('Response error');
+                const data = await response.json();
+
+                if (data.success) {
+                    catalogContainer.innerHTML = data.html;
+
+                    // Update browser history URL
+                    const cleanUrl = new URL(window.location.href);
+                    if (parseInt(categoryId) > 0) {
+                        cleanUrl.searchParams.set('category', categoryId);
+                    } else {
+                        cleanUrl.searchParams.delete('category');
+                    }
+                    if (parseInt(page) > 1) {
+                        cleanUrl.searchParams.set('page', page);
+                    } else {
+                        cleanUrl.searchParams.delete('page');
+                    }
+                    window.history.pushState({ categoryId, page }, '', cleanUrl.toString());
+
+                    // Update active tab styling
+                    tabBtns.forEach(btn => {
+                        const btnId = btn.getAttribute('data-category-id');
+                        if (btnId === String(categoryId)) {
+                            btn.classList.add('active');
+                        } else {
+                            btn.classList.remove('active');
+                        }
+                    });
+                } else {
+                    showToast('Gagal memuat daftar hidangan.');
+                }
+            } catch (err) {
+                console.error(err);
+                showToast('Gagal terhubung ke server.');
+            } finally {
+                catalogContainer.classList.remove('loading-catalog');
+            }
+        }
+
+        // Intercept category tabs clicks
+        document.querySelector('.category-tabs').addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (!btn) return;
+            e.preventDefault();
+            
+            const categoryId = btn.getAttribute('data-category-id');
+            loadCatalog(categoryId, 1);
+        });
+
+        // Intercept pagination links
+        catalogContainer.addEventListener('click', (e) => {
+            const link = e.target.closest('.page-link');
+            if (!link) return;
+            e.preventDefault();
+
+            const activeTab = document.querySelector('.tab-btn.active');
+            const categoryId = activeTab ? activeTab.getAttribute('data-category-id') : '0';
+            const page = link.getAttribute('data-page') || '1';
+
+            loadCatalog(categoryId, page);
+        });
+
+        // Intercept add to cart forms
         document.addEventListener('submit', async (e) => {
             const form = e.target.closest('.btn-add-form');
             if (!form) return;
@@ -571,17 +734,13 @@ body {
                 const data = await response.json();
 
                 if (data.success) {
-                    // Show beautiful green notification
                     showToast(data.message);
-
-                    // Dynamically update Navbar Cart Counter Badge
                     const cartCountEl = document.querySelector('.js-cart-count');
                     if (cartCountEl) {
                         cartCountEl.textContent = data.cart_count;
                         cartCountEl.style.display = data.cart_count > 0 ? 'inline-block' : 'none';
                     }
                 } else {
-                    // Show error notification if failed
                     showToast(data.message || 'Gagal menambahkan menu.');
                 }
             } catch (err) {
@@ -592,89 +751,39 @@ body {
             }
         });
 
-        // Intersepsi filter kategori secara asinkron (AJAX)
-        tabBtns.forEach(btn => {
-            btn.addEventListener('click', async (e) => {
-                e.preventDefault();
+        // Support browser Back/Forward navigation
+        window.addEventListener('popstate', async (e) => {
+            const state = e.state;
+            const categoryId = state && state.categoryId ? state.categoryId : '0';
+            const page = state && state.page ? state.page : '1';
 
-                // Active tab highlight transition
-                tabBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
+            catalogContainer.classList.add('loading-catalog');
+            try {
+                const url = new URL(window.location.href);
+                url.searchParams.set('category', categoryId);
+                url.searchParams.set('page', page);
+                url.searchParams.set('ajax', '1');
 
-                // Add smooth opacity transition overlay to grid
-                menuGrid.classList.add('loading');
-
-                const fetchUrl = new URL(btn.href);
-                fetchUrl.searchParams.set('ajax', '1');
-
-                try {
-                    const response = await fetch(fetchUrl);
-                    const data = await response.json();
-
-                    if (data.success) {
-                        // Clear grid
-                        menuGrid.innerHTML = '';
-
-                        if (data.items.length === 0) {
-                            menuGrid.innerHTML = `
-                                <article class="menu-card" style="grid-column: 1 / -1; min-height: 200px; justify-content: center; align-items: center;">
-                                    <div class="menu-card-body text-center">
-                                        <h2 class="menu-card-title">Belum Ada Menu</h2>
-                                        <p class="menu-card-desc mb-0">Belum ada hidangan tersedia untuk kategori ini.</p>
-                                    </div>
-                                </article>
-                            `;
+                const response = await fetch(url.toString(), {
+                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                });
+                const data = await response.json();
+                if (data.success) {
+                    catalogContainer.innerHTML = data.html;
+                    tabBtns.forEach(btn => {
+                        const btnId = btn.getAttribute('data-category-id');
+                        if (btnId === String(categoryId)) {
+                            btn.classList.add('active');
                         } else {
-                            // Render new items
-                            data.items.forEach((item, index) => {
-                                const article = document.createElement('article');
-                                article.className = 'menu-card animate-fade-in-up';
-                                article.style.animationDelay = (0.1 * index) + 's';
-                                article.innerHTML = `
-                                    <div class="menu-card-img-wrapper">
-                                        <a href="${item.detail_url}">
-                                            <img src="${item.gambar}" alt="${item.nama_menu}" class="menu-card-img">
-                                        </a>
-                                    </div>
-                                    <div class="menu-card-body">
-                                        <h2 class="menu-card-title">
-                                            <a href="${item.detail_url}">
-                                                ${item.nama_menu}
-                                            </a>
-                                        </h2>
-                                        <p class="menu-card-desc">${item.deskripsi}</p>
-                                        <div class="menu-card-footer">
-                                            <span class="menu-card-price">${item.harga_formatted}</span>
-                                            <div class="d-flex align-items-center gap-3">
-                                                <a href="${item.detail_url}" class="btn-add-to-cart" style="color: var(--text-secondary); text-decoration: none;">
-                                                    Detail
-                                                </a>
-                                                <form method="post" action="${item.action_url}" class="btn-add-form">
-                                                    <input type="hidden" name="id_menu" value="${item.id_menu}">
-                                                    <input type="hidden" name="qty" value="1">
-                                                    <button type="submit" class="btn-add-to-cart">
-                                                        Tambah +
-                                                    </button>
-                                                </form>
-                                            </div>
-                                        </div>
-                                    </div>
-                                `;
-                                menuGrid.appendChild(article);
-                            });
+                            btn.classList.remove('active');
                         }
-
-                        // Seamlessly update history state so that browser url matches the active category
-                        const cleanUrl = new URL(btn.href);
-                        history.pushState({ category: data.selectedCategory }, '', cleanUrl.pathname + cleanUrl.search);
-                    }
-                } catch (err) {
-                    console.error(err);
-                    showToast('Gagal memuat kategori menu.');
-                } finally {
-                    menuGrid.classList.remove('loading');
+                    });
                 }
-            });
+            } catch (err) {
+                console.error(err);
+            } finally {
+                catalogContainer.classList.remove('loading-catalog');
+            }
         });
     });
     </script>

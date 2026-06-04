@@ -420,8 +420,8 @@ ob_start();
 
         <?php if (!$isPaymentPhase): ?>
         <div class="promo-section animate-fade-in-up">
-            <h3 class="font-display text-white mb-3" style="font-size: 24px;">Voucher & Promo</h3>
-            <p class="text-secondary small mb-4" style="font-size: 12px; color: var(--text-secondary);">Pilih salah satu penawaran eksklusif Lumière di bawah ini untuk digunakan pada pesanan Anda:</p>
+            <h3 class="font-display text-white mb-3" style="font-size: 24px;">Promo</h3>
+            <p class="text-secondary small mb-4" style="font-size: 12px; color: var(--text-secondary);">Pilih salah satu penawaran eksklusif Lumière di bawah ini untuk digunakan pada pesanan Anda. <strong>1 voucher hanya untuk 1 akun, dan tidak bisa dipakai lagi kalau voucher sudah digunakan.</strong></p>
             
             <div class="row g-3 mb-4">
                 <!-- Option for "No Voucher" -->
@@ -446,7 +446,7 @@ ob_start();
                             continue;
                         }
 
-                        $lblVal = $av['jenis_voucher'] === 'Persentase' ? $av['nilai_voucher'] . '%' : rupiah((float)$av['nilai_voucher']);
+                        $lblVal = $av['jenis_voucher'] === 'Persentase' ? (float)$av['nilai_voucher'] . '%' : rupiah((float)$av['nilai_voucher']);
                         $isActive = (isset($_SESSION['active_voucher']) && $_SESSION['active_voucher'] === $av['kode_voucher']);
                         $formId = 'form-voucher-' . htmlspecialchars($av['kode_voucher']);
                     ?>

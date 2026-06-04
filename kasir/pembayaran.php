@@ -96,7 +96,7 @@ ob_start();
                     </form>
                     <div class="d-flex flex-wrap gap-2">
                         <a class="btn btn-outline-warning rounded-0 fw-medium px-4 py-2 text-white" style="font-size: 12px;" href="<?= htmlspecialchars(base_url('kasir/pembayaran_riwayat.php'), ENT_QUOTES, 'UTF-8'); ?>">Riwayat Transaksi</a>
-                        <a class="btn btn-warning rounded-0 fw-medium px-4 py-2" style="font-size: 12px; font-weight: 600;" href="<?= htmlspecialchars(base_url('kasir/pembayaran_cetak.php'), ENT_QUOTES, 'UTF-8'); ?>">Cetak Struk</a>
+
                     </div>
                 </div>
             </div>

@@ -20,11 +20,47 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $valid_statuses = ['Menunggu Pembayaran', 'Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai', 'Dibatalkan'];
 
     if ($id_pesanan > 0 && in_array($status, $valid_statuses, true)) {
+        // Ambil status pembayaran pesanan saat ini
+        $stmtCheckPay = $pdo->prepare("SELECT status FROM pembayaran WHERE id_pesanan = ?");
+        $stmtCheckPay->execute([$id_pesanan]);
+        $payStatus = $stmtCheckPay->fetchColumn();
+
+        if ($payStatus !== 'Lunas' && in_array($status, ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai'], true)) {
+            set_flash('error', 'Gagal: Pesanan belum dibayar. Silakan selesaikan pembayaran terlebih dahulu!');
+            redirect(base_url('kasir/pesanan_status.php?id=' . $id_pesanan));
+        }
+
+        $pdo->beginTransaction();
         try {
-            $stmt = $pdo->prepare("UPDATE pesanan SET status_pesanan = ? WHERE id_pesanan = ?");
-            $stmt->execute([$status, $id_pesanan]);
+            $id_karyawan = $_SESSION['id_user'] ?? null;
+            
+            // Update status pesanan
+            $stmt = $pdo->prepare("UPDATE pesanan SET status_pesanan = ?, id_karyawan = ? WHERE id_pesanan = ?");
+            $stmt->execute([$status, $id_karyawan, $id_pesanan]);
+            
+            // Sinkronisasi status pembayaran secara otomatis
+            if (in_array($status, ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai'], true)) {
+                $stmtBayar = $pdo->prepare("
+                    UPDATE pembayaran 
+                    SET status = 'Lunas', 
+                        tanggal_pembayaran = COALESCE(tanggal_pembayaran, NOW()),
+                        id_karyawan = COALESCE(id_karyawan, ?) 
+                    WHERE id_pesanan = ? AND status != 'Lunas'
+                ");
+                $stmtBayar->execute([$id_karyawan, $id_pesanan]);
+            } elseif ($status === 'Dibatalkan') {
+                $stmtBayar = $pdo->prepare("
+                    UPDATE pembayaran 
+                    SET status = 'Batal' 
+                    WHERE id_pesanan = ?
+                ");
+                $stmtBayar->execute([$id_pesanan]);
+            }
+            
+            $pdo->commit();
             set_flash('success', "Status pesanan #LP-$id_pesanan berhasil diubah menjadi $status.");
         } catch (Exception $e) {
+            $pdo->rollBack();
             set_flash('error', 'Gagal mengubah status: ' . $e->getMessage());
         }
     } else {
@@ -38,7 +74,7 @@ $selectedId = (int)($_GET['id'] ?? 0);
 $selected = null;
 $selectedDetails = [];
 if ($selectedId > 0) {
-    $stmt = $pdo->prepare("SELECT p.*, u.username FROM pesanan p LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan WHERE p.id_pesanan = ?");
+    $stmt = $pdo->prepare("SELECT p.*, u.username, pb.status AS status_pembayaran FROM pesanan p LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan WHERE p.id_pesanan = ?");
     $stmt->execute([$selectedId]);
     $selected = $stmt->fetch();
 
@@ -61,6 +97,88 @@ $activeOrders = $stmtActive->fetchAll();
 
 ob_start();
 ?>
+<style>
+/* Custom Dropdown Styling */
+.custom-dropdown {
+    position: relative;
+    width: 100%;
+}
+
+.custom-dropdown-trigger {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background-color: #0c0c0c;
+    color: #ffffff;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    padding: 10px 14px;
+    font-size: 13px;
+    font-family: var(--font-body);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.custom-dropdown-trigger:hover, .custom-dropdown-trigger:focus {
+    border-color: var(--gold);
+    outline: none;
+}
+
+.custom-dropdown-trigger .chevron {
+    transition: transform 0.2s;
+    opacity: 0.7;
+}
+
+.custom-dropdown.open .custom-dropdown-trigger .chevron {
+    transform: rotate(180deg);
+}
+
+.custom-dropdown-menu {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background-color: #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.8);
+    z-index: 1050;
+    margin-top: 4px;
+    max-height: 220px;
+    overflow-y: auto;
+}
+
+.custom-dropdown.open .custom-dropdown-menu {
+    display: block;
+}
+
+.custom-dropdown-item {
+    padding: 10px 14px;
+    font-size: 13px;
+    font-family: var(--font-body);
+    color: rgba(255, 255, 255, 0.8);
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+}
+
+.custom-dropdown-item:hover:not(.disabled) {
+    background-color: rgba(201, 168, 76, 0.1);
+    color: var(--gold);
+}
+
+.custom-dropdown-item.selected {
+    background-color: rgba(201, 168, 76, 0.15);
+    color: var(--gold);
+    font-weight: 500;
+}
+
+.custom-dropdown-item.disabled {
+    color: #555555;
+    cursor: not-allowed;
+    background-color: transparent;
+}
+</style>
 <section class="row g-5">
     <div class="col-lg-7">
         <article class="section-panel h-100">
@@ -80,14 +198,33 @@ ob_start();
                     <input type="hidden" name="id_pesanan" value="<?= $selected['id_pesanan']; ?>">
                     <div>
                         <label class="form-label small text-muted mb-1" for="status">Status Pesanan</label>
-                        <select class="form-control bg-dark text-white border-secondary rounded-0" id="status" name="status">
-                            <?php
-                            $statuses = ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai', 'Dibatalkan'];
-                            foreach ($statuses as $s):
-                            ?>
-                            <option value="<?= $s; ?>" <?= $selected['status_pesanan'] === $s ? 'selected' : ''; ?>><?= $s; ?></option>
-                            <?php endforeach; ?>
-                        </select>
+                        <div class="custom-dropdown" id="dropdown-container">
+                            <input type="hidden" name="status" id="status-input" value="<?= htmlspecialchars($selected['status_pesanan'], ENT_QUOTES, 'UTF-8') ?>">
+                            <button type="button" class="custom-dropdown-trigger" onclick="toggleDropdownMenuSingle(event)">
+                                <span id="trigger-label"><?= htmlspecialchars($selected['status_pesanan'], ENT_QUOTES, 'UTF-8') ?></span>
+                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                            </button>
+                            <div class="custom-dropdown-menu">
+                                <?php
+                                $isLunas = (($selected['status_pembayaran'] ?? '') === 'Lunas');
+                                $options = [
+                                    ['value' => 'Menunggu Pembayaran', 'label' => 'Menunggu Pembayaran', 'disabled' => false],
+                                    ['value' => 'Diproses', 'label' => 'Diproses' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                    ['value' => 'Sedang Disiapkan', 'label' => 'Sedang Disiapkan' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                    ['value' => 'Siap Saji', 'label' => 'Siap Saji' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                    ['value' => 'Selesai', 'label' => 'Selesai' . (!$isLunas ? ' (Belum Bayar)' : ''), 'disabled' => !$isLunas],
+                                    ['value' => 'Dibatalkan', 'label' => 'Dibatalkan', 'disabled' => false],
+                                ];
+                                foreach ($options as $opt):
+                                ?>
+                                    <div class="custom-dropdown-item <?= $opt['disabled'] ? 'disabled' : '' ?> <?= $selected['status_pesanan'] === $opt['value'] ? 'selected' : '' ?>" 
+                                         data-value="<?= htmlspecialchars($opt['value'], ENT_QUOTES, 'UTF-8') ?>"
+                                         onclick="selectDropdownOptionStatus('<?= htmlspecialchars($opt['value'], ENT_QUOTES, 'UTF-8') ?>', '<?= htmlspecialchars($opt['label'], ENT_QUOTES, 'UTF-8') ?>', <?= $opt['disabled'] ? 'true' : 'false' ?>)">
+                                        <?= htmlspecialchars($opt['label'], ENT_QUOTES, 'UTF-8') ?>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
                     </div>
                     <div>
                         <label class="form-label small text-muted mb-1" for="note">Catatan Shift</label>
@@ -127,6 +264,48 @@ ob_start();
         </article>
     </aside>
 </section>
+<script>
+function toggleDropdownMenuSingle(event) {
+    event.stopPropagation();
+    const dropdown = document.getElementById('dropdown-container');
+    if (dropdown) {
+        dropdown.classList.toggle('open');
+    }
+}
+
+function selectDropdownOptionStatus(value, label, disabled) {
+    if (disabled) return;
+    const input = document.getElementById('status-input');
+    const triggerLabel = document.getElementById('trigger-label');
+    if (input && triggerLabel) {
+        input.value = value;
+        triggerLabel.textContent = value;
+        
+        // Update selected class in items
+        document.querySelectorAll('.custom-dropdown-item').forEach(el => {
+            el.classList.remove('selected');
+            if (el.getAttribute('data-value') === value) {
+                el.classList.add('selected');
+            }
+        });
+    }
+    // Close dropdown
+    const dropdown = document.getElementById('dropdown-container');
+    if (dropdown) {
+        dropdown.classList.remove('open');
+    }
+}
+
+// Close dropdown when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.custom-dropdown')) {
+        const dropdown = document.getElementById('dropdown-container');
+        if (dropdown) {
+            dropdown.classList.remove('open');
+        }
+    }
+});
+</script>
 <?php
 $content = ob_get_clean();
 render_internal_shell([

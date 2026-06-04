@@ -16,11 +16,12 @@ $pdo = db();
 // Fetch customer's past orders (Selesai or Dibatalkan) along with rating and ulasan
 $stmt = $pdo->prepare('
     SELECT p.*, GROUP_CONCAT(CONCAT(m.nama_menu, " x", dp.jumlah) SEPARATOR ", ") AS items_summary,
-           ul.rating, ul.komentar
+           MAX(ul.rating) AS rating, MAX(ul.komentar) AS komentar, MAX(py.total_bayar) AS total_bayar
     FROM pesanan p
     LEFT JOIN detail_pesanan dp ON p.id_pesanan = dp.id_pesanan
     LEFT JOIN menu m ON dp.id_menu = m.id_menu
     LEFT JOIN ulasan ul ON p.id_pesanan = ul.id_pesanan
+    LEFT JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
     WHERE p.id_pelanggan = ? AND p.status_pesanan IN ("Selesai", "Dibatalkan")
     GROUP BY p.id_pesanan
     ORDER BY p.tanggal_pesanan DESC
@@ -33,7 +34,7 @@ $totalSpent = 0.0;
 $totalHistoryCount = 0;
 foreach ($historyOrders as $order) {
     if ($order['status_pesanan'] === 'Selesai') {
-        $totalSpent += (float)$order['total_harga'];
+        $totalSpent += (float)($order['total_bayar'] ?? $order['total_harga']);
         $totalHistoryCount++;
     }
 }
@@ -151,7 +152,7 @@ ob_start();
             <div class="row g-3">
                 <article class="p-3 border border-soft bg-black d-flex flex-column h-100 w-100 mb-2">
                     <p class="text-secondary small mb-2">Total Kunjungan</p>
-                    <p class="h2 text-gold font-display mb-0" style="font-size: 32px;"><?= str_pad((string)$totalHistoryCount, 2, '0', STR_PAD_LEFT); ?></p>
+                    <p class="h2 text-gold font-display mb-0" style="font-size: 32px;"><?= $totalHistoryCount; ?></p>
                 </article>
                 <article class="p-3 border border-soft bg-black d-flex flex-column h-100 w-100 mb-2">
                     <p class="text-secondary small mb-2">Total Akumulasi</p>

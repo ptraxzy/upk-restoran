@@ -518,7 +518,7 @@ if (str_contains($menuLower, 'scallop')) {
                     <line x1="12" y1="16" x2="12" y2="12"></line>
                     <line x1="12" y1="8" x2="12.01" y2="8"></line>
                 </svg>
-                KOMPOSISI & ALERGI
+                ALERGI
             </h3>
             <div class="allergens-grid">
                 <?php foreach ($komposisi as $k): ?>

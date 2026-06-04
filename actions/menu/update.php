@@ -29,7 +29,9 @@ if (isset($_FILES['gambar_file']) && $_FILES['gambar_file']['error'] !== UPLOAD_
         
         // Allowed extensions
         $allowedExtensions = ['jpg', 'jpeg', 'png', 'webp', 'gif'];
-        if (in_array($fileExtension, $allowedExtensions)) {
+        $fileMimeType = mime_content_type($fileTmpPath);
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        if (in_array($fileExtension, $allowedExtensions) && in_array($fileMimeType, $allowedMimeTypes)) {
             $newFileName = md5(time() . $fileName) . '.' . $fileExtension;
             $uploadFileDir = __DIR__ . '/../../assets/img/menu/';
             
