@@ -38,7 +38,10 @@ ob_start();
                 <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
                     <h4 class="font-display text-white m-0" style="font-size: 18px; line-height: 1.2;"><?= htmlspecialchars($item['nama_menu'], ENT_QUOTES, 'UTF-8'); ?></h4>
                 </div>
-                <p class="text-gold small fw-medium mb-2">Rp <?= number_format((float)$item['harga'], 0, ',', '.'); ?></p>
+                <div class="d-flex align-items-center justify-content-between mb-2">
+                    <p class="text-gold small fw-medium m-0">Rp <?= number_format((float)$item['harga'], 0, ',', '.'); ?></p>
+                    <span class="badge border border-secondary text-secondary rounded-0" style="font-size: 9px; padding: 2px 6px; font-weight: 500; font-family: var(--font-body);"><?= htmlspecialchars($item['nama_kategori'] ?? 'Umum', ENT_QUOTES, 'UTF-8'); ?></span>
+                </div>
 
                 <p class="text-secondary small mb-3 flex-grow-1" style="line-height: 1.5; font-size: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><?= htmlspecialchars($item['deskripsi'] ?? '', ENT_QUOTES, 'UTF-8'); ?></p>
 
