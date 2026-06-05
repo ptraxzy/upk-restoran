@@ -31,7 +31,7 @@ $stmtRecent = $pdo->query("
     SELECT p.id_pesanan, p.no_meja, p.status_pesanan, p.total_harga, p.tanggal_pesanan, pl.username
     FROM pesanan p
     LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
-    ORDER BY p.tanggal_pesanan DESC
+    ORDER BY p.id_pesanan DESC
     LIMIT 5
 ");
 $recentOrders = $stmtRecent->fetchAll();

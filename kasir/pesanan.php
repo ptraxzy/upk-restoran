@@ -20,7 +20,7 @@ $stmt = $pdo->query("
     LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
     LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
     WHERE p.status_pesanan IN ('Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Menunggu Pembayaran', 'Selesai')
-    ORDER BY p.tanggal_pesanan DESC
+    ORDER BY p.id_pesanan DESC
 ");
 $pesananList = $stmt->fetchAll();
 

@@ -20,7 +20,7 @@ $stmtPending = $pdo->query("
     LEFT JOIN pelanggan u ON p.id_pelanggan = u.id_pelanggan
     LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
     WHERE p.status_pesanan = 'Menunggu Pembayaran'
-    ORDER BY p.tanggal_pesanan DESC
+    ORDER BY p.id_pesanan DESC
 ");
 $pendingOrders = $stmtPending->fetchAll();
 

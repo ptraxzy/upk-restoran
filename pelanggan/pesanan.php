@@ -22,7 +22,7 @@ $stmt = $pdo->prepare('
     LEFT JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
     WHERE p.id_pelanggan = ?
     GROUP BY p.id_pesanan
-    ORDER BY p.tanggal_pesanan DESC
+    ORDER BY p.id_pesanan DESC
 ');
 $stmt->execute([$userId]);
 $orders = $stmt->fetchAll();

@@ -24,7 +24,7 @@ $stmt = $pdo->prepare('
     LEFT JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
     WHERE p.id_pelanggan = ? AND p.status_pesanan IN ("Selesai", "Dibatalkan")
     GROUP BY p.id_pesanan
-    ORDER BY p.tanggal_pesanan DESC
+    ORDER BY p.id_pesanan DESC
 ');
 $stmt->execute([$userId]);
 $historyOrders = $stmt->fetchAll();

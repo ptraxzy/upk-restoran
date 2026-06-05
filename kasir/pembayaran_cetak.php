@@ -211,7 +211,7 @@ ob_start();
                     SELECT p.id_pesanan, p.no_meja, p.total_harga, py.metode
                     FROM pesanan p
                     LEFT JOIN pembayaran py ON p.id_pesanan = py.id_pesanan
-                    ORDER BY p.tanggal_pesanan DESC
+                    ORDER BY p.id_pesanan DESC
                     LIMIT 5
                 ");
                 $otherOrders = $stmtOther->fetchAll();

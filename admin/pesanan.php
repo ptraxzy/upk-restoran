@@ -20,7 +20,7 @@ $stmt = $pdo->query('
     LEFT JOIN pembayaran pb ON p.id_pesanan = pb.id_pesanan
     LEFT JOIN karyawan k ON p.id_karyawan = k.id_karyawan
     LEFT JOIN karyawan kp ON pb.id_karyawan = kp.id_karyawan
-    ORDER BY p.tanggal_pesanan DESC
+    ORDER BY p.id_pesanan DESC
 ');
 $orders = $stmt->fetchAll();
 

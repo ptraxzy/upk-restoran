@@ -94,7 +94,7 @@ $stmtRecent = $pdo->query("
     LEFT JOIN pelanggan pl ON p.id_pelanggan = pl.id_pelanggan
     LEFT JOIN karyawan kc ON py.id_karyawan = kc.id_karyawan
     LEFT JOIN karyawan k_pesanan ON p.id_karyawan = k_pesanan.id_karyawan
-    ORDER BY p.tanggal_pesanan DESC
+    ORDER BY p.id_pesanan DESC
     LIMIT 5
 ");
 $recentTransactions = $stmtRecent->fetchAll();
