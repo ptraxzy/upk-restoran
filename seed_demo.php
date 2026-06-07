@@ -64,7 +64,10 @@ try {
         2 => ['nama' => 'Pan-Seared Duck', 'harga' => 85000],
         3 => ['nama' => 'Black Truffle Risotto', 'harga' => 75000],
         4 => ['nama' => 'Hokkaido Scallop', 'harga' => 95000],
-        5 => ['nama' => 'Dark Matter', 'harga' => 45000]
+        5 => ['nama' => 'Dark Matter', 'harga' => 45000],
+        6 => ['nama' => 'Ethereal Rose Nectar', 'harga' => 35000],
+        7 => ['nama' => 'Gold Dust Elixir', 'harga' => 50000],
+        8 => ['nama' => 'Royal Earl Grey Tea', 'harga' => 25000]
     ];
 
     // Data komentar ulasan premium

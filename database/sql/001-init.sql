@@ -157,7 +157,10 @@ INSERT IGNORE INTO `menu` (`id_menu`, `id_kategori`, `nama_menu`, `deskripsi`, `
 (2, 1, 'Pan-Seared Duck', 'Dry-aged duck breast, cherry reduction, parsnip puree.', 85000, 'https://images.unsplash.com/photo-1625943555419-56a2cb596640?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 22),
 (3, 1, 'Black Truffle Risotto', 'Acquerello rice, wild mushrooms, shaved black truffle.', 75000, 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 12),
 (4, 2, 'Hokkaido Scallop', 'Yuzu plum hijau fermentasi, lobak es, busa kedelai putih, jeruk mirin.', 95000, 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80', 'Tersedia', 10),
-(5, 3, 'Dark Matter', 'Kakao eksklusif single-origin, praline wijen hitam, balsamic dust.', 45000, 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 15);
+(5, 3, 'Dark Matter', 'Kakao eksklusif single-origin, praline wijen hitam, balsamic dust.', 45000, 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 15),
+(6, 4, 'Ethereal Rose Nectar', 'Air murni mawar aromatik, sirup kelopak mawar organik, perasan lemon segar.', 35000, 'https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?auto=format&fit=crop&w=800&q=80', 'Tersedia', 25),
+(7, 4, 'Gold Dust Elixir', 'Mocktail sari nanas emas fermentasi dengan taburan serpihan emas 24 karat.', 50000, 'https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&w=800&q=80', 'Tersedia', 15),
+(8, 4, 'Royal Earl Grey Tea', 'Seduhan daun teh Earl Grey premium Inggris dengan aroma jeruk bergamot alami.', 25000, 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80', 'Tersedia', 30);
 
 -- Seed data admin
 INSERT INTO `admin` (`nama_admin`, `username`, `password`)
