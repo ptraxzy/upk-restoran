@@ -60,31 +60,9 @@ $totalRows = count($filteredMenuItems);
 $totalPages = ceil($totalRows / $limit);
 $paginatedMenuItems = array_slice($filteredMenuItems, ($page - 1) * $limit, $limit);
 
+// Render catalog HTML first using output buffering
 ob_start();
 ?>
-<div class="d-flex flex-column flex-md-row justify-content-between mb-4 gap-3">
-    <form method="GET" class="d-flex gap-2">
-        <?php if ($selectedCategory > 0): ?>
-            <input type="hidden" name="category" value="<?= $selectedCategory; ?>">
-        <?php endif; ?>
-        <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari nama menu..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" style="min-width: 250px;">
-        <button type="submit" class="btn btn-warning rounded-0 px-4">Cari</button>
-    </form>
-    <div class="d-flex gap-2 flex-wrap">
-        <a href="<?= htmlspecialchars(base_url('admin/menu_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-warning rounded-0 text-dark fw-medium px-4">Tambah Menu</a>
-        <a href="<?= htmlspecialchars(base_url('admin/menu_kategori.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Kelola Kategori</a>
-        <a href="<?= htmlspecialchars(base_url('admin/menu_riwayat_hapus.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Riwayat Hapus Menu</a>
-    </div>
-</div>
-
-<!-- Category Tabs (Filter Kategori Menu seperti sisi pembeli) -->
-<div class="category-tabs d-flex gap-3 mb-4 overflow-auto pb-2" style="border-bottom: 1px solid var(--border-soft); scrollbar-width: none;">
-    <a href="?category=0<?= $search ? '&search=' . urlencode($search) : ''; ?>" class="tab-btn <?= $selectedCategory === 0 ? 'active' : ''; ?>">SEMUA</a>
-    <?php foreach ($categories as $cat): ?>
-        <a href="?category=<?= $cat['id_kategori']; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" class="tab-btn <?= $selectedCategory === (int)$cat['id_kategori'] ? 'active' : ''; ?>"><?= htmlspecialchars(strtoupper((string)$cat['nama_kategori']), ENT_QUOTES, 'UTF-8'); ?></a>
-    <?php endforeach; ?>
-</div>
-
 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-4">
     <?php foreach ($paginatedMenuItems as $item): ?>
         <div class="col">
@@ -152,6 +130,123 @@ ob_start();
     </nav>
 <?php endif; ?>
 <?php
+$catalogHtml = ob_get_clean();
+
+// Handle AJAX menu request
+if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
+    header('Content-Type: application/json');
+    echo json_encode(['success' => true, 'html' => $catalogHtml]);
+    exit;
+}
+
+ob_start();
+?>
+<div class="d-flex flex-column flex-md-row justify-content-between mb-4 gap-3">
+    <form method="GET" class="d-flex gap-2">
+        <?php if ($selectedCategory > 0): ?>
+            <input type="hidden" name="category" value="<?= $selectedCategory; ?>">
+        <?php endif; ?>
+        <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari nama menu..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" style="min-width: 250px;">
+        <button type="submit" class="btn btn-warning rounded-0 px-4">Cari</button>
+    </form>
+    <div class="d-flex gap-2 flex-wrap">
+        <a href="<?= htmlspecialchars(base_url('admin/menu_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-warning rounded-0 text-dark fw-medium px-4">Tambah Menu</a>
+        <a href="<?= htmlspecialchars(base_url('admin/menu_kategori.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Kelola Kategori</a>
+        <a href="<?= htmlspecialchars(base_url('admin/menu_riwayat_hapus.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Riwayat Hapus Menu</a>
+    </div>
+</div>
+
+<!-- Category Tabs (Filter Kategori Menu seperti sisi pembeli) -->
+<div class="category-tabs d-flex gap-3 mb-4 overflow-auto pb-2" style="border-bottom: 1px solid var(--border-soft); scrollbar-width: none;">
+    <a href="?category=0<?= $search ? '&search=' . urlencode($search) : ''; ?>" class="tab-btn <?= $selectedCategory === 0 ? 'active' : ''; ?>">SEMUA</a>
+    <?php foreach ($categories as $cat): ?>
+        <a href="?category=<?= $cat['id_kategori']; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" class="tab-btn <?= $selectedCategory === (int)$cat['id_kategori'] ? 'active' : ''; ?>"><?= htmlspecialchars(strtoupper((string)$cat['nama_kategori']), ENT_QUOTES, 'UTF-8'); ?></a>
+    <?php endforeach; ?>
+</div>
+
+<div id="menu-catalog-container" style="transition: opacity 0.25s ease;">
+    <?= $catalogHtml; ?>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const catalogContainer = document.getElementById('menu-catalog-container');
+    const tabContainer = document.querySelector('.category-tabs');
+
+    // Helper to load catalog data via AJAX
+    async function loadCatalog(urlStr) {
+        catalogContainer.style.opacity = '0.4';
+        catalogContainer.style.pointerEvents = 'none';
+
+        try {
+            const url = new URL(urlStr);
+            url.searchParams.set('ajax', '1');
+
+            const response = await fetch(url.toString(), {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!response.ok) throw new Error('Response error');
+            const data = await response.json();
+
+            if (data.success) {
+                catalogContainer.innerHTML = data.html;
+
+                // Update browser history URL
+                const cleanUrl = new URL(urlStr);
+                window.history.pushState({}, '', cleanUrl.toString());
+
+                // Update active tab styling
+                const urlParams = new URLSearchParams(cleanUrl.search);
+                const currentCategory = urlParams.get('category') || '0';
+
+                const tabBtns = document.querySelectorAll('.tab-btn');
+                tabBtns.forEach(btn => {
+                    const btnUrl = new URL(btn.href, window.location.origin);
+                    const btnCategory = btnUrl.searchParams.get('category') || '0';
+
+                    if (btnCategory === currentCategory) {
+                        btn.classList.add('active');
+                    } else {
+                        btn.classList.remove('active');
+                    }
+                });
+            }
+        } catch (error) {
+            console.error('AJAX Load error:', error);
+        } finally {
+            catalogContainer.style.opacity = '1';
+            catalogContainer.style.pointerEvents = 'auto';
+        }
+    }
+
+    // Intercept category tab clicks
+    if (tabContainer) {
+        tabContainer.addEventListener('click', (e) => {
+            const btn = e.target.closest('.tab-btn');
+            if (btn) {
+                e.preventDefault();
+                loadCatalog(btn.href);
+            }
+        });
+    }
+
+    // Intercept pagination clicks dynamically
+    if (catalogContainer) {
+        catalogContainer.addEventListener('click', (e) => {
+            const link = e.target.closest('.page-link');
+            if (link && !link.parentNode.classList.contains('disabled')) {
+                e.preventDefault();
+                loadCatalog(link.href);
+            }
+        });
+    }
+});
+</script>
+
+<?php
 $content = ob_get_clean();
 render_internal_shell([
     'brand' => 'Lumière',
@@ -161,3 +256,4 @@ render_internal_shell([
     'nav_sections' => admin_nav_sections(),
 ], $content);
 require __DIR__ . '/../includes/footer.php';
+
