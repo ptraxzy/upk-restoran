@@ -5,11 +5,8 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/auth.php';
 require_role('admin');
 
-$title = 'Indeks Kuliner';
-$assetBase = '../../assets';
-require __DIR__ . '/../includes/header.php';
-
 require_once __DIR__ . '/../includes/database.php';
+
 
 $selectedCategory = isset($_GET['category']) ? (int)$_GET['category'] : 0;
 
@@ -139,7 +136,13 @@ if (isset($_GET['ajax']) && $_GET['ajax'] === '1') {
     exit;
 }
 
+// Normal page load - load headers
+$title = 'Indeks Kuliner';
+$assetBase = '../../assets';
+require __DIR__ . '/../includes/header.php';
+
 ob_start();
+
 ?>
 <div class="d-flex flex-column flex-md-row justify-content-between mb-4 gap-3">
     <form method="GET" class="d-flex gap-2">
