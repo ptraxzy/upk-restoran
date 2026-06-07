@@ -49,8 +49,9 @@ ob_start();
         <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari nama menu..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" style="min-width: 250px;">
         <button type="submit" class="btn btn-warning rounded-0 px-4">Cari</button>
     </form>
-    <div class="d-flex gap-2">
+    <div class="d-flex gap-2 flex-wrap">
         <a href="<?= htmlspecialchars(base_url('admin/menu_tambah.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-warning rounded-0 text-dark fw-medium px-4">Tambah Menu</a>
+        <a href="<?= htmlspecialchars(base_url('admin/menu_kategori.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Kelola Kategori</a>
         <a href="<?= htmlspecialchars(base_url('admin/menu_riwayat_hapus.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Riwayat Hapus Menu</a>
     </div>
 </div>

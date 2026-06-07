@@ -54,6 +54,7 @@ function admin_nav_sections(): array
         ],
         'Pengelolaan' => [
             ['label' => 'Data Menu', 'href' => base_url('admin/menu.php')],
+            ['label' => 'Kategori Menu', 'href' => base_url('admin/menu_kategori.php')],
             ['label' => 'Pesanan Restoran', 'href' => base_url('admin/pesanan.php')],
             ['label' => 'Promo & Diskon', 'href' => base_url('admin/diskon.php')],
             ['label' => 'Data Tim', 'href' => base_url('admin/karyawan.php')],
