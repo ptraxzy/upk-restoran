@@ -8,7 +8,7 @@ require_once __DIR__ . '/includes/database.php';
 try {
     $pdo = db();
 
-    // Hapus data transaksi lama jika ada untuk mencegah tabrakan/duplikasi
+    // Hapus data lama jika ada untuk mencegah tabrakan/duplikasi
     $pdo->exec('SET FOREIGN_KEY_CHECKS = 0');
     $pdo->exec('TRUNCATE TABLE ulasan');
     $pdo->exec('TRUNCATE TABLE pembayaran');
@@ -16,7 +16,27 @@ try {
     $pdo->exec('TRUNCATE TABLE pesanan');
     $pdo->exec('TRUNCATE TABLE karyawan');
     $pdo->exec('TRUNCATE TABLE voucher');
+    $pdo->exec('TRUNCATE TABLE menu');
+    $pdo->exec('TRUNCATE TABLE kategori');
     $pdo->exec('SET FOREIGN_KEY_CHECKS = 1');
+
+    // Masukkan data Kategori default
+    $pdo->exec("INSERT INTO kategori (id_kategori, nama_kategori) VALUES 
+        (1, 'Hidangan Utama'), 
+        (2, 'Hidangan Pembuka'), 
+        (3, 'Pencuci Mulut'), 
+        (4, 'Minuman')");
+
+    // Masukkan data Menu default (termasuk 3 minuman premium baru)
+    $pdo->exec("INSERT INTO menu (id_menu, id_kategori, nama_menu, deskripsi, harga, gambar, status, porsi) VALUES
+        (1, 1, 'Wagyu Ribeye A5', 'A5 Japanese Wagyu, black garlic butter, smoked sea salt.', 125000, 'https://images.unsplash.com/photo-1558030006-450675393462?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 18),
+        (2, 1, 'Pan-Seared Duck', 'Dry-aged duck breast, cherry reduction, parsnip puree.', 85000, 'https://images.unsplash.com/photo-1625943555419-56a2cb596640?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 22),
+        (3, 1, 'Black Truffle Risotto', 'Acquerello rice, wild mushrooms, shaved black truffle.', 75000, 'https://images.unsplash.com/photo-1473093295043-cdd812d0e601?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 12),
+        (4, 2, 'Hokkaido Scallop', 'Yuzu plum hijau fermentasi, lobak es, busa kedelai putih, jeruk mirin.', 95000, 'https://images.unsplash.com/photo-1511690656952-34342bb7c2f2?auto=format&fit=crop&w=800&q=80', 'Tersedia', 10),
+        (5, 3, 'Dark Matter', 'Kakao eksklusif single-origin, praline wijen hitam, balsamic dust.', 45000, 'https://images.unsplash.com/photo-1563729784474-d77dbb933a9e?auto=format&fit=crop&w=1200&q=80', 'Tersedia', 15),
+        (6, 4, 'Ethereal Rose Nectar', 'Air murni mawar aromatik, sirup kelopak mawar organik, perasan lemon segar.', 35000, 'https://images.unsplash.com/photo-1595981267035-7b04ca84a82d?auto=format&fit=crop&w=800&q=80', 'Tersedia', 25),
+        (7, 4, 'Gold Dust Elixir', 'Mocktail sari nanas emas fermentasi dengan taburan serpihan emas 24 karat.', 50000, 'https://images.unsplash.com/photo-1536935338788-846bb9981813?auto=format&fit=crop&w=800&q=80', 'Tersedia', 15),
+        (8, 4, 'Royal Earl Grey Tea', 'Seduhan daun teh Earl Grey premium Inggris dengan aroma jeruk bergamot alami.', 25000, 'https://images.unsplash.com/photo-1576092768241-dec231879fc3?auto=format&fit=crop&w=800&q=80', 'Tersedia', 30)");
 
     // Ambil ID Pelanggan default
     $stmtUser = $pdo->query("SELECT id_pelanggan FROM pelanggan WHERE username = 'testmember' LIMIT 1");
@@ -58,7 +78,7 @@ try {
         $stmtV->execute([$v[0], $v[1], $v[2], $v[3], $v[4], $v[5], $v[6], $v[7], $v[8]]);
     }
 
-    // List menu bawaan beserta harganya
+    // List menu bawaan beserta harganya untuk di-seed ke transaksi
     $menus = [
         1 => ['nama' => 'Wagyu Ribeye A5', 'harga' => 125000],
         2 => ['nama' => 'Pan-Seared Duck', 'harga' => 85000],
@@ -198,7 +218,7 @@ try {
 
     echo json_encode([
         'status' => 'success',
-        'message' => 'Simulasi data presentasi berhasil dibuat (Transaksi 14 hari, 4 Kasir/Karyawan baru, dan 4 Voucher aktif)!',
+        'message' => 'Simulasi data presentasi berhasil dibuat (Kategori, Menu, Transaksi 14 hari, 4 Kasir/Karyawan baru, dan 4 Voucher aktif)!',
         'detail' => 'Silakan jalankan kembali URL seed_demo.php Anda di browser untuk memperbarui database.'
     ], JSON_PRETTY_PRINT);
 
