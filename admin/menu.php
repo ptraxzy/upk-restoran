@@ -11,14 +11,32 @@ require __DIR__ . '/../includes/header.php';
 
 require_once __DIR__ . '/../includes/database.php';
 
-$stmt = db()->query("
-    SELECT m.*, k.nama_kategori, a.username AS pembuat, 'admin' AS pembuat_role
-    FROM menu m
-    LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
-    LEFT JOIN admin a ON m.id_admin = a.id_admin
-    WHERE m.deleted_at IS NULL
-    ORDER BY m.id_menu DESC
-");
+$selectedCategory = isset($_GET['category']) ? (int)$_GET['category'] : 0;
+
+// Ambil semua kategori untuk filter tabs
+$stmtKat = db()->query("SELECT * FROM kategori ORDER BY id_kategori ASC");
+$categories = $stmtKat->fetchAll();
+
+if ($selectedCategory > 0) {
+    $stmt = db()->prepare("
+        SELECT m.*, k.nama_kategori, a.username AS pembuat, 'admin' AS pembuat_role
+        FROM menu m
+        LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
+        LEFT JOIN admin a ON m.id_admin = a.id_admin
+        WHERE m.deleted_at IS NULL AND m.id_kategori = ?
+        ORDER BY m.id_menu DESC
+    ");
+    $stmt->execute([$selectedCategory]);
+} else {
+    $stmt = db()->query("
+        SELECT m.*, k.nama_kategori, a.username AS pembuat, 'admin' AS pembuat_role
+        FROM menu m
+        LEFT JOIN kategori k ON m.id_kategori = k.id_kategori
+        LEFT JOIN admin a ON m.id_admin = a.id_admin
+        WHERE m.deleted_at IS NULL
+        ORDER BY m.id_menu DESC
+    ");
+}
 $menuItems = $stmt->fetchAll();
 
 $search = trim($_GET['search'] ?? '');
@@ -46,6 +64,9 @@ ob_start();
 ?>
 <div class="d-flex flex-column flex-md-row justify-content-between mb-4 gap-3">
     <form method="GET" class="d-flex gap-2">
+        <?php if ($selectedCategory > 0): ?>
+            <input type="hidden" name="category" value="<?= $selectedCategory; ?>">
+        <?php endif; ?>
         <input type="text" name="search" class="form-control bg-black text-white border-secondary rounded-0" placeholder="Cari nama menu..." value="<?= htmlspecialchars($search, ENT_QUOTES, 'UTF-8'); ?>" style="min-width: 250px;">
         <button type="submit" class="btn btn-warning rounded-0 px-4">Cari</button>
     </form>
@@ -54,6 +75,14 @@ ob_start();
         <a href="<?= htmlspecialchars(base_url('admin/menu_kategori.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Kelola Kategori</a>
         <a href="<?= htmlspecialchars(base_url('admin/menu_riwayat_hapus.php'), ENT_QUOTES, 'UTF-8'); ?>" class="btn btn-outline-warning rounded-0 text-white fw-medium px-4">Riwayat Hapus Menu</a>
     </div>
+</div>
+
+<!-- Category Tabs (Filter Kategori Menu seperti sisi pembeli) -->
+<div class="category-tabs d-flex gap-3 mb-4 overflow-auto pb-2" style="border-bottom: 1px solid var(--border-soft); scrollbar-width: none;">
+    <a href="?category=0<?= $search ? '&search=' . urlencode($search) : ''; ?>" class="tab-btn <?= $selectedCategory === 0 ? 'active' : ''; ?>">SEMUA</a>
+    <?php foreach ($categories as $cat): ?>
+        <a href="?category=<?= $cat['id_kategori']; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" class="tab-btn <?= $selectedCategory === (int)$cat['id_kategori'] ? 'active' : ''; ?>"><?= htmlspecialchars(strtoupper((string)$cat['nama_kategori']), ENT_QUOTES, 'UTF-8'); ?></a>
+    <?php endforeach; ?>
 </div>
 
 <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-4 mb-4">
@@ -105,17 +134,17 @@ ob_start();
     <nav aria-label="Page navigation" class="mt-2 mb-4">
         <ul class="pagination pagination-sm justify-content-center border-0 gap-2 m-0">
             <li class="page-item <?= $page <= 1 ? 'disabled opacity-50 pe-none' : ''; ?>">
-                <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
+                <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= max(1, $page - 1); ?><?= $selectedCategory ? '&category=' . $selectedCategory : ''; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Previous">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" style="transform: scaleX(-1);"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
                 </a>
             </li>
             <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                 <li class="page-item <?= $i === $page ? 'active' : ''; ?>">
-                    <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
+                    <a class="page-link rounded-0 <?= $i === $page ? 'bg-warning text-dark border-warning' : 'bg-black text-white border-secondary'; ?>" href="?page=<?= $i; ?><?= $selectedCategory ? '&category=' . $selectedCategory : ''; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>"><?= $i; ?></a>
                 </li>
             <?php endfor; ?>
             <li class="page-item <?= $page >= $totalPages ? 'disabled opacity-50 pe-none' : ''; ?>">
-                <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
+                <a class="page-link rounded-0 bg-black text-white border-secondary" href="?page=<?= min($totalPages, $page + 1); ?><?= $selectedCategory ? '&category=' . $selectedCategory : ''; ?><?= $search ? '&search=' . urlencode($search) : ''; ?>" aria-label="Next">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24"><path fill="currentColor" d="M5 13.5h3v-3H5zm5 0h3v-3h-3zM17 9l-1 1l2 2l-2 2l1 1l3-3z"></path></svg>
                 </a>
             </li>

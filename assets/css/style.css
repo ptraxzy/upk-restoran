@@ -1063,3 +1063,31 @@ select:-webkit-autofill:focus {
     padding-left: 8px;
 }
 
+/* Category Tab Buttons */
+.category-tabs::-webkit-scrollbar {
+    display: none;
+}
+.tab-btn {
+    display: inline-block;
+    padding: 0 0 10px 0;
+    font-family: var(--font-sans);
+    font-weight: 600;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    color: var(--text-secondary) !important;
+    position: relative;
+    text-decoration: none !important;
+    transition: color 0.3s ease;
+    white-space: nowrap;
+    text-transform: uppercase;
+    border-bottom: 2px solid transparent;
+}
+.tab-btn:hover {
+    color: var(--text-primary) !important;
+}
+.tab-btn.active {
+    color: var(--gold) !important;
+    border-bottom-color: var(--gold) !important;
+}
+
+
