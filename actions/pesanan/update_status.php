@@ -22,6 +22,22 @@ if ($id_pesanan <= 0 || !in_array($status, $valid_statuses, true)) {
 
 $pdo = db();
 
+// Fetch current order status
+$stmtOrder = $pdo->prepare("SELECT status_pesanan FROM pesanan WHERE id_pesanan = ?");
+$stmtOrder->execute([$id_pesanan]);
+$currentStatus = $stmtOrder->fetchColumn();
+
+if (!$currentStatus) {
+    set_flash('error', 'Pesanan tidak ditemukan.');
+    redirect(base_url('kasir/pesanan.php'));
+}
+
+// Lock status if already Completed (Selesai) or Cancelled (Dibatalkan)
+if (in_array($currentStatus, ['Selesai', 'Dibatalkan'], true)) {
+    set_flash('error', "Gagal: Pesanan yang sudah selesai atau dibatalkan tidak dapat diubah statusnya.");
+    redirect(base_url('kasir/pesanan.php'));
+}
+
 // Ambil status pembayaran pesanan saat ini
 $stmtCheckPay = $pdo->prepare("SELECT status FROM pembayaran WHERE id_pesanan = ?");
 $stmtCheckPay->execute([$id_pesanan]);
@@ -54,6 +70,15 @@ try {
         $stmtBayar = $pdo->prepare("
             UPDATE pembayaran 
             SET status = 'Batal' 
+            WHERE id_pesanan = ?
+        ");
+        $stmtBayar->execute([$id_pesanan]);
+    } elseif ($status === 'Menunggu Pembayaran') {
+        // Rollback pembayaran back to Menunggu
+        $stmtBayar = $pdo->prepare("
+            UPDATE pembayaran 
+            SET status = 'Menunggu',
+                tanggal_pembayaran = NULL
             WHERE id_pesanan = ?
         ");
         $stmtBayar->execute([$id_pesanan]);

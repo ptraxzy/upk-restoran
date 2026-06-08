@@ -20,6 +20,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $valid_statuses = ['Menunggu Pembayaran', 'Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai', 'Dibatalkan'];
 
     if ($id_pesanan > 0 && in_array($status, $valid_statuses, true)) {
+        // Fetch current order status
+        $stmtOrder = $pdo->prepare("SELECT status_pesanan FROM pesanan WHERE id_pesanan = ?");
+        $stmtOrder->execute([$id_pesanan]);
+        $currentStatus = $stmtOrder->fetchColumn();
+
+        if (!$currentStatus) {
+            set_flash('error', 'Pesanan tidak ditemukan.');
+            redirect(base_url('kasir/pesanan_status.php'));
+        }
+
+        // Lock status if already Completed (Selesai) or Cancelled (Dibatalkan)
+        if (in_array($currentStatus, ['Selesai', 'Dibatalkan'], true)) {
+            set_flash('error', "Gagal: Pesanan yang sudah selesai atau dibatalkan tidak dapat diubah statusnya.");
+            redirect(base_url('kasir/pesanan_status.php?id=' . $id_pesanan));
+        }
+
         // Ambil status pembayaran pesanan saat ini
         $stmtCheckPay = $pdo->prepare("SELECT status FROM pembayaran WHERE id_pesanan = ?");
         $stmtCheckPay->execute([$id_pesanan]);
@@ -52,6 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $stmtBayar = $pdo->prepare("
                     UPDATE pembayaran 
                     SET status = 'Batal' 
+                    WHERE id_pesanan = ?
+                ");
+                $stmtBayar->execute([$id_pesanan]);
+            } elseif ($status === 'Menunggu Pembayaran') {
+                // Rollback pembayaran back to Menunggu
+                $stmtBayar = $pdo->prepare("
+                    UPDATE pembayaran 
+                    SET status = 'Menunggu',
+                        tanggal_pembayaran = NULL
                     WHERE id_pesanan = ?
                 ");
                 $stmtBayar->execute([$id_pesanan]);
@@ -186,6 +211,7 @@ ob_start();
             <p class="text-secondary small mb-4">Panel status untuk memindahkan order dari diproses ke selesai atau dibatalkan.</p>
 
             <?php if ($selected): ?>
+            <?php $isLocked = in_array($selected['status_pesanan'], ['Selesai', 'Dibatalkan'], true); ?>
             <div class="p-4 border border-secondary mb-4" style="background: rgba(197,160,89,0.05);">
                 <p class="text-muted small mb-2">Order Terpilih</p>
                 <h4 class="font-display text-white mb-1" style="font-size: 22px;">#LP-<?= $selected['id_pesanan']; ?> • Meja <?= htmlspecialchars($selected['no_meja'], ENT_QUOTES, 'UTF-8'); ?></h4>
@@ -194,13 +220,19 @@ ob_start();
                     <span class="text-gold" style="font-size: 12px;"><?= $d['jumlah']; ?>x <?= htmlspecialchars($d['nama_menu'], ENT_QUOTES, 'UTF-8'); ?></span><br>
                 <?php endforeach; ?>
 
+                <?php if ($isLocked): ?>
+                    <div class="alert alert-danger rounded-0 mt-3 small" style="background: rgba(220, 53, 69, 0.1); border: 1px solid rgba(220, 53, 69, 0.2); color: #ff6b6b; font-family: var(--font-body);">
+                        <strong>Pemberitahuan:</strong> Status pesanan ini sudah <strong><?= htmlspecialchars($selected['status_pesanan']); ?></strong> dan telah dikunci. Status pesanan akhir tidak dapat diubah kembali demi keamanan data.
+                    </div>
+                <?php endif; ?>
+
                 <form class="mt-4 d-flex flex-column gap-4" action="<?= htmlspecialchars(base_url('kasir/pesanan_status.php'), ENT_QUOTES, 'UTF-8'); ?>" method="POST">
                     <input type="hidden" name="id_pesanan" value="<?= $selected['id_pesanan']; ?>">
                     <div>
                         <label class="form-label small text-muted mb-1" for="status">Status Pesanan</label>
-                        <div class="custom-dropdown" id="dropdown-container">
+                        <div class="custom-dropdown <?= $isLocked ? 'pe-none opacity-50' : ''; ?>" id="dropdown-container">
                             <input type="hidden" name="status" id="status-input" value="<?= htmlspecialchars($selected['status_pesanan'], ENT_QUOTES, 'UTF-8') ?>">
-                            <button type="button" class="custom-dropdown-trigger" onclick="toggleDropdownMenuSingle(event)">
+                            <button type="button" class="custom-dropdown-trigger" onclick="<?= $isLocked ? 'return false;' : 'toggleDropdownMenuSingle(event)' ?>" <?= $isLocked ? 'disabled' : ''; ?>>
                                 <span id="trigger-label"><?= htmlspecialchars($selected['status_pesanan'], ENT_QUOTES, 'UTF-8') ?></span>
                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" class="chevron"><polyline points="6 9 12 15 18 9"></polyline></svg>
                             </button>
@@ -228,10 +260,10 @@ ob_start();
                     </div>
                     <div>
                         <label class="form-label small text-muted mb-1" for="note">Catatan Shift</label>
-                        <textarea class="form-control bg-dark text-white border-secondary rounded-0" id="note" name="note" placeholder="Catatan singkat untuk kitchen atau kasir berikutnya."></textarea>
+                        <textarea class="form-control bg-dark text-white border-secondary rounded-0" id="note" name="note" placeholder="Catatan singkat untuk kitchen atau kasir berikutnya." <?= $isLocked ? 'disabled' : ''; ?>></textarea>
                     </div>
                     <div class="d-flex gap-2">
-                        <button class="btn btn-warning rounded-0 fw-medium px-4 py-2" type="submit">Simpan Status</button>
+                        <button class="btn btn-warning rounded-0 fw-medium px-4 py-2" type="submit" <?= $isLocked ? 'disabled' : ''; ?>>Simpan Status</button>
                         <a class="btn btn-outline-warning rounded-0 fw-medium px-4 py-2 text-white" href="<?= htmlspecialchars(base_url('kasir/pesanan.php'), ENT_QUOTES, 'UTF-8'); ?>">Kembali</a>
                     </div>
                 </form>

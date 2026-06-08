@@ -182,7 +182,7 @@ try {
                 ]);
             }
 
-            if ($statusPesanan === 'Selesai' || $statusPesanan === 'Siap Saji') {
+            if (in_array($statusPesanan, ['Diproses', 'Sedang Disiapkan', 'Siap Saji', 'Selesai'], true)) {
                 $statusBayar = 'Lunas';
                 $metode = rand(1, 2) === 1 ? 'QRIS' : 'Tunai';
                 

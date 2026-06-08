@@ -19,58 +19,69 @@ class QrisCepat
 
     /**
      * Membuat request deposit (Pay-in)
-     * URL: {base_url}deposit/{amount}/{apikey}
+     * URL: {base_url}topup
+     * Method: POST (JSON body)
      *
      * @param int|float $amount
      * @return array|null Response dari API atau null jika gagal
      */
     public function deposit($amount): ?array
     {
-        // Pastikan amount adalah integer tanpa desimal/koma
         $intAmount = (int) round((float)$amount);
-        $endpoint = sprintf('deposit/%d/%s', $intAmount, $this->apiKey);
-        return $this->request($endpoint);
+        $payload = [
+            'apikey' => $this->apiKey,
+            'nominal' => $intAmount
+        ];
+        return $this->request('topup', 'POST', $payload);
     }
 
     /**
      * Membuat request withdraw (Pay-out)
-     * URL: {base_url}withdraw/{amount}/{bank}/{rekening}/{apikey}
+     * URL: {base_url}transfer
+     * Method: POST
      *
      * @param int|float $amount
-     * @param string $bank Kode Bank
-     * @param string $rekening Nomor Rekening
+     * @param string $bank Kode Bank / Email Penerima
+     * @param string $rekening Nomor Rekening (jika ada)
      * @return array|null Response dari API atau null jika gagal
      */
-    public function withdraw($amount, string $bank, string $rekening): ?array
+    public function withdraw($amount, string $bank, string $rekening = ''): ?array
     {
         $intAmount = (int) round((float)$amount);
-        $endpoint = sprintf('withdraw/%d/%s/%s/%s', $intAmount, $bank, $rekening, $this->apiKey);
-        return $this->request($endpoint);
+        $payload = [
+            'apikey' => $this->apiKey,
+            'email' => $bank,
+            'nominal' => $intAmount
+        ];
+        return $this->request('transfer', 'POST', $payload);
     }
 
     /**
      * Mengecek status transaksi
-     * URL: {base_url}trx/{trx_id}
+     * URL: {base_url}check-status?apikey={apikey}&idTransaksi={trx_id}
+     * Method: GET
      *
      * @param string $trxId ID Transaksi
      * @return array|null Response dari API atau null jika gagal
      */
     public function checkStatus(string $trxId): ?array
     {
-        $endpoint = sprintf('trx/%s', $trxId);
-        return $this->request($endpoint);
+        $endpoint = sprintf('check-status?apikey=%s&idTransaksi=%s', urlencode($this->apiKey), urlencode($trxId));
+        return $this->request($endpoint, 'GET');
     }
 
     /**
      * Melakukan HTTP request ke API
      *
      * @param string $endpoint
+     * @param string $method
+     * @param array|null $payload
      * @return array|null
      */
-    private function request(string $endpoint): ?array
+    private function request(string $endpoint, string $method = 'GET', ?array $payload = null): ?array
     {
         if (empty($this->apiKey)) {
-            error_log('QrisCepat API Error: API Key is not set in configuration.');
+            error_log('FR3 NEWERA API Error: API Key is not set in configuration.');
             return ['status' => 'error', 'message' => 'Konfigurasi API Key belum diatur.'];
         }
 
@@ -82,21 +93,58 @@ class QrisCepat
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_USERAGENT, 'UPK-Restoran-Client/1.0');
-        curl_setopt($ch, CURLOPT_TIMEOUT, 4); // 4-second timeout to prevent presentation freeze
+        $timeout = (strpos($endpoint, 'topup') === 0) ? 12 : 3;
+        curl_setopt($ch, CURLOPT_TIMEOUT, $timeout);
+
+        if ($method === 'POST') {
+            curl_setopt($ch, CURLOPT_POST, true);
+            if ($payload !== null) {
+                $jsonPayload = json_encode($payload);
+                curl_setopt($ch, CURLOPT_POSTFIELDS, $jsonPayload);
+                curl_setopt($ch, CURLOPT_HTTPHEADER, [
+                    'Content-Type: application/json',
+                    'Content-Length: ' . strlen($jsonPayload)
+                ]);
+            }
+        }
         
         $response = curl_exec($ch);
         $error = curl_error($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
 
         if ($error || !$response) {
-            error_log('QrisCepat API Error: ' . ($error ?: 'Empty response') . '. Falling back to robust simulation mode.');
-            return $this->getMockResponse($endpoint);
+            error_log('FR3 NEWERA API Error: ' . ($error ?: 'Empty response') . '. Falling back to simulation mode.');
+            return $this->getMockResponse($endpoint, $payload);
         }
 
         $decoded = json_decode($response, true);
         if (json_last_error() !== JSON_ERROR_NONE || !isset($decoded['status'])) {
-            error_log('QrisCepat API Error: Invalid JSON response. Falling back to robust simulation mode.');
-            return $this->getMockResponse($endpoint);
+            error_log('FR3 NEWERA API Error: Invalid JSON response. Falling back to simulation mode.');
+            return $this->getMockResponse($endpoint, $payload);
+        }
+
+        // Map FR3 NEWERA response key formats to match application expectations
+        if ($decoded['status'] == 200 && isset($decoded['data'])) {
+            $mappedData = [];
+            
+            // Map Create QRIS response
+            if (isset($decoded['data']['qr_string'])) {
+                $mappedData['qris'] = $decoded['data']['qr_string'];
+                $mappedData['trx_id'] = $decoded['data']['trxId'] ?? '';
+                $mappedData['amount'] = $decoded['data']['amount'] ?? 0;
+            }
+            
+            // Map Check Status response
+            if (isset($decoded['data']['status'])) {
+                $mappedData['status'] = $decoded['data']['status']; // "SUCCESS", "PENDING", etc.
+                $mappedData['trx_id'] = $decoded['data']['trxId'] ?? '';
+            }
+
+            return [
+                'status' => 'success',
+                'data' => $mappedData
+            ];
         }
 
         return $decoded;
@@ -105,13 +153,11 @@ class QrisCepat
     /**
      * Menghasilkan mock response aman jika API utama mati demi kelancaran ujian UPK/UKK.
      */
-    private function getMockResponse(string $endpoint): array
+    private function getMockResponse(string $endpoint, ?array $payload = null): array
     {
         // Deteksi tipe request dari endpoint
-        if (strpos($endpoint, 'deposit/') === 0) {
-            $parts = explode('/', $endpoint);
-            $amount = isset($parts[1]) ? (int)$parts[1] : 10000;
-            
+        if (strpos($endpoint, 'topup') === 0) {
+            $amount = $payload['nominal'] ?? 10000;
             return [
                 'status' => 'success',
                 'message' => 'Mock QRIS generated successfully (Resiliency Fallback Active)',
@@ -127,7 +173,7 @@ class QrisCepat
             'status' => 'success',
             'message' => 'Query processed successfully',
             'data' => [
-                'status' => 'Lunas'
+                'status' => 'PENDING'
             ]
         ];
     }

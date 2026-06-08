@@ -87,7 +87,7 @@ ob_start();
                 $active5 = ($status === 'Selesai');
                 ?>
 
-                <div id="unpaid-warning-banner" class="mb-4 p-4 border border-warning animate-fade-in-up <?= ($status === 'Menunggu Pembayaran') ? '' : 'hidden'; ?>" style="background: rgba(201, 168, 76, 0.05); border-color: var(--gold) !important;">
+                <div id="unpaid-warning-banner" class="mb-4 p-4 border border-warning animate-fade-in-up <?= ($status === 'Menunggu Pembayaran') ? '' : 'd-none'; ?>" style="background: rgba(201, 168, 76, 0.05); border-color: var(--gold) !important;">
                     <div class="d-flex align-items-center gap-3">
                         <div class="text-gold" style="font-size: 24px;">
                             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-alert-circle"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
@@ -97,9 +97,11 @@ ob_start();
                             <p class="text-secondary small mb-0">Pesanan Anda telah kami catat. Silakan selesaikan pembayaran untuk mengirimkan pesanan ke dapur dan memulai persiapan hidangan.</p>
                         </div>
                     </div>
-                    <div class="d-flex gap-3 mt-3">
+                    <div class="d-flex gap-3 mt-3 flex-wrap">
                         <?php if (($order['metode_pembayaran'] ?? 'QRIS') === 'QRIS'): ?>
-                            <a href="<?= base_url('pelanggan/keranjang_checkout.php?action=pay&trx=' . ($order['trx_id'] ?? '') . '&id_pesanan=' . $order['id_pesanan']); ?>" class="btn btn-warning py-2 px-4" style="font-size: 11px; font-weight: 600; border-radius: 0;">Selesaikan Pembayaran (QRIS)</a>
+                            <a href="<?= base_url('pelanggan/pembayaran_qr.php?id=' . $order['id_pesanan']); ?>" class="btn btn-warning py-2 px-4" style="font-size: 11px; font-weight: 600; border-radius: 0;">Buka QR Pembayaran</a>
+                            <a href="<?= base_url('pelanggan/keranjang_checkout.php?action=pay&trx=' . ($order['trx_id'] ?? '') . '&id_pesanan=' . $order['id_pesanan']); ?>" class="btn btn-outline-warning py-2 px-4 text-white" style="font-size: 11px; font-weight: 500; border-radius: 0;">Halaman Checkout</a>
+                            <button onclick="triggerBypass(<?= $order['id_pesanan'] ?>)" class="btn btn-outline-danger py-2 px-4" style="font-size: 11px; font-weight: 600; border-radius: 0; border-color: rgba(220, 53, 69, 0.4); color: #dc3545;">Bypass Pembayaran (Debug)</button>
                         <?php else: ?>
                             <button class="btn btn-outline-warning py-2 px-4 text-white" style="font-size: 11px; font-weight: 600; border-radius: 0;" disabled>Silakan Lakukan Pembayaran Tunai di Kasir (Meja <?= htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?>)</button>
                         <?php endif; ?>
@@ -118,15 +120,15 @@ ob_start();
                     <div class="d-flex flex-column gap-4 mt-2">
                         <!-- Step 1 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div id="step-circle-1" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done1 || $active1) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">1</div>
+                            <div id="step-circle-1" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done1 || $active1) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;"><?= $done1 ? '✔' : '1'; ?></div>
                             <div>
-                                <p id="step-title-1" class="fw-semibold text-light mb-1" style="font-size: 14px;">Konfirmasi Pembayaran</p>
+                                <p id="step-title-1" class="fw-semibold <?= ($done1 || $active1) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Konfirmasi Pembayaran</p>
                                 <p id="step-detail-1" class="small text-secondary mb-0"><?= $active1 ? 'Silakan selesaikan pembayaran via ' . htmlspecialchars($order['metode_pembayaran'] ?? 'QRIS') . ' Anda.' : 'Pembayaran terkonfirmasi • Lunas via ' . htmlspecialchars($order['metode_pembayaran'] ?? 'QRIS'); ?></p>
                             </div>
                         </div>
                         <!-- Step 2 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div id="step-circle-2" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done2 || $active2) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">2</div>
+                            <div id="step-circle-2" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done2 || $active2) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;"><?= $done2 ? '✔' : '2'; ?></div>
                             <div>
                                 <p id="step-title-2" class="fw-semibold <?= ($done2 || $active2) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Pesanan Diterima</p>
                                 <p id="step-detail-2" class="small text-secondary mb-0"><?= $active1 ? 'Menunggu pembayaran diselesaikan...' : 'Pesanan telah masuk ke antrean chef • Meja ' . htmlspecialchars((string)$order['no_meja'], ENT_QUOTES, 'UTF-8'); ?></p>
@@ -134,7 +136,7 @@ ob_start();
                         </div>
                         <!-- Step 3 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div id="step-circle-3" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done3 || $active3) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">3</div>
+                            <div id="step-circle-3" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done3 || $active3) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;"><?= $done3 ? '✔' : '3'; ?></div>
                             <div>
                                 <p id="step-title-3" class="fw-semibold <?= ($done3 || $active3) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Persiapan Hidangan</p>
                                 <p id="step-detail-3" class="small text-secondary mb-0"><?= ($done3 || $active3) ? 'Chef sedang mengolah dan meracik bahan masakan Anda.' : 'Menunggu antrean dapur chef...'; ?></p>
@@ -142,7 +144,7 @@ ob_start();
                         </div>
                         <!-- Step 4 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div id="step-circle-4" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done4 || $active4) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">4</div>
+                            <div id="step-circle-4" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done4 || $active4) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;"><?= $done4 ? '✔' : '4'; ?></div>
                             <div>
                                 <p id="step-title-4" class="fw-semibold <?= ($done4 || $active4) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Siap Disajikan</p>
                                 <p id="step-detail-4" class="small text-secondary mb-0"><?= ($done4 || $active4) ? 'Hidangan matang sempurna dan siap disajikan oleh pelayan kami.' : 'Menunggu masakan matang...'; ?></p>
@@ -150,7 +152,7 @@ ob_start();
                         </div>
                         <!-- Step 5 -->
                         <div class="d-flex align-items-start gap-3">
-                            <div id="step-circle-5" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done5 || $active5) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;">5</div>
+                            <div id="step-circle-5" class="d-flex h-8 w-8 align-items-center justify-content-center <?= ($done5 || $active5) ? 'bg-warning text-dark fw-bold' : 'bg-secondary text-light'; ?> rounded-circle" style="font-size: 12px;"><?= $done5 ? '✔' : '5'; ?></div>
                             <div>
                                 <p id="step-title-5" class="fw-semibold <?= ($done5 || $active5) ? 'text-light' : 'text-secondary'; ?> mb-1" style="font-size: 14px;">Selesai</p>
                                 <p id="step-detail-5" class="small text-secondary mb-0"><?= $active5 ? 'Sajian lengkap dinikmati di meja Anda.' : 'Sedang diantar ke meja...'; ?></p>
@@ -276,6 +278,7 @@ ob_start();
                 } else {
                     circle.className = 'd-flex h-8 w-8 align-items-center justify-content-center bg-secondary text-light rounded-circle';
                 }
+                circle.textContent = step.done ? '✔' : step.num;
             }
 
             if (title) {
@@ -295,9 +298,9 @@ ob_start();
         const warningBanner = document.getElementById('unpaid-warning-banner');
         if (warningBanner) {
             if (status === 'Menunggu Pembayaran') {
-                warningBanner.classList.remove('hidden');
+                warningBanner.classList.remove('d-none');
             } else {
-                warningBanner.classList.add('hidden');
+                warningBanner.classList.add('d-none');
             }
         }
     }
@@ -319,7 +322,24 @@ ob_start();
                 }
             })
             .catch(err => console.error('Error polling status:', err));
-    }, 3000);
+    });
+
+    async function triggerBypass(id) {
+        if (!confirm('Apakah Anda yakin ingin melakukan bypass pembayaran untuk pesanan ini?')) return;
+        try {
+            const resp = await fetch('ajax_check_payment.php?id_pesanan=' + id + '&bypass=true', { credentials: 'same-origin' });
+            if (!resp.ok) return;
+            const data = await resp.json();
+            if (data.status === 'Lunas') {
+                alert('Bypass pembayaran berhasil! Halaman akan dimuat ulang.');
+                window.location.reload();
+            } else {
+                alert('Gagal melakukan bypass: ' + (data.message || 'Status tidak Lunas'));
+            }
+        } catch (e) {
+            alert('Terjadi kesalahan jaringan.');
+        }
+    }
 </script>
 <?php endif; ?>
 

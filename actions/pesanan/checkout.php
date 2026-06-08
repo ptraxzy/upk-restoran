@@ -156,7 +156,12 @@ try {
     unset($_SESSION['active_voucher_value']);
     unset($_SESSION['active_discount']);
 
-    redirect(base_url("pelanggan/keranjang_checkout.php?action=pay&trx={$trx_id}&id_pesanan={$id_pesanan}"));
+    // Redirect based on payment method
+    if ($metode === 'QRIS') {
+        redirect(base_url("pelanggan/pembayaran_qr.php?id={$id_pesanan}"));
+    } else {
+        redirect(base_url("pelanggan/keranjang_checkout.php?action=pay&trx={$trx_id}&id_pesanan={$id_pesanan}"));
+    }
 
 } catch (Exception $e) {
     $pdo->rollBack();

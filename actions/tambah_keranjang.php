@@ -10,6 +10,12 @@ $id_menu = (int) ($_POST['id_menu'] ?? 0);
 $qty = (int) ($_POST['qty'] ?? 1);
 $isAjax = isset($_POST['ajax']) && $_POST['ajax'] === '1';
 
+$referer = $_SERVER['HTTP_REFERER'] ?? '';
+$redirectUrl = base_url('pelanggan/menu.php');
+if (!empty($referer) && !str_contains($referer, 'menu_detail.php')) {
+    $redirectUrl = $referer;
+}
+
 if ($id_menu <= 0 || $qty <= 0) {
     if ($isAjax) {
         header('Content-Type: application/json');
@@ -17,7 +23,7 @@ if ($id_menu <= 0 || $qty <= 0) {
         exit;
     }
     set_flash('error', 'Item tidak valid.');
-    redirect(base_url('pelanggan/dashboard.php'));
+    redirect($redirectUrl);
 }
 
 $pdo = db();
@@ -32,7 +38,7 @@ if (!$menu) {
         exit;
     }
     set_flash('error', 'Menu tidak ditemukan atau tidak tersedia.');
-    redirect(base_url('pelanggan/dashboard.php'));
+    redirect($redirectUrl);
 }
 
 $userId = $_SESSION['id_user'] ?? 0;
@@ -70,4 +76,4 @@ if ($isAjax) {
 }
 
 set_flash('success', $menu['nama_menu'] . ' berhasil ditambahkan ke keranjang.');
-redirect(base_url('pelanggan/dashboard.php'));
+redirect($redirectUrl);

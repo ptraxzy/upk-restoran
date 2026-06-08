@@ -229,12 +229,62 @@ if ($isPaymentPhase) {
 
 // Payment Gateway Logic (only for QRIS)
 $paymentResult = null;
-if ($isPaymentPhase && $metodePembayaran === 'QRIS') {
-    $payment = new QrisCepat();
-    // UNTUK UPK: Hardcode nominal ke 10.000 agar gampang dites presentasi,
-    // tapi di tampilan (frontend) tetap muncul harga asli.
-    $presentationAmount = 10000;
-    $paymentResult = $payment->deposit($presentationAmount);
+if ($isPaymentPhase && $metodePembayaran === 'QRIS' && $pembayaran) {
+    $gatewayTrxId = $pembayaran['trx_id'] ?? '';
+    
+    // If it's empty or the default ORD- transaction ID, call deposit to generate a new QRIS payment
+    if (empty($gatewayTrxId) || strpos($gatewayTrxId, 'ORD-') === 0) {
+        $payment = new QrisCepat();
+        $presentationAmount = 1000;
+        $res = $payment->deposit($presentationAmount);
+        if ($res && $res['status'] === 'success' && isset($res['data'])) {
+            $gatewayTrxId = $res['data']['trx_id'];
+            
+            // Save the gateway transaction ID in the database
+            $stmtUpdate = $pdo->prepare("UPDATE pembayaran SET trx_id = ? WHERE id_pesanan = ?");
+            $stmtUpdate->execute([$gatewayTrxId, $id_pesanan]);
+            
+            // Refresh pembayaran object with new trx_id
+            $pembayaran['trx_id'] = $gatewayTrxId;
+            
+            // Cache the QRIS payload
+            $_SESSION['qris_cache_' . $id_pesanan] = $res['data']['qris'];
+            $paymentResult = $res;
+        }
+    } else {
+        // Reuse the existing transaction ID and payload
+        $qrisPayload = $_SESSION['qris_cache_' . $id_pesanan] ?? null;
+        
+        if (!$qrisPayload) {
+            // Re-fetch using checkStatus
+            $payment = new QrisCepat();
+            $statusRes = $payment->checkStatus($gatewayTrxId);
+            if ($statusRes && isset($statusRes['data']['qris'])) {
+                $qrisPayload = $statusRes['data']['qris'];
+                $_SESSION['qris_cache_' . $id_pesanan] = $qrisPayload;
+            } else {
+                // Generate a new one if it fails
+                $presentationAmount = 1000;
+                $res = $payment->deposit($presentationAmount);
+                if ($res && $res['status'] === 'success') {
+                    $gatewayTrxId = $res['data']['trx_id'];
+                    $qrisPayload = $res['data']['qris'];
+                    $stmtUpdate = $pdo->prepare("UPDATE pembayaran SET trx_id = ? WHERE id_pesanan = ?");
+                    $stmtUpdate->execute([$gatewayTrxId, $id_pesanan]);
+                    $pembayaran['trx_id'] = $gatewayTrxId;
+                    $_SESSION['qris_cache_' . $id_pesanan] = $qrisPayload;
+                }
+            }
+        }
+        
+        $paymentResult = [
+            'status' => 'success',
+            'data' => [
+                'qris' => $qrisPayload,
+                'trx_id' => $gatewayTrxId
+            ]
+        ];
+    }
 }
 
 $title = 'Checkout';
@@ -378,6 +428,16 @@ ob_start();
                                     <span class="text-secondary">Status</span>
                                     <span class="text-warning fw-medium blink">Menunggu Pembayaran...</span>
                                 </div>
+                            </div>
+
+                            <div class="d-flex gap-2 mt-3">
+                                <a href="<?= htmlspecialchars(base_url('pelanggan/pembayaran_qr.php?id=' . $id_pesanan), ENT_QUOTES, 'UTF-8') ?>" 
+                                   class="btn btn-outline-warning py-2 px-3" style="font-size: 11px; font-weight: 500;">
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 4px;">
+                                        <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+                                    </svg>
+                                    Buka Halaman QR
+                                </a>
                             </div>
                         </div>
                     <?php else: ?>
@@ -594,10 +654,6 @@ ob_start();
                 <p class="text-secondary small mb-0" style="font-size: 11px;">Silakan selesaikan pembayaran QRIS Anda dengan memindai kode QR di atas.</p>
             <?php endif; ?>
         </div>
-        
-        <a href="<?= base_url('actions/pesanan/simulate_pay.php?id_pesanan=' . $id_pesanan); ?>" class="btn btn-outline-success w-100 py-3 mb-2 fw-semibold text-uppercase" style="font-size: 11px; letter-spacing: 0.05em; border-radius: 0; border-color: #28a745 !important; color: #28a745 !important;">
-            Simulasi Bayar Lunas (Demo)
-        </a>
 
         <a href="<?= base_url('pelanggan/pesanan_status.php'); ?>" class="btn btn-warning w-100 py-3" style="font-size: 12px; font-weight: 600; border-radius: 0;">Pantau Sajian Anda</a>
         <a href="<?= base_url('pelanggan/dashboard.php'); ?>" class="btn btn-outline-warning w-100 py-3 mt-2" style="font-size: 12px; font-weight: 600; border-radius: 0;">Dashboard</a>
@@ -605,7 +661,35 @@ ob_start();
     </aside>
 </section>
 
+<!-- Luxury Payment Success Modal -->
+<div id="payment-success-modal" style="display: none; position: fixed; inset: 0; z-index: 10000; background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(10px); align-items: center; justify-content: center;">
+    <div style="text-align: center; max-width: 400px; padding: 40px; border: 1px solid rgba(201, 168, 76, 0.3); background: rgba(20, 20, 20, 0.8); box-shadow: 0 20px 50px rgba(0,0,0,0.8); position: relative; overflow: hidden;">
+        <div style="position: absolute; top: -50px; left: -50px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(201, 168, 76, 0.1) 0%, transparent 70%); pointer-events: none;"></div>
+        
+        <div class="success-checkmark-wrapper" style="margin-bottom: 24px; display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 80px; border-radius: 50%; border: 2px solid var(--gold); background: rgba(201, 168, 76, 0.05); box-shadow: 0 0 20px rgba(201, 168, 76, 0.2); animation: pulse-gold 2s infinite;">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--gold)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="animation: draw-check 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; stroke-dasharray: 50; stroke-dashoffset: 50;">
+                <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+        </div>
+        
+        <h3 class="font-display" style="color: var(--gold); font-size: 26px; margin-bottom: 12px; font-weight: 400; letter-spacing: 0.05em; font-family: var(--font-serif);">Pembayaran Berhasil</h3>
+        <p class="text-secondary" style="font-size: 13px; line-height: 1.6; margin-bottom: 24px; color: var(--text-secondary);">Cita rasa istimewa Lumière sedang dipersiapkan untuk Anda. Mengalihkan ke pelacak pesanan...</p>
+        
+        <div style="width: 100%; height: 2px; background: rgba(255,255,255,0.08); position: relative;">
+            <div id="success-progress-bar" style="width: 0%; height: 100%; background: var(--gold); transition: width 2.5s linear;"></div>
+        </div>
+    </div>
+</div>
+
 <style>
+@keyframes pulse-gold {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 168, 76, 0.4); }
+    70% { transform: scale(1.02); box-shadow: 0 0 0 12px rgba(201, 168, 76, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(201, 168, 76, 0); }
+}
+@keyframes draw-check {
+    to { stroke-dashoffset: 0; }
+}
 @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 .blink { animation: blink 2s infinite; }
 
@@ -682,6 +766,40 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    <?php if ($isPaymentPhase): ?>
+    // Polling payment status automatically
+    const idPesanan = <?= $id_pesanan ?>;
+    const pollInterval = setInterval(async () => {
+        try {
+            const response = await fetch(`<?= base_url('pelanggan/ajax_check_payment.php') ?>?id_pesanan=${idPesanan}`);
+            if (!response.ok) return;
+            const data = await response.json();
+            if (data && data.status === 'Lunas') {
+                clearInterval(pollInterval);
+                
+                // Show the luxury success modal
+                const modal = document.getElementById('payment-success-modal');
+                if (modal) {
+                    modal.style.display = 'flex';
+                    setTimeout(() => {
+                        const bar = document.getElementById('success-progress-bar');
+                        if (bar) bar.style.width = '100%';
+                    }, 50);
+                }
+                
+                // Delay redirection to show the beautiful success notification
+                setTimeout(() => {
+                    window.location.href = `<?= base_url('pelanggan/pesanan_status.php') ?>`;
+                }, 2600);
+            }
+        } catch (err) {
+            console.error('Error polling payment status:', err);
+        }
+    }, 3000);
+
+
+    <?php endif; ?>
 });
 </script>
 

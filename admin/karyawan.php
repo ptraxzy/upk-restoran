@@ -39,9 +39,9 @@ $totalRows = count($filteredKaryawans);
 $totalPages = ceil($totalRows / $limit);
 $paginatedKaryawans = array_slice($filteredKaryawans, ($page - 1) * $limit, $limit);
 
-$countAdmin = (int) db()->query("SELECT COUNT(*) FROM admin")->fetchColumn();
 $countKasir = (int) db()->query("SELECT COUNT(*) FROM karyawan")->fetchColumn();
-$total = $countAdmin + $countKasir;
+$countKasirAktif = (int) db()->query("SELECT COUNT(*) FROM karyawan WHERE status = 'Aktif'")->fetchColumn();
+$countKasirNonaktif = $countKasir - $countKasirAktif;
 
 ob_start();
 ?>
@@ -129,16 +129,16 @@ ob_start();
             <h3 class="font-display text-white mb-4" style="font-size: 24px;">Komposisi Tim</h3>
             <div class="d-flex flex-column gap-3">
                 <div class="p-3 border border-soft bg-black d-flex justify-content-between align-items-center">
-                    <span class="text-secondary small">Kasir</span>
-                    <span class="h4 text-gold font-display m-0"><?= $countKasir; ?></span>
+                    <span class="text-secondary small">Kasir Aktif</span>
+                    <span class="h4 text-gold font-display m-0"><?= $countKasirAktif; ?></span>
                 </div>
                 <div class="p-3 border border-soft bg-black d-flex justify-content-between align-items-center">
-                    <span class="text-secondary small">Administrator</span>
-                    <span class="h4 text-gold font-display m-0"><?= $countAdmin; ?></span>
+                    <span class="text-secondary small">Kasir Nonaktif</span>
+                    <span class="h4 text-gold font-display m-0"><?= $countKasirNonaktif; ?></span>
                 </div>
                 <div class="p-3 border border-gold border-opacity-20 bg-gold bg-opacity-5 d-flex justify-content-between align-items-center mt-3">
-                    <span class="text-white small fw-medium">Total Anggota</span>
-                    <span class="h3 text-gold font-display m-0"><?= $total; ?></span>
+                    <span class="text-white small fw-medium">Total Kasir</span>
+                    <span class="h3 text-gold font-display m-0"><?= $countKasir; ?></span>
                 </div>
             </div>
         </article>

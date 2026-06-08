@@ -132,7 +132,7 @@ ob_start();
                                 <?php if ($payStatus !== 'Lunas' && ($order['metode_pembayaran'] ?? 'QRIS') === 'Tunai'): ?>
                                     <a href="<?= base_url('actions/pesanan/confirm_cash.php?id_pesanan=' . $order['id_pesanan']); ?>" class="btn btn-sm btn-warning rounded-0 fw-semibold" style="font-size: 10px; padding: 4px 8px;">Konfirmasi Cash</a>
                                 <?php elseif ($payStatus !== 'Lunas' && ($order['metode_pembayaran'] ?? 'QRIS') === 'QRIS'): ?>
-                                    <a href="<?= base_url('actions/pesanan/simulate_pay.php?id_pesanan=' . $order['id_pesanan']); ?>" class="btn btn-sm btn-outline-success rounded-0 fw-semibold" style="font-size: 10px; padding: 4px 8px; border-color: #28a745 !important; color: #28a745 !important;">Simulasi QRIS</a>
+                                    <span class="badge bg-warning bg-opacity-10 text-warning border border-warning border-opacity-20" style="font-size: 10px;">Menunggu QRIS</span>
                                 <?php else: ?>
                                     <span class="text-muted small">-</span>
                                 <?php endif; ?>

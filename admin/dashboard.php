@@ -22,9 +22,8 @@ $pesananToday = (int)$stmtPesanan->fetchColumn();
 $stmtMenu = $pdo->query("SELECT COUNT(*) FROM menu WHERE status = 'Tersedia'");
 $menuAktif = (int)$stmtMenu->fetchColumn();
 
-$countAdmin = (int) $pdo->query("SELECT COUNT(*) FROM admin")->fetchColumn();
-$countKasir = (int) $pdo->query("SELECT COUNT(*) FROM karyawan")->fetchColumn();
-$timAktif = $countAdmin + $countKasir;
+$countKasir = (int) $pdo->query("SELECT COUNT(*) FROM karyawan WHERE status = 'Aktif'")->fetchColumn();
+$timAktif = $countKasir;
 
 // Recent orders
 $stmtRecent = $pdo->query("
@@ -144,29 +143,29 @@ ob_start();
     <div class="col">
         <article class="card h-100 p-4">
             <p class="text-secondary small mb-2">Pemasukan Hari Ini</p>
-            <p class="h2 text-white font-display mb-0"><?= rupiah($revToday); ?></p>
+            <p class="h2 text-white font-display mb-0" id="metric-revenue"><?= rupiah($revToday); ?></p>
             <p class="metric-note">Akumulasi pembayaran lunas pada hari ini.</p>
         </article>
     </div>
     <div class="col">
         <article class="card h-100 p-4">
             <p class="text-secondary small mb-2">Pesanan Hari Ini</p>
-            <p class="h2 text-white font-display mb-0"><?= $pesananToday; ?></p>
+            <p class="h2 text-white font-display mb-0" id="metric-orders"><?= $pesananToday; ?></p>
             <p class="metric-note">Jumlah pesanan yang masuk hari ini.</p>
         </article>
     </div>
     <div class="col">
         <article class="card h-100 p-4">
             <p class="text-secondary small mb-2">Menu Tersedia</p>
-            <p class="h2 text-white font-display mb-0"><?= $menuAktif; ?></p>
+            <p class="h2 text-white font-display mb-0" id="metric-menu"><?= $menuAktif; ?></p>
             <p class="metric-note">Hidangan yang aktif dan dapat dipesan pelanggan.</p>
         </article>
     </div>
     <div class="col">
         <article class="card h-100 p-4">
             <p class="text-secondary small mb-2">Tim Bertugas</p>
-            <p class="h2 text-white font-display mb-0"><?= $timAktif; ?></p>
-            <p class="metric-note">Total staf admin dan kasir yang terdaftar.</p>
+            <p class="h2 text-white font-display mb-0" id="metric-staff"><?= $timAktif; ?></p>
+            <p class="metric-note">Total staf admin dan kasir yang <strong>aktif</strong>.</p>
         </article>
     </div>
 </section>
@@ -196,7 +195,7 @@ ob_start();
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody id="recent-orders-body">
                         <?php foreach ($recentOrders as $order): ?>
                         <?php
                         $statusClass = match($order['status_pesanan']) {
@@ -437,6 +436,91 @@ document.addEventListener('DOMContentLoaded', function() {
         chart.data.datasets[1].data = chartRevenue;
         chart.update();
     }, 150);
+
+    // ===== AUTO-REFRESH: Update dashboard every 30 seconds =====
+    function formatRupiah(value) {
+        return new Intl.NumberFormat('id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(value);
+    }
+
+    function getStatusClass(status) {
+        switch (status) {
+            case 'Menunggu Pembayaran': return 'bg-danger text-white';
+            case 'Diproses':
+            case 'Sedang Disiapkan': return 'bg-warning text-dark';
+            case 'Siap Saji': return 'bg-info text-dark';
+            case 'Selesai': return 'bg-success text-white';
+            default: return 'bg-secondary text-white';
+        }
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.appendChild(document.createTextNode(text || ''));
+        return div.innerHTML;
+    }
+
+    async function refreshDashboard() {
+        try {
+            const resp = await fetch('api_dashboard.php', { credentials: 'same-origin' });
+            if (!resp.ok) return;
+            const data = await resp.json();
+
+            // Update metric cards
+            const revEl = document.getElementById('metric-revenue');
+            const ordEl = document.getElementById('metric-orders');
+            const menuEl = document.getElementById('metric-menu');
+            const staffEl = document.getElementById('metric-staff');
+
+            if (revEl) revEl.textContent = formatRupiah(data.revToday);
+            if (ordEl) ordEl.textContent = data.pesananToday;
+            if (menuEl) menuEl.textContent = data.menuAktif;
+            if (staffEl) staffEl.textContent = data.timAktif;
+
+            // Update chart
+            const isMobileNow = window.innerWidth < 576;
+            chart.data.labels = data.chartLabels.map(label => {
+                if (!isMobileNow) return label;
+                return label.split(' ')[0].substring(0, 3);
+            });
+            chart.data.datasets[0].data = data.chartRevenue;
+            chart.data.datasets[1].data = data.chartRevenue;
+
+            const newMax = Math.max(...data.chartRevenue);
+            chart.options.scales.y.max = newMax > 0 ? Math.ceil(newMax / 500000) * 500000 : 1000000;
+            chart.update('none');
+
+            // Update recent orders table
+            const tbody = document.getElementById('recent-orders-body');
+            if (tbody && data.recentOrders) {
+                if (data.recentOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" class="text-center py-4 text-muted">Belum ada pesanan.</td></tr>';
+                } else {
+                    tbody.innerHTML = data.recentOrders.map(order => {
+                        const cls = getStatusClass(order.status_pesanan);
+                        const customer = escapeHtml(order.username || 'Guest');
+                        const total = formatRupiah(parseFloat(order.total_harga));
+                        return `<tr>
+                            <td class="fw-medium text-gold">#LP-${order.id_pesanan}</td>
+                            <td class="text-white">${customer}</td>
+                            <td class="text-secondary">${escapeHtml(order.no_meja)}</td>
+                            <td class="text-white fw-medium">${total}</td>
+                            <td><span class="badge ${cls}">${escapeHtml(order.status_pesanan)}</span></td>
+                        </tr>`;
+                    }).join('');
+                }
+            }
+        } catch (e) {
+            // Silently ignore refresh errors
+        }
+    }
+
+    // Refresh every 30 seconds
+    setInterval(refreshDashboard, 30000);
 });
 </script>
 <?php

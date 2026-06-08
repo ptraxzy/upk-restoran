@@ -296,8 +296,8 @@ ob_start();
                                     TANDAI SELESAI
                                 </a>
                             <?php elseif ($p['status_pesanan'] === 'Selesai'): ?>
-                                <button type="button" class="btn-figma-secondary w-100" onclick="toggleStatusSelector(<?= $p['id_pesanan'] ?>)">
-                                    UBAH STATUS
+                                <button type="button" class="btn-figma-secondary w-100" disabled style="opacity: 0.5; cursor: not-allowed; border-color: rgba(255, 255, 255, 0.1) !important; color: rgba(255, 255, 255, 0.4) !important;">
+                                    TRANSAKSI SELESAI
                                 </button>
                             <?php endif; ?>
                         </div>
